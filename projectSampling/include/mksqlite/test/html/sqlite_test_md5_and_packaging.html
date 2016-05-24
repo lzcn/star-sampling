@@ -1,0 +1,482 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_test_md5_and_packaging</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_test_md5_and_packaging.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">MD5 Test Suite</a></li><li><a href="#4">Packaging time for random numbers</a></li><li><a href="#5">1.000.000 random numbers</a></li><li><a href="#6">Same random numbers, cumulated</a></li><li><a href="#7">Same random numbers, half constant 0</a></li><li><a href="#8">QLIN16/QLOG16 test suite</a></li><li><a href="#9">Measuring QLIN16</a></li><li><a href="#10">Display results</a></li><li><a href="#11">Measuring QLOG16</a></li><li><a href="#12">Display results</a></li><li><a href="#13">Packaging time for screenshot data</a></li><li><a href="#14">Measuring</a></li><li><a href="#15">Display results</a></li><li><a href="#16">Close database</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> sqlite_test_md5_and_packaging
+</pre><pre class="codeinput">    clear <span class="string">all</span>
+    close <span class="string">all</span>
+    clc
+    dummy = mksqlite(<span class="string">'version mex'</span>);
+    fprintf( <span class="string">'\n\n'</span> );
+
+
+    mksqlite( <span class="string">'open'</span>, <span class="string">''</span> );
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+
+
+</pre><h2>MD5 Test Suite<a name="3"></a></h2><p>(ref: <a href="http://tools.ietf.org/html/rfc1321">http://tools.ietf.org/html/rfc1321</a>)</p><pre class="codeinput">    <span class="comment">% Compare md5 hashing values with the reference values, listed from the above source</span>
+    clc
+    fprintf( <span class="string">'MD5 Test Suite:\n\n'</span> );
+    q = mksqlite( <span class="string">'select MD5(?) as MD5'</span>, <span class="string">'a'</span> );
+    fprintf( <span class="string">'"a":\n%s\n%s\n\n'</span>, lower( q.MD5 ), <span class="string">'0cc175b9c0f1b6a831c399e269772661'</span> );
+    q = mksqlite( <span class="string">'select MD5(?) as MD5'</span>, <span class="string">'abc'</span> );
+    fprintf( <span class="string">'"abc":\n%s\n%s\n\n'</span>, lower( q.MD5 ), <span class="string">'900150983cd24fb0d6963f7d28e17f72'</span> );
+    q = mksqlite( <span class="string">'select MD5(?) as MD5'</span>, <span class="string">'message digest'</span> );
+    fprintf( <span class="string">'"message digest":\n%s\n%s\n\n'</span>, lower( q.MD5 ), <span class="string">'f96b697d7cb7938d525a2f31aaf161d0'</span> );
+    q = mksqlite( <span class="string">'select MD5(?) as MD5'</span>, <span class="string">'abcdefghijklmnopqrstuvwxyz'</span> );
+    fprintf( <span class="string">'"abcdefghijklmnopqrstuvwxyz":\n%s\n%s\n\n'</span>, lower( q.MD5 ), <span class="string">'c3fcd3d76192e4007dfb496cca67e13b'</span> );
+    q = mksqlite( <span class="string">'select MD5(?) as MD5'</span>, <span class="string">'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'</span> );
+    fprintf( <span class="string">'"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789":\n%s\n%s\n\n'</span>, lower( q.MD5 ), <span class="string">'d174ab98d277d9f5a5611c2c9f419d9f'</span> );
+    q = mksqlite( <span class="string">'select MD5(?) as MD5'</span>, <span class="string">'12345678901234567890123456789012345678901234567890123456789012345678901234567890'</span> );
+    fprintf( <span class="string">'"12345678901234567890123456789012345678901234567890123456789012345678901234567890":\n%s\n%s\n\n'</span>, lower( q.MD5 ), <span class="string">'57edf4a22be3c955ac49da2e2107b67a'</span> );
+</pre><pre class="codeoutput">MD5 Test Suite:
+
+"a":
+0cc175b9c0f1b6a831c399e269772661
+0cc175b9c0f1b6a831c399e269772661
+
+"abc":
+900150983cd24fb0d6963f7d28e17f72
+900150983cd24fb0d6963f7d28e17f72
+
+"message digest":
+f96b697d7cb7938d525a2f31aaf161d0
+f96b697d7cb7938d525a2f31aaf161d0
+
+"abcdefghijklmnopqrstuvwxyz":
+c3fcd3d76192e4007dfb496cca67e13b
+c3fcd3d76192e4007dfb496cca67e13b
+
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789":
+d174ab98d277d9f5a5611c2c9f419d9f
+d174ab98d277d9f5a5611c2c9f419d9f
+
+"12345678901234567890123456789012345678901234567890123456789012345678901234567890":
+57edf4a22be3c955ac49da2e2107b67a
+57edf4a22be3c955ac49da2e2107b67a
+
+</pre><h2>Packaging time for random numbers<a name="4"></a></h2><pre class="codeinput">    fprintf( <span class="string">'BLOSC test suite:\n\n'</span> );
+
+    compressor = <span class="string">'blosclz'</span>;   <span class="comment">% blosclz, lz4, lz4hc, qlin16, qlog16</span>
+
+    <span class="comment">% Using typed BLOBs with compression feature</span>
+    mksqlite( <span class="string">'typedBLOBs'</span>, 2 );
+    mksqlite( <span class="string">'compression_check'</span>, 1 );
+</pre><pre class="codeoutput">BLOSC test suite:
+
+</pre><h2>1.000.000 random numbers<a name="5"></a></h2><pre class="codeinput">    data = randn( 1e6, 1 );
+
+    <span class="keyword">for</span> level = 9:-1:0
+        <span class="comment">% set compressor and compression level</span>
+        mksqlite( <span class="string">'compression'</span>, compressor, level );
+
+        <span class="comment">% measuring</span>
+        q = mksqlite( [<span class="string">'SELECT BDCPackTime(?) AS t_pack, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       BDCUnpackTime(?) AS t_unpack, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       BDCRatio(?) AS ratio, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       ? as data'</span>], <span class="keyword">...</span>
+                       data, data, data, data );
+
+        <span class="comment">% display results</span>
+        fprintf( <span class="string">'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n'</span>, <span class="keyword">...</span>
+                  level, q.t_pack, q.t_unpack, q.ratio*100 );
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">Level 9: pack(0.0442379s), unpack(0.00750921s), ratio(96.6226%)
+Level 8: pack(0.0410647s), unpack(0.00751595s), ratio(96.5836%)
+Level 7: pack(0.0385499s), unpack(0.00749894s), ratio(96.5836%)
+Level 6: pack(0.0367404s), unpack(0.0074051s), ratio(96.6209%)
+Level 5: pack(0s), unpack(0s), ratio(100%)
+Level 4: pack(0s), unpack(0s), ratio(100%)
+Level 3: pack(0s), unpack(0s), ratio(100%)
+Level 2: pack(0s), unpack(0s), ratio(100%)
+Level 1: pack(0s), unpack(0s), ratio(100%)
+Level 0: pack(0s), unpack(0s), ratio(100%)
+</pre><h2>Same random numbers, cumulated<a name="6"></a></h2><pre class="codeinput">    data = cumsum( data );
+
+    <span class="keyword">for</span> level = 9:-1:0
+        <span class="comment">% set compressor and compression level</span>
+        mksqlite( <span class="string">'compression'</span>, compressor, level );
+
+        <span class="comment">% measuring</span>
+        q = mksqlite( [<span class="string">'SELECT BDCPackTime(?) AS t_pack, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       BDCUnpackTime(?) AS t_unpack, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       BDCRatio(?) AS ratio, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       ? as data'</span>], <span class="keyword">...</span>
+                       data, data, data, data );
+
+        <span class="comment">% display results</span>
+        fprintf( <span class="string">'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n'</span>, <span class="keyword">...</span>
+                  level, q.t_pack, q.t_unpack, q.ratio*100 );
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">Level 9: pack(0.0337529s), unpack(0.00458148s), ratio(76.9435%)
+Level 8: pack(0.0305492s), unpack(0.0042495s), ratio(76.9101%)
+Level 7: pack(0.0281922s), unpack(0.0042275s), ratio(76.8893%)
+Level 6: pack(0.0266616s), unpack(0.00413688s), ratio(76.9302%)
+Level 5: pack(0.0225097s), unpack(0.00401459s), ratio(77.0878%)
+Level 4: pack(0.0175458s), unpack(0.00388848s), ratio(77.207%)
+Level 3: pack(0.00977619s), unpack(0.00339285s), ratio(79.0156%)
+Level 2: pack(0.00843624s), unpack(0.00335209s), ratio(79.2738%)
+Level 1: pack(0.00903598s), unpack(0.00309313s), ratio(82.5725%)
+Level 0: pack(0s), unpack(0s), ratio(100%)
+</pre><h2>Same random numbers, half constant 0<a name="7"></a></h2><pre class="codeinput">    data( 1:500000 ) = 0;
+
+    <span class="keyword">for</span> level = 9:-1:0
+        <span class="comment">% set compressor and compression level</span>
+        mksqlite( <span class="string">'compression'</span>, compressor, level );
+
+        <span class="comment">% measuring</span>
+        q = mksqlite( [<span class="string">'SELECT BDCPackTime(?) AS t_pack, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       BDCUnpackTime(?) AS t_unpack, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       BDCRatio(?) AS ratio, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       ? as data'</span>], <span class="keyword">...</span>
+                       data, data, data, data );
+
+        <span class="comment">% display results</span>
+        fprintf( <span class="string">'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n'</span>, <span class="keyword">...</span>
+                  level, q.t_pack, q.t_unpack, q.ratio*100 );
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">Level 9: pack(0.0177004s), unpack(0.00344564s), ratio(38.1788%)
+Level 8: pack(0.0162771s), unpack(0.00313126s), ratio(38.1433%)
+Level 7: pack(0.015085s), unpack(0.00318023s), ratio(38.1431%)
+Level 6: pack(0.0142715s), unpack(0.0031163s), ratio(38.2187%)
+Level 5: pack(0.0121614s), unpack(0.00305823s), ratio(38.3733%)
+Level 4: pack(0.00967824s), unpack(0.00307436s), ratio(38.3733%)
+Level 3: pack(0.00582964s), unpack(0.0029984s), ratio(38.6284%)
+Level 2: pack(0.00524222s), unpack(0.00298785s), ratio(38.65%)
+Level 1: pack(0.00559473s), unpack(0.00286819s), ratio(40.1428%)
+Level 0: pack(0s), unpack(0s), ratio(100%)
+</pre><h2>QLIN16/QLOG16 test suite<a name="8"></a></h2><pre class="codeinput">    fprintf( <span class="string">'\nLossy compression "QLIN16":\n(Unique resolution over entire value range)\n'</span> );
+
+    level = 1; <span class="comment">% Always 1, ratio is always constant 1:4</span>
+    data = cumsum( randn( 1e6, 1 ) );
+</pre><pre class="codeoutput">
+Lossy compression "QLIN16":
+(Unique resolution over entire value range)
+</pre><h2>Measuring QLIN16<a name="9"></a></h2><pre class="codeinput">    <span class="comment">% set compressor and compression level</span>
+    mksqlite( <span class="string">'compression'</span>, <span class="string">'QLIN16'</span>, level );
+    q = mksqlite( [<span class="string">'SELECT BDCPackTime(?) AS t_pack, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       BDCUnpackTime(?) AS t_unpack, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       BDCRatio(?) AS ratio, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       ? as data'</span>], <span class="keyword">...</span>
+                   data, data, data, data );
+</pre><h2>Display results<a name="10"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n'</span>, <span class="keyword">...</span>
+              level, q.t_pack, q.t_unpack, q.ratio*100 );
+
+    figure
+    plot( data, <span class="string">'r-'</span>, <span class="string">'linewidth'</span>, 2, <span class="string">'displayname'</span>, <span class="string">'Original'</span> ), hold <span class="string">all</span>
+    plot( q.data, <span class="string">'k-'</span>, <span class="string">'displayname'</span>, <span class="string">'Copy'</span> )
+    grid
+    legend( <span class="string">'show'</span> )
+    title( <span class="string">'QLIN16'</span> );
+
+    fprintf( <span class="string">'\nLossy compression "QLOG16":\n(Lesser resolution for bigger values)\n'</span> );
+
+    level = 1; <span class="comment">% Always 1, ratio is always constant 1:4</span>
+    data = data - min(data); <span class="comment">% Only positive numbers allowed (and 0, NaN, +Inf und -Inf)</span>
+</pre><pre class="codeoutput">Level 1: pack(0.00930696s), unpack(0.00242359s), ratio(25.0001%)
+
+Lossy compression "QLOG16":
+(Lesser resolution for bigger values)
+</pre><img vspace="5" hspace="5" src="sqlite_test_md5_and_packaging_01.jpg" alt=""> <h2>Measuring QLOG16<a name="11"></a></h2><pre class="codeinput">    <span class="comment">% set compressor and compression level</span>
+    mksqlite( <span class="string">'compression'</span>, <span class="string">'QLOG16'</span>, level );
+    q = mksqlite( [<span class="string">'SELECT BDCPackTime(?) AS t_pack, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       BDCUnpackTime(?) AS t_unpack, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       BDCRatio(?) AS ratio, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       ? as data'</span>], <span class="keyword">...</span>
+                   data, data, data, data );
+</pre><h2>Display results<a name="12"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n'</span>, <span class="keyword">...</span>
+              level, q.t_pack, q.t_unpack, q.ratio*100 );
+
+    figure
+    plot( data, <span class="string">'r-'</span>, <span class="string">'linewidth'</span>, 2, <span class="string">'displayname'</span>, <span class="string">'Original'</span> ), hold <span class="string">all</span>
+    plot( q.data, <span class="string">'k-'</span>, <span class="string">'displayname'</span>, <span class="string">'Copy'</span> )
+    grid
+    legend( <span class="string">'show'</span> )
+    title( <span class="string">'QLOG16'</span> );
+</pre><pre class="codeoutput">Level 1: pack(0.0200932s), unpack(0.0145116s), ratio(25.0001%)
+</pre><img vspace="5" hspace="5" src="sqlite_test_md5_and_packaging_02.jpg" alt=""> <h2>Packaging time for screenshot data<a name="13"></a></h2><pre class="codeinput">    <span class="comment">% Screenshot (figure) as (RGB-matrix)</span>
+    fprintf( <span class="string">'\nScreenshot data:\n'</span> );
+
+    h = figure;
+    set( h, <span class="string">'units'</span>, <span class="string">'normalized'</span>, <span class="string">'position'</span>, [0.5,0.5,0.2,0.2] );
+    x = linspace(0,2*pi,20);
+    plot( x, sin(x), <span class="string">'r-'</span>, <span class="string">'linewidth'</span>, 2 );
+    legend <span class="string">on</span>
+    F = getframe(h);
+    delete(h);
+    data = F.cdata;
+</pre><pre class="codeoutput">
+Screenshot data:
+</pre><h2>Measuring<a name="14"></a></h2><pre class="codeinput">    level = 9;
+    mksqlite( <span class="string">'compression'</span>, compressor, level );
+
+    q = mksqlite( [<span class="string">'SELECT BDCPackTime(?) AS t_pack, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       BDCUnpackTime(?) AS t_unpack, '</span>, <span class="keyword">...</span>
+                   <span class="string">'       BDCRatio(?) AS ratio'</span>], <span class="keyword">...</span>
+                   data, data, data );
+</pre><h2>Display results<a name="15"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n'</span>, <span class="keyword">...</span>
+              level, q.t_pack, q.t_unpack, q.ratio*100 );
+</pre><pre class="codeoutput">Level 9: pack(0.00014165s), unpack(0.0001264s), ratio(3.30078%)
+</pre><h2>Close database<a name="16"></a></h2><pre class="codeinput">    mksqlite( <span class="string">'close'</span> );
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_test_md5_and_packaging
+
+    clear all
+    close all
+    clc
+    dummy = mksqlite('version mex');
+    fprintf( '\n\n' );
+    
+    
+    mksqlite( 'open', '' );
+  
+    %% MD5 Test Suite
+    % (ref: http://tools.ietf.org/html/rfc1321)
+
+    % Compare md5 hashing values with the reference values, listed from the above source
+    clc
+    fprintf( 'MD5 Test Suite:\n\n' );
+    q = mksqlite( 'select MD5(?) as MD5', 'a' );
+    fprintf( '"a":\n%s\n%s\n\n', lower( q.MD5 ), '0cc175b9c0f1b6a831c399e269772661' );
+    q = mksqlite( 'select MD5(?) as MD5', 'abc' );
+    fprintf( '"abc":\n%s\n%s\n\n', lower( q.MD5 ), '900150983cd24fb0d6963f7d28e17f72' );
+    q = mksqlite( 'select MD5(?) as MD5', 'message digest' );
+    fprintf( '"message digest":\n%s\n%s\n\n', lower( q.MD5 ), 'f96b697d7cb7938d525a2f31aaf161d0' );
+    q = mksqlite( 'select MD5(?) as MD5', 'abcdefghijklmnopqrstuvwxyz' );
+    fprintf( '"abcdefghijklmnopqrstuvwxyz":\n%s\n%s\n\n', lower( q.MD5 ), 'c3fcd3d76192e4007dfb496cca67e13b' );
+    q = mksqlite( 'select MD5(?) as MD5', 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' );
+    fprintf( '"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789":\n%s\n%s\n\n', lower( q.MD5 ), 'd174ab98d277d9f5a5611c2c9f419d9f' );
+    q = mksqlite( 'select MD5(?) as MD5', '12345678901234567890123456789012345678901234567890123456789012345678901234567890' );
+    fprintf( '"12345678901234567890123456789012345678901234567890123456789012345678901234567890":\n%s\n%s\n\n', lower( q.MD5 ), '57edf4a22be3c955ac49da2e2107b67a' );
+
+
+    %% Packaging time for random numbers
+
+    fprintf( 'BLOSC test suite:\n\n' );
+
+    compressor = 'blosclz';   % blosclz, lz4, lz4hc, qlin16, qlog16
+
+    % Using typed BLOBs with compression feature
+    mksqlite( 'typedBLOBs', 2 );
+    mksqlite( 'compression_check', 1 );
+
+    %% 1.000.000 random numbers
+
+    data = randn( 1e6, 1 );
+
+    for level = 9:-1:0
+        % set compressor and compression level
+        mksqlite( 'compression', compressor, level );
+
+        % measuring
+        q = mksqlite( ['SELECT BDCPackTime(?) AS t_pack, ', ...
+                       '       BDCUnpackTime(?) AS t_unpack, ', ...
+                       '       BDCRatio(?) AS ratio, ', ...
+                       '       ? as data'], ...
+                       data, data, data, data );
+
+        % display results
+        fprintf( 'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n', ...
+                  level, q.t_pack, q.t_unpack, q.ratio*100 );
+    end
+
+    %% Same random numbers, cumulated
+
+    data = cumsum( data );
+
+    for level = 9:-1:0
+        % set compressor and compression level
+        mksqlite( 'compression', compressor, level );
+
+        % measuring
+        q = mksqlite( ['SELECT BDCPackTime(?) AS t_pack, ', ...
+                       '       BDCUnpackTime(?) AS t_unpack, ', ...
+                       '       BDCRatio(?) AS ratio, ', ...
+                       '       ? as data'], ...
+                       data, data, data, data );
+
+        % display results
+        fprintf( 'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n', ...
+                  level, q.t_pack, q.t_unpack, q.ratio*100 );
+    end
+
+    %% Same random numbers, half constant 0
+
+    data( 1:500000 ) = 0;
+
+    for level = 9:-1:0
+        % set compressor and compression level
+        mksqlite( 'compression', compressor, level );
+
+        % measuring
+        q = mksqlite( ['SELECT BDCPackTime(?) AS t_pack, ', ...
+                       '       BDCUnpackTime(?) AS t_unpack, ', ...
+                       '       BDCRatio(?) AS ratio, ', ...
+                       '       ? as data'], ...
+                       data, data, data, data );
+
+        % display results
+        fprintf( 'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n', ...
+                  level, q.t_pack, q.t_unpack, q.ratio*100 );
+    end
+
+
+    %% QLIN16/QLOG16 test suite
+
+    fprintf( '\nLossy compression "QLIN16":\n(Unique resolution over entire value range)\n' );
+
+    level = 1; % Always 1, ratio is always constant 1:4
+    data = cumsum( randn( 1e6, 1 ) );
+
+    %% Measuring QLIN16
+    
+    % set compressor and compression level
+    mksqlite( 'compression', 'QLIN16', level );
+    q = mksqlite( ['SELECT BDCPackTime(?) AS t_pack, ', ...
+                   '       BDCUnpackTime(?) AS t_unpack, ', ...
+                   '       BDCRatio(?) AS ratio, ', ...
+                   '       ? as data'], ...
+                   data, data, data, data );
+
+    %% Display results
+    fprintf( 'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n', ...
+              level, q.t_pack, q.t_unpack, q.ratio*100 );
+
+    figure
+    plot( data, 'r-', 'linewidth', 2, 'displayname', 'Original' ), hold all
+    plot( q.data, 'k-', 'displayname', 'Copy' )
+    grid
+    legend( 'show' )
+    title( 'QLIN16' );
+
+    fprintf( '\nLossy compression "QLOG16":\n(Lesser resolution for bigger values)\n' );
+
+    level = 1; % Always 1, ratio is always constant 1:4
+    data = data - min(data); % Only positive numbers allowed (and 0, NaN, +Inf und -Inf)
+    
+    %% Measuring QLOG16
+
+    % set compressor and compression level
+    mksqlite( 'compression', 'QLOG16', level );
+    q = mksqlite( ['SELECT BDCPackTime(?) AS t_pack, ', ...
+                   '       BDCUnpackTime(?) AS t_unpack, ', ...
+                   '       BDCRatio(?) AS ratio, ', ...
+                   '       ? as data'], ...
+                   data, data, data, data );
+
+    %% Display results
+    fprintf( 'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n', ...
+              level, q.t_pack, q.t_unpack, q.ratio*100 );
+
+    figure
+    plot( data, 'r-', 'linewidth', 2, 'displayname', 'Original' ), hold all
+    plot( q.data, 'k-', 'displayname', 'Copy' )
+    grid
+    legend( 'show' )
+    title( 'QLOG16' );
+
+    %% Packaging time for screenshot data
+    
+    % Screenshot (figure) as (RGB-matrix)
+    fprintf( '\nScreenshot data:\n' );
+
+    h = figure;
+    set( h, 'units', 'normalized', 'position', [0.5,0.5,0.2,0.2] );
+    x = linspace(0,2*pi,20);
+    plot( x, sin(x), 'r-', 'linewidth', 2 );
+    legend on
+    F = getframe(h);
+    delete(h);
+    data = F.cdata;
+
+    %% Measuring
+
+    level = 9;
+    mksqlite( 'compression', compressor, level );
+    
+    q = mksqlite( ['SELECT BDCPackTime(?) AS t_pack, ', ...
+                   '       BDCUnpackTime(?) AS t_unpack, ', ...
+                   '       BDCRatio(?) AS ratio'], ...
+                   data, data, data );
+
+    %% Display results
+    fprintf( 'Level %d: pack(%gs), unpack(%gs), ratio(%g%%)\n', ...
+              level, q.t_pack, q.t_unpack, q.ratio*100 );
+
+    %% Close database
+    mksqlite( 'close' );
+
+##### SOURCE END #####
+--></body></html>

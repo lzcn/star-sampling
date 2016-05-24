@@ -1,0 +1,275 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_test_bind</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_test_bind.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Create a database with some records</a></li><li><a href="#4">Take a screenshot (figure) as RGB-matrix...</a></li><li><a href="#5">Read back all records</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> sqlite_test_bind
+</pre><pre class="codeinput">    clear <span class="string">all</span>
+    close <span class="string">all</span>
+    clc
+    dummy = mksqlite(<span class="string">'version mex'</span>);
+    fprintf( <span class="string">'\n\n'</span> );
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+
+
+</pre><h2>Create a database with some records<a name="3"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Creating in-memory database...\n'</span> );
+    mksqlite( <span class="string">'open'</span>, <span class="string">':memory:'</span> ); <span class="comment">% "in-memory"-database</span>
+
+    <span class="comment">%          |First name |Last name    |City         |Random data</span>
+    mydata = { <span class="keyword">...</span>
+               <span class="string">'Gunther'</span>,  <span class="string">'Meyer'</span>,      <span class="string">'Munich'</span>,     []; <span class="keyword">...</span>
+               <span class="string">'Holger'</span>,   <span class="string">'Michelmann'</span>, <span class="string">'Garbsen'</span>,    rand( 1, 10 ); <span class="keyword">...</span>
+               <span class="string">'Knuth'</span>,    <span class="string">'Almeroth'</span>,   <span class="string">'Wehnsen'</span>,    <span class="string">'coworker'</span> <span class="keyword">...</span>
+             };
+
+    <span class="comment">% create table</span>
+    mksqlite( <span class="string">'CREATE TABLE demo (Col_1, Col_2, Col_3, Data)'</span> );
+
+    <span class="comment">% create records</span>
+    <span class="comment">% uses "cell expansion" for command shortening!</span>
+    <span class="keyword">for</span> i = 1:size( mydata, 1 )
+        mksqlite( <span class="string">'INSERT INTO demo VALUES (?,?,?,?)'</span>, mydata{i,:} );
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">Creating in-memory database...
+</pre><h2>Take a screenshot (figure) as RGB-matrix...<a name="4"></a></h2><pre class="codeinput">    h = figure;
+    set( h, <span class="string">'units'</span>, <span class="string">'normalized'</span>, <span class="string">'position'</span>, [0.5,0.5,0.2,0.2] );
+    x = linspace( 0, 2*pi, 20 );
+    plot( x, sin(x), <span class="string">'r-'</span>, <span class="string">'linewidth'</span>, 2 );
+    legend <span class="string">on</span>
+    F = getframe(h);
+    delete(h);
+    data = F.cdata;
+
+    <span class="comment">% ... write back screenshot information as BLOB with additional</span>
+    <span class="comment">% array size parameters</span>
+    mksqlite( <span class="string">'INSERT INTO demo VALUES (?,?,?,?)'</span>, <span class="keyword">...</span>
+              size( data, 1 ), size( data, 2 ), size( data, 3 ), data );
+
+
+
+
+    <span class="comment">% ------------------------------------------------------------------</span>
+</pre><h2>Read back all records<a name="5"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Restore BLOB records...\n\n'</span> )
+
+    query = mksqlite( <span class="string">'SELECT * FROM demo'</span> );
+
+    fprintf( <span class="string">'---&gt; Empty array: '</span> ), <span class="keyword">...</span>
+             query(1).Data
+
+    fprintf( <span class="string">'---&gt; 10 random numbers between 0 and 1: '</span> ), <span class="keyword">...</span>
+             typecast( query(2).Data, <span class="string">'double'</span> )
+
+    fprintf( <span class="string">'---&gt; Text: '</span> ), <span class="keyword">...</span>
+             cast( query(3).Data, <span class="string">'char'</span> )
+
+    fprintf( <span class="string">'---&gt; Image: (see figure) \n\n'</span> )
+
+    <span class="comment">% Reshape vector from 4th row as multidimensional array (RGB matrix) back:</span>
+    img = reshape( query(4).Data, query(4).Col_1, query(4).Col_2, query(4).Col_3 );
+
+    <span class="comment">% display image got from database</span>
+    h = image( img );
+    axis <span class="string">off</span>
+    set( gcf, <span class="string">'units'</span>, <span class="string">'normalized'</span>, <span class="string">'position'</span>, [0.5,0.5,0.2,0.2] );
+    drawnow
+
+    <span class="comment">% bring figure on top</span>
+    <span class="keyword">try</span>
+        warning( <span class="string">'off'</span>, <span class="string">'MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame'</span> );
+        jh = get( h, <span class="string">'JavaFrame'</span> );
+        jh.fFigureClient.getWindow.setAlwaysOnTop( true );
+        jh.fFigureClient.getWindow.setVisible( true );
+    <span class="keyword">catch</span>
+        <span class="comment">% ignore errors</span>
+    <span class="keyword">end</span>
+
+    mksqlite( <span class="string">'close'</span> );
+</pre><pre class="codeoutput">Restore BLOB records...
+
+---&gt; Empty array: 
+ans =
+
+     []
+
+---&gt; 10 random numbers between 0 and 1: 
+ans =
+
+   0.192536187802256
+   0.190031548151377
+   0.841315265924517
+   0.103525881042305
+   0.846405562204329
+   0.196486559592500
+   0.883888791365866
+   0.020917176371716
+   0.049953303019211
+   0.268031019298321
+
+---&gt; Text: 
+ans =
+
+coworker
+
+---&gt; Image: (see figure) 
+
+</pre><img vspace="5" hspace="5" src="sqlite_test_bind_01.jpg" alt=""> <p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_test_bind
+
+    clear all
+    close all
+    clc
+    dummy = mksqlite('version mex');
+    fprintf( '\n\n' );
+
+    
+    %% Create a database with some records
+    fprintf( 'Creating in-memory database...\n' );
+    mksqlite( 'open', ':memory:' ); % "in-memory"-database
+
+    %          |First name |Last name    |City         |Random data
+    mydata = { ...
+               'Gunther',  'Meyer',      'Munich',     []; ...
+               'Holger',   'Michelmann', 'Garbsen',    rand( 1, 10 ); ...
+               'Knuth',    'Almeroth',   'Wehnsen',    'coworker' ...
+             }; 
+
+    % create table
+    mksqlite( 'CREATE TABLE demo (Col_1, Col_2, Col_3, Data)' );
+
+    % create records
+    % uses "cell expansion" for command shortening!
+    for i = 1:size( mydata, 1 )
+        mksqlite( 'INSERT INTO demo VALUES (?,?,?,?)', mydata{i,:} );
+    end
+
+    %% Take a screenshot (figure) as RGB-matrix...
+    h = figure;
+    set( h, 'units', 'normalized', 'position', [0.5,0.5,0.2,0.2] );
+    x = linspace( 0, 2*pi, 20 );
+    plot( x, sin(x), 'r-', 'linewidth', 2 );
+    legend on
+    F = getframe(h);
+    delete(h);
+    data = F.cdata;
+
+    % ... write back screenshot information as BLOB with additional 
+    % array size parameters
+    mksqlite( 'INSERT INTO demo VALUES (?,?,?,?)', ...
+              size( data, 1 ), size( data, 2 ), size( data, 3 ), data );
+
+
+
+    
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+
+    
+    %% Read back all records
+    fprintf( 'Restore BLOB records...\n\n' )
+
+    query = mksqlite( 'SELECT * FROM demo' );
+
+    fprintf( 'REPLACE_WITH_DASH_DASH-> Empty array: ' ), ...
+             query(1).Data
+
+    fprintf( 'REPLACE_WITH_DASH_DASH-> 10 random numbers between 0 and 1: ' ), ...
+             typecast( query(2).Data, 'double' )
+
+    fprintf( 'REPLACE_WITH_DASH_DASH-> Text: ' ), ...
+             cast( query(3).Data, 'char' )
+
+    fprintf( 'REPLACE_WITH_DASH_DASH-> Image: (see figure) \n\n' )
+
+    % Reshape vector from 4th row as multidimensional array (RGB matrix) back:
+    img = reshape( query(4).Data, query(4).Col_1, query(4).Col_2, query(4).Col_3 );
+
+    % display image got from database
+    h = image( img );
+    axis off
+    set( gcf, 'units', 'normalized', 'position', [0.5,0.5,0.2,0.2] );
+    drawnow
+
+    % bring figure on top
+    try
+        warning( 'off', 'MATLAB:HandleGraphics:ObsoletedProperty:JavaFrame' );
+        jh = get( h, 'JavaFrame' );
+        jh.fFigureClient.getWindow.setAlwaysOnTop( true );
+        jh.fFigureClient.getWindow.setVisible( true );
+    catch
+        % ignore errors
+    end
+
+    mksqlite( 'close' );
+
+##### SOURCE END #####
+--></body></html>

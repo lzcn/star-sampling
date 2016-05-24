@@ -1,0 +1,459 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_test_regex</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_test_regex.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Create a new in-memory database</a></li><li><a href="#4">Some regex examples (only some ideas, you'll find your specific needs...)</a></li><li><a href="#5">Small example recursive scanning a path and storing results into a database to easily query some statistics later</a></li><li><a href="#6">Query statistics from database and display</a></li><li><a href="#7">Rebuild full file names of all found DLLs and display</a></li><li><a href="#8">Rebuild full path by backtracing and display</a></li><li><a href="#9">Path scan tool for recursive search</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> sqlite_test_regex
+</pre><pre class="codeinput">    clear <span class="string">all</span>
+    close <span class="string">all</span>
+    clc
+    dummy = mksqlite(<span class="string">'version mex'</span>);
+    fprintf( <span class="string">'\n\n'</span> );
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+
+
+</pre><h2>Create a new in-memory database<a name="3"></a></h2><pre class="codeinput">    db = mksqlite( 0, <span class="string">'open'</span>, <span class="string">':memory:'</span> );
+
+    <span class="comment">% define an email address</span>
+    email = <span class="string">'Guenther.Mayer@domain.de'</span>;
+
+    fprintf( <span class="string">'Some examples on regular expressions (email="%s"):\n\n'</span>, email );
+</pre><pre class="codeoutput">Some examples on regular expressions (email="Guenther.Mayer@domain.de"):
+
+</pre><h2>Some regex examples (only some ideas, you'll find your specific needs...)<a name="4"></a></h2><pre class="codeinput">    fprintf( <span class="string">'%s\n'</span>, <span class="string">'Find matching string: mksqlite( ''SELECT REGEX(?,"M...r") as result'', email )'</span> );
+    disp( mksqlite( db, <span class="string">'SELECT REGEX(?,"M...r") as result'</span>, email ) )
+
+    fprintf( <span class="string">'%s\n'</span>, <span class="string">'Parse entire email: mksqlite( ''SELECT REGEX(?,"([^@]+@(.*))\.(.*)") as result'', email )'</span> );
+    disp( mksqlite( db, <span class="string">'SELECT REGEX(?,"([^@]+@(.*))\.(.*)") as result'</span>, email ) )
+
+    fprintf( <span class="string">'%s\n'</span>, <span class="string">'Omit name only (3rd argument is replacement string): mksqlite( ''SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1") as result'', email )'</span> );
+    disp( mksqlite( db, <span class="string">'SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1") as result'</span>, email ) )
+
+    fprintf( <span class="string">'%s\n'</span>, <span class="string">'Replace domain: mksqlite( ''SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1@$2.com") as result'', email )'</span> );
+    disp( mksqlite( db, <span class="string">'SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1@$2.com") as result'</span>, email ) )
+
+
+    mksqlite( db, <span class="string">'close'</span> );
+
+    <span class="keyword">if</span> length(dbstack) == 1
+        input(<span class="string">'Press &lt;return&gt; '</span> );
+    <span class="keyword">end</span>
+
+    <span class="comment">% ---------------------------------------------------------------</span>
+</pre><pre class="codeoutput">Find matching string: mksqlite( 'SELECT REGEX(?,"M...r") as result', email )
+    result: 'Mayer'
+
+Parse entire email: mksqlite( 'SELECT REGEX(?,"([^@]+@(.*))\.(.*)") as result', email )
+    result: 'Guenther.Mayer@domain.de'
+
+Omit name only (3rd argument is replacement string): mksqlite( 'SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1") as result', email )
+    result: 'Guenther.Mayer'
+
+Replace domain: mksqlite( 'SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1@$2.com") as result', email )
+    result: 'Guenther.Mayer@domain.com'
+
+</pre><h2>Small example recursive scanning a path and storing results into a database to easily query some statistics later<a name="5"></a></h2><pre class="codeinput">    clc
+
+    <span class="comment">% on-disc database filename to create</span>
+    db_name = <span class="string">'winsys32.db'</span>;
+
+    <span class="comment">% root path which will be scanned</span>
+    root = fullfile( getenv(<span class="string">'windir'</span>), <span class="string">'system32'</span> );
+    fprintf( <span class="string">'For the next example the path "%s" will be scanned for files (bat,exe,dll).\n'</span>, root );
+    fprintf( <span class="string">'After the scan SQLite will be used to show summaries on catched files...\n'</span> );
+
+    <span class="keyword">if</span> length(dbstack) == 1
+        input( <span class="string">'Press &lt;return&gt; to progress, Ctrl+C otherwise...'</span> );
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> exist( db_name, <span class="string">'file'</span> )
+        fprintf( <span class="string">'\nReopen database file of last scan results...'</span> );
+        mksqlite( <span class="string">'open'</span>, db_name ); <span class="comment">% open existing dbase</span>
+    <span class="keyword">else</span>
+        fprintf( <span class="string">'\nScan in progress...\n'</span> );
+        fprintf( <span class="string">'Create local dbase file of all asked files in %s...\n'</span>, root );
+        mksqlite( <span class="string">'open'</span>, db_name ); <span class="comment">% create new dbase</span>
+        mksqlite( [<span class="string">'CREATE TABLE IF NOT EXISTS files '</span>  , <span class="keyword">...</span>
+                   <span class="string">'(id       PRIMARY KEY, '</span>            , <span class="keyword">...</span>
+                   <span class="string">' name     TEXT, '</span>                   , <span class="keyword">...</span>
+                   <span class="string">' parent   INTEGER, '</span>                , <span class="keyword">...</span>
+                   <span class="string">' date     DATE, '</span>                   , <span class="keyword">...</span>
+                   <span class="string">' size     INTEGER)'</span>] );
+        mksqlite( <span class="string">'DELETE FROM files'</span> ); <span class="comment">% delete all records</span>
+
+        <span class="comment">% recursive scan program files directory for EXEs, DLLs, ...</span>
+        path_trace( root, {<span class="string">'.exe'</span>, <span class="string">'.dll'</span>, <span class="string">'.bat'</span>} );
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">For the next example the path "C:\WINDOWS\system32" will be scanned for files (bat,exe,dll).
+After the scan SQLite will be used to show summaries on catched files...
+
+Reopen database file of last scan results...</pre><h2>Query statistics from database and display<a name="6"></a></h2><pre class="codeinput">    clc
+    fprintf( <span class="string">'\n\n%s\n'</span>, <span class="string">'Analyse path scan: count files and file sizes, grouped by extension'</span> );
+    query = mksqlite( [<span class="string">'SELECT SUM(CAST(size AS REAL)) AS sum, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       COUNT(*) as count, '</span>, <span class="keyword">...</span>
+                       <span class="string">'       REGEX(lower(name),"^.*\.(.*)$","$1") as ext '</span>, <span class="keyword">...</span>
+                       <span class="string">'FROM files WHERE size NOT NULL GROUP BY ext'</span>] );
+
+    <span class="keyword">for</span> i = 1:numel(query)
+        disp( query(i) )
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">
+
+Analyse path scan: count files and file sizes, grouped by extension
+      sum: 2.235318600000000e+009
+    count: 3470
+      ext: 'dll'
+
+      sum: 364398256
+    count: 507
+      ext: 'exe'
+
+</pre><h2>Rebuild full file names of all found DLLs and display<a name="7"></a></h2><pre class="codeinput">    fprintf( <span class="string">'\n\n%s\n'</span>, <span class="string">'Display filenames of found DLLs (first 20)'</span> );
+
+    <span class="keyword">if</span> length(dbstack) == 1
+        input(<span class="string">'Press &lt;return&gt; to continue with last step...'</span> );
+    <span class="keyword">end</span>
+
+    query = mksqlite( [<span class="string">'SELECT * FROM files '</span>, <span class="keyword">...</span>
+                       <span class="string">'WHERE REGEX(lower(name),"^.*\.(.*)$","$1")="dll" '</span>, <span class="keyword">...</span>
+                       <span class="string">'ORDER BY date LIMIT 20'</span>] );
+</pre><pre class="codeoutput">
+
+Display filenames of found DLLs (first 20)
+</pre><h2>Rebuild full path by backtracing and display<a name="8"></a></h2><pre class="codeinput">    <span class="keyword">for</span> i = 1:numel( query )
+        q = query(i);
+        name = q.name;
+        <span class="keyword">while</span> q.parent &gt; 0
+            q = mksqlite( <span class="string">'SELECT * FROM files WHERE id=?'</span>, q.parent );
+            name = fullfile( q.name, name );
+        <span class="keyword">end</span>
+        fprintf( <span class="string">'%s\n'</span>, fullfile( root, name ) );
+    <span class="keyword">end</span>
+
+    <span class="comment">% That's it...</span>
+    mksqlite( <span class="string">'close'</span> );
+</pre><pre class="codeoutput">C:\WINDOWS\system32\d3dx9_24.dll
+C:\WINDOWS\system32\d3dx9_25.dll
+C:\WINDOWS\system32\d3dx9_26.dll
+C:\WINDOWS\system32\d3dx9_27.dll
+C:\WINDOWS\system32\d3dx9_28.dll
+C:\WINDOWS\system32\x3daudio1_0.dll
+C:\WINDOWS\system32\xactengine2_0.dll
+C:\WINDOWS\system32\d3dx9_29.dll
+C:\WINDOWS\system32\xinput1_1.dll
+C:\WINDOWS\system32\xactengine2_1.dll
+C:\WINDOWS\system32\d3dx9_30.dll
+C:\WINDOWS\system32\xactengine2_2.dll
+C:\WINDOWS\system32\xactengine2_3.dll
+C:\WINDOWS\system32\xinput1_2.dll
+C:\WINDOWS\system32\xactengine2_4.dll
+C:\WINDOWS\system32\d3dx9_31.dll
+C:\WINDOWS\system32\d3dx10.dll
+C:\WINDOWS\system32\d3dx9_32.dll
+C:\WINDOWS\system32\xactengine2_5.dll
+C:\WINDOWS\system32\xactengine2_6.dll
+</pre><h2>Path scan tool for recursive search<a name="9"></a></h2><pre class="codeinput"><span class="keyword">function</span> path_trace( pathname, extensions, parent_id )
+    <span class="keyword">if</span> nargin &lt; 3
+      parent_id = 0;
+    <span class="keyword">end</span>
+
+    <span class="comment">% get the parent path by its ID from the database</span>
+    query = mksqlite( <span class="string">'SELECT COUNT(*) AS id FROM files'</span> );
+    id = query.id;
+
+    <span class="comment">% process all files in this path and store all in one transaction</span>
+    mksqlite( <span class="string">'BEGIN'</span> );
+    files = dir( pathname );
+    <span class="keyword">if</span> ~isempty( files )
+        <span class="keyword">for</span> i = 1:numel( files )
+            filename = files(i).name;
+            <span class="keyword">if</span> filename(1) ~= <span class="string">'.'</span>  <span class="comment">% skip './' and '../'</span>
+                fullfilename = fullfile( pathname, filename );
+                <span class="keyword">if</span> ~files(i).isdir  <span class="comment">% only files here</span>
+                    [trash, name, ext] = fileparts( fullfilename );
+                    <span class="keyword">if</span> any( strcmpi( ext, extensions ) ) <span class="comment">% only extensions demanded</span>
+                        id = id + 1;
+                        mksqlite( [<span class="string">'INSERT INTO files '</span>, <span class="keyword">...</span>
+                                   <span class="string">'(id,name,parent,date,size) '</span>, <span class="keyword">...</span>
+                                   <span class="string">'VALUES (?,?,?,?,?)'</span>], <span class="keyword">...</span>
+                                   id, [name ext], parent_id, <span class="keyword">...</span>
+                                   datestr( files(i).datenum, <span class="string">'yyyy-mm-dd HH:MM:SS.FFF'</span> ), <span class="keyword">...</span>
+                                   files(i).bytes );
+                        <span class="keyword">if</span> length(dbstack) == 1
+                            fprintf( <span class="string">'File: %s\n'</span>, fullfilename );
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    mksqlite( <span class="string">'COMMIT'</span> );
+
+    <span class="comment">% process all subpaths in this path now</span>
+    <span class="keyword">if</span> ~isempty( files )
+        <span class="keyword">for</span> i = 1:numel( files )
+            filename = files(i).name;
+            <span class="keyword">if</span> filename(1) ~= <span class="string">'.'</span>  <span class="comment">% skip './' and '../'</span>
+                fullfilename = fullfile( pathname, filename );
+                <span class="keyword">if</span> files(i).isdir  <span class="comment">% only paths now</span>
+                    query = mksqlite( <span class="string">'SELECT COUNT(*) AS id FROM files'</span> );
+                    id = query.id + 1;
+                    mksqlite( [<span class="string">'INSERT INTO files '</span>, <span class="keyword">...</span>
+                               <span class="string">'(id,name,parent) '</span>, <span class="keyword">...</span>
+                               <span class="string">'VALUES (?,?,?)'</span>], <span class="keyword">...</span>
+                               id, filename, parent_id );
+                    <span class="comment">% scan this subpath</span>
+                    path_trace( fullfilename, extensions, id );
+                    <span class="keyword">if</span> length(dbstack) == 1
+                        fprintf( <span class="string">'Dir: %s\n'</span>, fullfilename );
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_test_regex
+
+    clear all
+    close all
+    clc
+    dummy = mksqlite('version mex');
+    fprintf( '\n\n' );
+
+    %% Create a new in-memory database
+    db = mksqlite( 0, 'open', ':memory:' );
+    
+    % define an email address
+    email = 'Guenther.Mayer@domain.de';
+
+    fprintf( 'Some examples on regular expressions (email="%s"):\n\n', email );
+
+    %% Some regex examples (only some ideas, you'll find your specific needs...)
+    fprintf( '%s\n', 'Find matching string: mksqlite( ''SELECT REGEX(?,"M...r") as result'', email )' );
+    disp( mksqlite( db, 'SELECT REGEX(?,"M...r") as result', email ) )
+
+    fprintf( '%s\n', 'Parse entire email: mksqlite( ''SELECT REGEX(?,"([^@]+@(.*))\.(.*)") as result'', email )' );
+    disp( mksqlite( db, 'SELECT REGEX(?,"([^@]+@(.*))\.(.*)") as result', email ) )
+
+    fprintf( '%s\n', 'Omit name only (3rd argument is replacement string): mksqlite( ''SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1") as result'', email )' );
+    disp( mksqlite( db, 'SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1") as result', email ) )
+
+    fprintf( '%s\n', 'Replace domain: mksqlite( ''SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1@$2.com") as result'', email )' );
+    disp( mksqlite( db, 'SELECT REGEX(?,"([^@]+)@(.*)\.(.*)", "$1@$2.com") as result', email ) )
+
+
+    mksqlite( db, 'close' );
+
+    if length(dbstack) == 1
+        input('Press <return> ' );
+    end
+    
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+
+    %% Small example recursive scanning a path and storing results into a database to easily query some statistics later
+    clc
+    
+    % on-disc database filename to create
+    db_name = 'winsys32.db';
+    
+    % root path which will be scanned
+    root = fullfile( getenv('windir'), 'system32' );
+    fprintf( 'For the next example the path "%s" will be scanned for files (bat,exe,dll).\n', root );
+    fprintf( 'After the scan SQLite will be used to show summaries on catched files...\n' );
+    
+    if length(dbstack) == 1
+        input( 'Press <return> to progress, Ctrl+C otherwise...' );
+    end
+
+    if exist( db_name, 'file' )
+        fprintf( '\nReopen database file of last scan results...' );
+        mksqlite( 'open', db_name ); % open existing dbase
+    else
+        fprintf( '\nScan in progress...\n' );
+        fprintf( 'Create local dbase file of all asked files in %s...\n', root );
+        mksqlite( 'open', db_name ); % create new dbase
+        mksqlite( ['CREATE TABLE IF NOT EXISTS files '  , ...
+                   '(id       PRIMARY KEY, '            , ...
+                   ' name     TEXT, '                   , ...
+                   ' parent   INTEGER, '                , ...
+                   ' date     DATE, '                   , ...
+                   ' size     INTEGER)'] );
+        mksqlite( 'DELETE FROM files' ); % delete all records
+        
+        % recursive scan program files directory for EXEs, DLLs, ...
+        path_trace( root, {'.exe', '.dll', '.bat'} ); 
+    end
+
+    %% Query statistics from database and display
+    clc
+    fprintf( '\n\n%s\n', 'Analyse path scan: count files and file sizes, grouped by extension' );
+    query = mksqlite( ['SELECT SUM(CAST(size AS REAL)) AS sum, ', ...
+                       '       COUNT(*) as count, ', ...
+                       '       REGEX(lower(name),"^.*\.(.*)$","$1") as ext ', ...
+                       'FROM files WHERE size NOT NULL GROUP BY ext'] );
+
+    for i = 1:numel(query)
+        disp( query(i) )
+    end
+
+    
+    %% Rebuild full file names of all found DLLs and display
+    fprintf( '\n\n%s\n', 'Display filenames of found DLLs (first 20)' );
+    
+    if length(dbstack) == 1
+        input('Press <return> to continue with last step...' );
+    end
+
+    query = mksqlite( ['SELECT * FROM files ', ...
+                       'WHERE REGEX(lower(name),"^.*\.(.*)$","$1")="dll" ', ...
+                       'ORDER BY date LIMIT 20'] );
+
+    %% Rebuild full path by backtracing and display
+    for i = 1:numel( query )
+        q = query(i);
+        name = q.name;
+        while q.parent > 0
+            q = mksqlite( 'SELECT * FROM files WHERE id=?', q.parent );
+            name = fullfile( q.name, name );
+        end
+        fprintf( '%s\n', fullfile( root, name ) );
+    end
+
+    % That's it...
+    mksqlite( 'close' );
+
+
+%% Path scan tool for recursive search
+function path_trace( pathname, extensions, parent_id )
+    if nargin < 3
+      parent_id = 0;
+    end
+
+    % get the parent path by its ID from the database
+    query = mksqlite( 'SELECT COUNT(*) AS id FROM files' );
+    id = query.id;
+
+    % process all files in this path and store all in one transaction
+    mksqlite( 'BEGIN' );
+    files = dir( pathname );
+    if ~isempty( files )
+        for i = 1:numel( files )
+            filename = files(i).name;
+            if filename(1) ~= '.'  % skip './' and '../'
+                fullfilename = fullfile( pathname, filename );
+                if ~files(i).isdir  % only files here
+                    [trash, name, ext] = fileparts( fullfilename );
+                    if any( strcmpi( ext, extensions ) ) % only extensions demanded
+                        id = id + 1;
+                        mksqlite( ['INSERT INTO files ', ...
+                                   '(id,name,parent,date,size) ', ...
+                                   'VALUES (?,?,?,?,?)'], ...
+                                   id, [name ext], parent_id, ...
+                                   datestr( files(i).datenum, 'yyyy-mm-dd HH:MM:SS.FFF' ), ...
+                                   files(i).bytes );
+                        if length(dbstack) == 1
+                            fprintf( 'File: %s\n', fullfilename );
+                        end
+                    end
+                end
+            end
+        end
+    end
+    mksqlite( 'COMMIT' );
+
+    % process all subpaths in this path now
+    if ~isempty( files )
+        for i = 1:numel( files )
+            filename = files(i).name;
+            if filename(1) ~= '.'  % skip './' and '../'
+                fullfilename = fullfile( pathname, filename );
+                if files(i).isdir  % only paths now
+                    query = mksqlite( 'SELECT COUNT(*) AS id FROM files' );
+                    id = query.id + 1;
+                    mksqlite( ['INSERT INTO files ', ...
+                               '(id,name,parent) ', ...
+                               'VALUES (?,?,?)'], ...
+                               id, filename, parent_id );
+                    % scan this subpath
+                    path_trace( fullfilename, extensions, id );
+                    if length(dbstack) == 1
+                        fprintf( 'Dir: %s\n', fullfilename );
+                    end
+                end
+            end
+        end
+    end
+
+##### SOURCE END #####
+--></body></html>

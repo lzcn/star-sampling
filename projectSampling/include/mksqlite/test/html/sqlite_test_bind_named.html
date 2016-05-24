@@ -1,0 +1,328 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_test_bind_named</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_test_bind_named.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Create an in-memory database</a></li><li><a href="#4">Create a N-element dataset with activities for some users</a></li><li><a href="#5">Normalize the data</a></li><li><a href="#6">Fill user table with unique user names and retrieve their user_id</a></li><li><a href="#7">Merge user_id and struct data</a></li><li><a href="#8">Fill data table per struct data</a></li><li><a href="#9">Deletion of referred data should lead to error</a></li><li><a href="#10">Read back entire data and compare input and output structures</a></li><li><a href="#11">Check multiple SELECT statements when parameter wrapping is on</a></li><li><a href="#12">Now delete some user dedicated data, to enable user detaching</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> sqlite_test_bind_named
+</pre><pre class="codeinput"><span class="comment">%</span>
+    clear <span class="string">all</span>; close <span class="string">all</span>; clc
+
+    <span class="comment">% use_sql_m:</span>
+    <span class="comment">%  false: use mksqlite only</span>
+    <span class="comment">%  true:  use sql.m wrapper</span>
+    use_sql_m = true;
+
+
+    <span class="keyword">if</span> use_sql_m
+        sqlfcn = @sql;
+    <span class="keyword">else</span>
+        sqlfcn = @mksqlite;
+    <span class="keyword">end</span>
+</pre><h2>Create an in-memory database<a name="3"></a></h2><pre class="codeinput">    sqlfcn( <span class="string">'open'</span>, <span class="string">''</span> );
+
+    <span class="comment">% enable Foreign key constraint check</span>
+    sqlfcn( <span class="string">'PRAGMA foreign_keys = ON'</span> );
+    <span class="comment">% enable stmt re-use</span>
+    sqlfcn( <span class="string">'param_wrapping'</span>, 1 )
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+</pre><h2>Create a N-element dataset with activities for some users<a name="4"></a></h2><pre class="codeinput">    N    = 1000;
+    user = { <span class="string">'user_A'</span>, <span class="string">'user_B'</span>, <span class="string">'user_C'</span> };
+    dat  = struct( <span class="string">'user'</span>, { user{ ceil( rand(N,1) * length(user) ) } }, <span class="keyword">...</span>
+                   <span class="string">'activity'</span>, cellstr( char( <span class="string">'@'</span> + ceil( rand(N,10) * 26 ) ) )' )
+
+    fprintf( <span class="string">'Make a schema with normalized user table...\n'</span> );
+
+    <span class="keyword">if</span> use_sql_m
+        tbl_user = struct;
+        tbl_user.user_id = <span class="string">'INTEGER PRIMARY KEY'</span>;
+        tbl_user.name    = <span class="string">'TEXT'</span>;
+        sqlfcn( <span class="string">'CREATE TABLE user ([*#])'</span>, tbl_user );
+
+        tbl_data = struct;
+        tbl_data.user_id = <span class="string">'INTEGER'</span>;
+        tbl_data.activity    = <span class="string">'TEXT'</span>;
+        sqlfcn( <span class="string">'CREATE TABLE data ([*#], FOREIGN KEY (user_id) REFERENCES user(user_id))'</span>, tbl_data );
+    <span class="keyword">else</span>
+        sqlfcn( <span class="string">'CREATE TABLE user(user_id INTEGER PRIMARY KEY, name TEXT)'</span> );
+        sqlfcn( <span class="string">'CREATE TABLE data(user_id INTEGER, activity TEXT, FOREIGN KEY (user_id) REFERENCES user(user_id))'</span> );
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">
+dat = 
+
+1x1000 struct array with fields:
+    user
+    activity
+
+Make a schema with normalized user table...
+</pre><h2>Normalize the data<a name="5"></a></h2><pre class="codeinput">    [user_list, ~, ind] = unique({dat.user});
+</pre><h2>Fill user table with unique user names and retrieve their user_id<a name="6"></a></h2><pre class="codeinput">    [~, ~, ~, row_id] = sqlfcn( <span class="string">'INSERT INTO user (name) VALUES (:name)'</span>, <span class="keyword">...</span>
+                                 struct( <span class="string">'name'</span>, user_list) ) <span class="comment">% get the auto increment user_id back</span>
+
+    assert( isequal( row_id, [1,2,3]' ) );
+</pre><pre class="codeoutput">
+row_id =
+
+     1
+     2
+     3
+
+</pre><h2>Merge user_id and struct data<a name="7"></a></h2><pre class="codeinput">    userId        = num2cell( row_id(ind) );
+    [dat.user_id] = deal( userId{:} ); <span class="comment">% add the user_id as new field</span>
+</pre><h2>Fill data table per struct data<a name="8"></a></h2><pre class="codeinput">    <span class="keyword">if</span> use_sql_m
+        sqlfcn( <span class="string">'INSERT INTO data ([#]) VALUES ([:#])'</span>, rmfield( dat, <span class="string">'user'</span> ) );
+    <span class="keyword">else</span>
+        sqlfcn( <span class="string">'INSERT INTO data (user_id,activity) VALUES (:user_id,:activity)'</span>, dat );
+    <span class="keyword">end</span>
+</pre><h2>Deletion of referred data should lead to error<a name="9"></a></h2><pre class="codeinput">    <span class="keyword">try</span>
+        sqlfcn( <span class="string">'DELETE FROM user'</span> )
+        fprintf( <span class="string">'Test failed: should not be here!'</span> );
+    <span class="keyword">catch</span> err
+        <span class="keyword">if</span> strcmpi( err.message, <span class="string">'FOREIGN KEY constraint failed'</span> )
+            fprintf( [<span class="string">'Error successfully catched:\n'</span>, <span class="keyword">...</span>
+                      <span class="string">'entries from user table can''t be deleted '</span>, <span class="keyword">...</span>
+                      <span class="string">'because they are referred by a foreign key of data table\n\n'</span>] );
+        <span class="keyword">else</span>
+            rethrow(err)
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">Error successfully catched:
+entries from user table can't be deleted because they are referred by a foreign key of data table
+
+</pre><h2>Read back entire data and compare input and output structures<a name="10"></a></h2><pre class="codeinput">    sqlfcn( <span class="string">'result_type'</span>, 0 ); <span class="comment">% structs (default)</span>
+    test_type_0 = sqlfcn( <span class="string">'SELECT name, activity, user_id FROM data JOIN user USING(user_id)'</span> );
+
+    sqlfcn( <span class="string">'result_type'</span>, 2 ); <span class="comment">% cell matrix</span>
+    test_type_2 = sqlfcn( <span class="string">'SELECT name, activity, user_id FROM data JOIN user USING(user_id)'</span> );
+
+    lhs_0 = struct2cell(test_type_0(:))';
+    lhs_2 = test_type_2;
+    rhs   = struct2cell(dat(:))';
+
+    assert( isequal(lhs_0, rhs) &amp;&amp; isequal(lhs_2, rhs) );
+
+    fprintf( <span class="string">'Check: OK!\n'</span> );
+</pre><pre class="codeoutput">Check: OK!
+</pre><h2>Check multiple SELECT statements when parameter wrapping is on<a name="11"></a></h2><pre class="codeinput">    <span class="comment">% Get the activities of each user ordered by user_id and activity</span>
+    <span class="comment">% (still cell result type!)</span>
+    lhs = sqlfcn( [<span class="string">'SELECT name, activity FROM data JOIN user USING(user_id) '</span>, <span class="keyword">...</span>
+                     <span class="string">'ORDER BY user_id, activity'</span>] );
+
+    <span class="comment">% Split into 3 individual SELECT statements, each ordered by activity,</span>
+    <span class="comment">% should lead to the same result</span>
+    rhs = sqlfcn( [<span class="string">'SELECT name, activity FROM data JOIN user USING(user_id) '</span>, <span class="keyword">...</span>
+                     <span class="string">'WHERE user_id=? ORDER BY activity'</span>], {1,2,3} );
+
+    assert( isequal(lhs, rhs) );
+
+    fprintf( <span class="string">'Check: OK!\n'</span> );
+</pre><pre class="codeoutput">Check: OK!
+</pre><h2>Now delete some user dedicated data, to enable user detaching<a name="12"></a></h2><pre class="codeinput">    <span class="comment">% delete some dedicated data</span>
+    sqlfcn( <span class="string">'DELETE FROM data WHERE user_id=:myID'</span>, struct(<span class="string">'myID'</span>, row_id(1) ) )
+    <span class="comment">% now you can delete also the corresponding user</span>
+    sqlfcn( <span class="string">'DELETE FROM user WHERE user_id=:myID'</span>, struct(<span class="string">'myID'</span>, row_id(1) ) )
+
+
+    sqlfcn( <span class="string">'close'</span> )
+
+    fprintf( <span class="string">'Test finished successful!\n'</span>);
+</pre><pre class="codeoutput">Test finished successful!
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_test_bind_named
+%
+    clear all; close all; clc
+    
+    % use_sql_m: 
+    %  false: use mksqlite only
+    %  true:  use sql.m wrapper
+    use_sql_m = true;  
+    
+
+    if use_sql_m
+        sqlfcn = @sql;
+    else
+        sqlfcn = @mksqlite;
+    end
+    
+    %% Create an in-memory database
+    sqlfcn( 'open', '' );
+
+    % enable Foreign key constraint check
+    sqlfcn( 'PRAGMA foreign_keys = ON' ); 
+    % enable stmt re-use
+    sqlfcn( 'param_wrapping', 1 )
+    
+    %% Create a N-element dataset with activities for some users
+    N    = 1000;
+    user = { 'user_A', 'user_B', 'user_C' };
+    dat  = struct( 'user', { user{ ceil( rand(N,1) * length(user) ) } }, ...
+                   'activity', cellstr( char( '@' + ceil( rand(N,10) * 26 ) ) )' )
+
+    fprintf( 'Make a schema with normalized user table...\n' );
+    
+    if use_sql_m
+        tbl_user = struct;
+        tbl_user.user_id = 'INTEGER PRIMARY KEY';
+        tbl_user.name    = 'TEXT';
+        sqlfcn( 'CREATE TABLE user ([*#])', tbl_user );
+
+        tbl_data = struct;
+        tbl_data.user_id = 'INTEGER';
+        tbl_data.activity    = 'TEXT';
+        sqlfcn( 'CREATE TABLE data ([*#], FOREIGN KEY (user_id) REFERENCES user(user_id))', tbl_data );
+    else
+        sqlfcn( 'CREATE TABLE user(user_id INTEGER PRIMARY KEY, name TEXT)' );
+        sqlfcn( 'CREATE TABLE data(user_id INTEGER, activity TEXT, FOREIGN KEY (user_id) REFERENCES user(user_id))' );
+    end
+
+
+    %% Normalize the data
+    [user_list, ~, ind] = unique({dat.user});
+
+    %% Fill user table with unique user names and retrieve their user_id
+    [~, ~, ~, row_id] = sqlfcn( 'INSERT INTO user (name) VALUES (:name)', ...
+                                 struct( 'name', user_list) ) % get the auto increment user_id back
+                            
+    assert( isequal( row_id, [1,2,3]' ) );
+
+    %% Merge user_id and struct data
+    userId        = num2cell( row_id(ind) ); 
+    [dat.user_id] = deal( userId{:} ); % add the user_id as new field
+
+    %% Fill data table per struct data
+    if use_sql_m
+        sqlfcn( 'INSERT INTO data ([#]) VALUES ([:#])', rmfield( dat, 'user' ) );
+    else
+        sqlfcn( 'INSERT INTO data (user_id,activity) VALUES (:user_id,:activity)', dat );
+    end
+
+    %% Deletion of referred data should lead to error
+    try
+        sqlfcn( 'DELETE FROM user' )
+        fprintf( 'Test failed: should not be here!' );
+    catch err
+        if strcmpi( err.message, 'FOREIGN KEY constraint failed' )
+            fprintf( ['Error successfully catched:\n', ...
+                      'entries from user table can''t be deleted ', ...
+                      'because they are referred by a foreign key of data table\n\n'] );
+        else
+            rethrow(err)
+        end
+    end
+    
+    %% Read back entire data and compare input and output structures
+    
+    sqlfcn( 'result_type', 0 ); % structs (default)
+    test_type_0 = sqlfcn( 'SELECT name, activity, user_id FROM data JOIN user USING(user_id)' );
+    
+    sqlfcn( 'result_type', 2 ); % cell matrix
+    test_type_2 = sqlfcn( 'SELECT name, activity, user_id FROM data JOIN user USING(user_id)' );
+    
+    lhs_0 = struct2cell(test_type_0(:))';
+    lhs_2 = test_type_2;
+    rhs   = struct2cell(dat(:))';
+    
+    assert( isequal(lhs_0, rhs) && isequal(lhs_2, rhs) );
+    
+    fprintf( 'Check: OK!\n' );
+    
+    %% Check multiple SELECT statements when parameter wrapping is on
+    
+    % Get the activities of each user ordered by user_id and activity
+    % (still cell result type!)
+    lhs = sqlfcn( ['SELECT name, activity FROM data JOIN user USING(user_id) ', ...
+                     'ORDER BY user_id, activity'] );
+              
+    % Split into 3 individual SELECT statements, each ordered by activity,
+    % should lead to the same result
+    rhs = sqlfcn( ['SELECT name, activity FROM data JOIN user USING(user_id) ', ...
+                     'WHERE user_id=? ORDER BY activity'], {1,2,3} );
+    
+    assert( isequal(lhs, rhs) );
+    
+    fprintf( 'Check: OK!\n' );
+
+    %% Now delete some user dedicated data, to enable user detaching
+    
+    % delete some dedicated data
+    sqlfcn( 'DELETE FROM data WHERE user_id=:myID', struct('myID', row_id(1) ) )
+    % now you can delete also the corresponding user
+    sqlfcn( 'DELETE FROM user WHERE user_id=:myID', struct('myID', row_id(1) ) )
+
+
+    sqlfcn( 'close' )
+
+    fprintf( 'Test finished successful!\n');
+    
+##### SOURCE END #####
+--></body></html>

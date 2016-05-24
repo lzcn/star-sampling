@@ -1,0 +1,394 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_test</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_test.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Speed test: create records in one single translation</a></li><li><a href="#4">Some sql statistics:</a></li><li><a href="#5">create an in-memory database now and copy all records from on-disc dataset into it</a></li><li><a href="#6">Some sql statistics again:</a></li><li><a href="#7">Close database</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> sqlite_test
+</pre><pre class="codeinput">    clear <span class="string">all</span>
+    close <span class="string">all</span>
+    clc
+    dummy = mksqlite(<span class="string">'version mex'</span>);
+    fprintf( <span class="string">'\n\n'</span> );
+
+    database = <span class="string">'my_testdb'</span>;   <span class="comment">% database file name</span>
+    table    = <span class="string">'test_table'</span>;  <span class="comment">% sql table name</span>
+
+    ruler    = [repmat( <span class="string">'-'</span>, 1, 60 ), <span class="string">'\n'</span>];  <span class="comment">% ruler</span>
+
+
+    NumOfSamples = 100000;    <span class="comment">% number of records in dataset</span>
+
+    <span class="comment">% delete database file, if it still exists</span>
+    <span class="keyword">try</span>
+        delete( database );
+    <span class="keyword">catch</span>
+        error( <span class="string">'Unable to delete database'</span> );
+    <span class="keyword">end</span>
+
+    <span class="comment">% open (creates a new) database</span>
+    mksqlite( <span class="string">'open'</span>, database );
+    <span class="comment">% with synchronous OFF, SQLite continues without syncing</span>
+    <span class="comment">% as soon as it has handed data off to the operating system</span>
+    mksqlite( <span class="string">'PRAGMA synchronous = OFF'</span> );
+
+    <span class="comment">% create table</span>
+    fprintf( <span class="string">'Create new on-disc database\n'</span> );
+    mksqlite( [<span class="string">'CREATE TABLE '</span> table        , <span class="keyword">...</span>
+               <span class="string">'  ( Entry       CHAR(32), '</span> , <span class="keyword">...</span>
+               <span class="string">'    BigFloat    DOUBLE, '</span>   , <span class="keyword">...</span>
+               <span class="string">'    SmallFloat  FLOAT, '</span>    , <span class="keyword">...</span>
+               <span class="string">'    Value       INT, '</span>      , <span class="keyword">...</span>
+               <span class="string">'    Chars       TINYINT, '</span>  , <span class="keyword">...</span>
+               <span class="string">'    Boolean     BIT, '</span>      , <span class="keyword">...</span>
+               <span class="string">'    ManyChars   CHAR(255) ) '</span>] );
+
+    fprintf( ruler );
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+
+
+Create new on-disc database
+------------------------------------------------------------
+</pre><h2>Speed test: create records in one single translation<a name="3"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Create %d records in one single transaction\n'</span>, NumOfSamples );
+    ManyChars = repmat( <span class="string">'1234567890'</span>, 1, 20 );
+
+    tic;
+    mksqlite( <span class="string">'begin'</span> );  <span class="comment">% start transaction creation</span>
+
+        <span class="keyword">for</span> idx = 1:NumOfSamples
+          mksqlite( [<span class="string">'INSERT INTO '</span>, table                     , <span class="keyword">...</span>
+                     <span class="string">' (Entry, BigFloat, ManyChars) '</span>          , <span class="keyword">...</span>
+                     <span class="string">'  VALUES('</span>                               , <span class="keyword">...</span>
+                                  sprintf( <span class="string">'"Entry_%d"'</span>, idx ) , <span class="keyword">...</span>
+                                  <span class="string">','</span>                          , <span class="keyword">...</span>
+                                  num2str(idx)                 , <span class="keyword">...</span>
+                                  <span class="string">','</span>                          , <span class="keyword">...</span>
+                                  <span class="string">'"'</span>, ManyChars, <span class="string">'"'</span>          , <span class="keyword">...</span>
+                     <span class="string">'         )'</span>                              ] );
+        <span class="keyword">end</span>
+
+    mksqlite( <span class="string">'commit'</span> );  <span class="comment">% finalize transaction</span>
+    fprintf( <span class="string">'done.\n'</span> );
+    toc
+</pre><pre class="codeoutput">Create 100000 records in one single transaction
+done.
+Elapsed time is 9.909159 seconds.
+</pre><h2>Some sql statistics:<a name="4"></a></h2><pre class="codeinput">    <span class="comment">% Counting records in table</span>
+    fprintf( <span class="string">'Query amount of records\n'</span> )
+    res = mksqlite( [<span class="string">'SELECT COUNT(*) AS count FROM '</span> table] );
+    fprintf( <span class="string">'SELECT COUNT(*) returned %d\n'</span>, res.count );
+
+    <span class="comment">% Cumulating selected record fields</span>
+    fprintf( <span class="string">'Cumulate all values between 10 and 75\n'</span> );
+    res = mksqlite( [<span class="string">'SELECT SUM(BigFloat) AS cumsum FROM '</span> table, <span class="keyword">...</span>
+                     <span class="string">' WHERE BigFloat BETWEEN 10 AND 75'</span>] );
+    fprintf( <span class="string">'Sum is %d\n'</span>, res.cumsum );
+
+    <span class="comment">% Speed test: fetching all records</span>
+    fprintf( <span class="string">'Read all records as array of structs\n'</span> );
+    tic;
+    res = mksqlite( [<span class="string">'SELECT * FROM '</span> table] );
+    a = toc;
+    fprintf( <span class="string">'ready, %f seconds = %d records per second\n\n\n'</span>, <span class="keyword">...</span>
+             a, int32(NumOfSamples/a) );
+
+    <span class="comment">% done with on-disc database tests</span>
+    mksqlite(<span class="string">'close'</span>);
+
+    <span class="comment">% -----------------------------------------------------------------</span>
+</pre><pre class="codeoutput">Query amount of records
+SELECT COUNT(*) returned 100000
+Cumulate all values between 10 and 75
+Sum is 2805
+Read all records as array of structs
+ready, 0.423362 seconds = 236204 records per second
+
+
+</pre><h2>create an in-memory database now and copy all records from on-disc dataset into it<a name="5"></a></h2><pre class="codeinput">    fprintf( <span class="string">'Create new in-memory database\n'</span> );
+    fprintf( ruler );
+
+    <span class="comment">% Create an in-memory database ( mksqlite('open', '') does the same job )</span>
+    mksqlite( <span class="string">'open'</span>, <span class="string">':memory:'</span> );
+
+    <span class="comment">% Attach previous on-disc database</span>
+    mksqlite( [<span class="string">'ATTACH DATABASE "'</span>, database <span class="string">'" AS original'</span>] );
+
+    <span class="comment">% Copy on-disc database into on-memory database</span>
+    fprintf( <span class="string">'copy database contents in one transaction\n'</span> );
+
+    mksqlite( <span class="string">'begin'</span> );  <span class="comment">% begin transaction</span>
+
+        <span class="comment">% duplicate each table via sql schema</span>
+        tables = mksqlite( <span class="string">'SELECT name FROM original.sqlite_master WHERE type = "table" '</span> );
+        <span class="keyword">for</span> idx = 1:length( tables )
+            mksqlite( [<span class="string">'CREATE TABLE "'</span> tables(idx).name <span class="string">'" '</span>, <span class="keyword">...</span>
+                       <span class="string">'AS SELECT * FROM original."'</span>, tables(idx).name <span class="string">'"'</span>] );
+        <span class="keyword">end</span>
+
+        <span class="comment">% duplicate all indexing tables via schema</span>
+        tables = mksqlite( <span class="string">'SELECT sql FROM original.sqlite_master WHERE type = "index" '</span>);
+        <span class="keyword">for</span> idx = 1:length( tables )
+            mksqlite( tables(idx).sql );
+        <span class="keyword">end</span>
+
+    mksqlite(<span class="string">'commit'</span>);  <span class="comment">% finalize transaction</span>
+
+    <span class="comment">% detach original (on-disc) database</span>
+    mksqlite( <span class="string">'DETACH original'</span> );
+    fprintf( <span class="string">'Copying done.\n'</span> );
+</pre><pre class="codeoutput">Create new in-memory database
+------------------------------------------------------------
+copy database contents in one transaction
+Copying done.
+</pre><h2>Some sql statistics again:<a name="6"></a></h2><pre class="codeinput">    <span class="comment">% counting records in table</span>
+    fprintf( <span class="string">'Query record count\n'</span> )
+    res = mksqlite( [<span class="string">'SELECT COUNT(*) AS count FROM '</span> table] );
+    fprintf( <span class="string">'SELECT COUNT(*) returned %d\n'</span>, res.count);
+
+    <span class="comment">% cumulating selected record fields</span>
+    fprintf( <span class="string">'Cumulate all values between 10 and 75\n'</span> );
+    res = mksqlite( [<span class="string">'SELECT SUM(BigFloat) AS cumsum FROM '</span> table, <span class="keyword">...</span>
+                     <span class="string">' WHERE BigFloat BETWEEN 10 AND 75'</span>] );
+    fprintf( <span class="string">'Sum is %d\n'</span>, res.cumsum );
+
+    <span class="comment">% speed test: fetching all records</span>
+    fprintf( <span class="string">'Read all records as array of structs\n'</span> );
+    tic;
+    res = mksqlite( [<span class="string">'SELECT * FROM '</span> table] );
+    a = toc;
+    fprintf( <span class="string">'ready, %f seconds = %d records per second\n'</span>, <span class="keyword">...</span>
+             a, int32(NumOfSamples/a) );
+</pre><pre class="codeoutput">Query record count
+SELECT COUNT(*) returned 100000
+Cumulate all values between 10 and 75
+Sum is 2805
+Read all records as array of structs
+ready, 0.347738 seconds = 287573 records per second
+</pre><h2>Close database<a name="7"></a></h2><pre class="codeinput">    mksqlite(<span class="string">'close'</span>);
+
+    fprintf( <span class="string">'done.\n'</span> );
+</pre><pre class="codeoutput">done.
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_test
+
+    clear all
+    close all
+    clc
+    dummy = mksqlite('version mex');
+    fprintf( '\n\n' );
+
+    database = 'my_testdb';   % database file name
+    table    = 'test_table';  % sql table name
+    
+    ruler    = [repmat( '-', 1, 60 ), '\n'];  % ruler
+
+
+    NumOfSamples = 100000;    % number of records in dataset
+
+    % delete database file, if it still exists
+    try
+        delete( database );
+    catch
+        error( 'Unable to delete database' );
+    end
+
+    % open (creates a new) database
+    mksqlite( 'open', database );
+    % with synchronous OFF, SQLite continues without syncing 
+    % as soon as it has handed data off to the operating system
+    mksqlite( 'PRAGMA synchronous = OFF' );
+
+    % create table
+    fprintf( 'Create new on-disc database\n' );
+    mksqlite( ['CREATE TABLE ' table        , ...
+               '  ( Entry       CHAR(32), ' , ...
+               '    BigFloat    DOUBLE, '   , ...
+               '    SmallFloat  FLOAT, '    , ...
+               '    Value       INT, '      , ...
+               '    Chars       TINYINT, '  , ...
+               '    Boolean     BIT, '      , ... 
+               '    ManyChars   CHAR(255) ) '] );
+
+    fprintf( ruler );
+
+    %% Speed test: create records in one single translation
+    fprintf( 'Create %d records in one single transaction\n', NumOfSamples );
+    ManyChars = repmat( '1234567890', 1, 20 );
+
+    tic;
+    mksqlite( 'begin' );  % start transaction creation
+
+        for idx = 1:NumOfSamples
+          mksqlite( ['INSERT INTO ', table                     , ...
+                     ' (Entry, BigFloat, ManyChars) '          , ...
+                     '  VALUES('                               , ...
+                                  sprintf( '"Entry_%d"', idx ) , ...
+                                  ','                          , ...
+                                  num2str(idx)                 , ...
+                                  ','                          , ...
+                                  '"', ManyChars, '"'          , ...
+                     '         )'                              ] );
+        end
+        
+    mksqlite( 'commit' );  % finalize transaction
+    fprintf( 'done.\n' );
+    toc
+
+    %% Some sql statistics:
+    
+    % Counting records in table
+    fprintf( 'Query amount of records\n' )
+    res = mksqlite( ['SELECT COUNT(*) AS count FROM ' table] );
+    fprintf( 'SELECT COUNT(*) returned %d\n', res.count );
+
+    % Cumulating selected record fields
+    fprintf( 'Cumulate all values between 10 and 75\n' );
+    res = mksqlite( ['SELECT SUM(BigFloat) AS cumsum FROM ' table, ...
+                     ' WHERE BigFloat BETWEEN 10 AND 75'] );
+    fprintf( 'Sum is %d\n', res.cumsum );
+
+    % Speed test: fetching all records
+    fprintf( 'Read all records as array of structs\n' );
+    tic;
+    res = mksqlite( ['SELECT * FROM ' table] );
+    a = toc;
+    fprintf( 'ready, %f seconds = %d records per second\n\n\n', ...
+             a, int32(NumOfSamples/a) );
+
+    % done with on-disc database tests
+    mksqlite('close');
+    
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+    
+    %% create an in-memory database now and copy all records from on-disc dataset into it
+    fprintf( 'Create new in-memory database\n' );
+    fprintf( ruler );
+    
+    % Create an in-memory database ( mksqlite('open', '') does the same job )
+    mksqlite( 'open', ':memory:' );
+
+    % Attach previous on-disc database
+    mksqlite( ['ATTACH DATABASE "', database '" AS original'] );
+
+    % Copy on-disc database into on-memory database
+    fprintf( 'copy database contents in one transaction\n' );
+    
+    mksqlite( 'begin' );  % begin transaction
+    
+        % duplicate each table via sql schema
+        tables = mksqlite( 'SELECT name FROM original.sqlite_master WHERE type = "table" ' );
+        for idx = 1:length( tables )
+            mksqlite( ['CREATE TABLE "' tables(idx).name '" ', ...
+                       'AS SELECT * FROM original."', tables(idx).name '"'] );
+        end
+
+        % duplicate all indexing tables via schema
+        tables = mksqlite( 'SELECT sql FROM original.sqlite_master WHERE type = "index" ');
+        for idx = 1:length( tables )
+            mksqlite( tables(idx).sql );
+        end
+    
+    mksqlite('commit');  % finalize transaction
+    
+    % detach original (on-disc) database
+    mksqlite( 'DETACH original' );
+    fprintf( 'Copying done.\n' );
+
+    %% Some sql statistics again:
+    
+    % counting records in table
+    fprintf( 'Query record count\n' )
+    res = mksqlite( ['SELECT COUNT(*) AS count FROM ' table] );
+    fprintf( 'SELECT COUNT(*) returned %d\n', res.count);
+
+    % cumulating selected record fields
+    fprintf( 'Cumulate all values between 10 and 75\n' );
+    res = mksqlite( ['SELECT SUM(BigFloat) AS cumsum FROM ' table, ...
+                     ' WHERE BigFloat BETWEEN 10 AND 75'] );
+    fprintf( 'Sum is %d\n', res.cumsum );
+    
+    % speed test: fetching all records
+    fprintf( 'Read all records as array of structs\n' );
+    tic;
+    res = mksqlite( ['SELECT * FROM ' table] );
+    a = toc;
+    fprintf( 'ready, %f seconds = %d records per second\n', ...
+             a, int32(NumOfSamples/a) );
+
+    %% Close database
+    mksqlite('close');
+
+    fprintf( 'done.\n' );
+
+##### SOURCE END #####
+--></body></html>

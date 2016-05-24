@@ -1,0 +1,230 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_exceptions</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_exceptions.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> sqlite_exceptions
+
+    clear <span class="string">all</span>
+    close <span class="string">all</span>
+    clc
+    dummy = mksqlite(<span class="string">'version mex'</span>);
+    fprintf( <span class="string">'\n\n'</span> );
+
+    commands = { <span class="keyword">...</span>
+      <span class="string">'mksqlite(''open'',''filenotfound.db'', ''ro'');'</span>, <span class="keyword">...</span><span class="comment">  % opens non-existent file</span>
+      <span class="string">'mksqlite(''open'','''');'</span>, <span class="keyword">...</span><span class="comment">                         % open in-memory file</span>
+      <span class="string">'mksqlite(''select column_doesnt_exist'');'</span>, <span class="keyword">...</span><span class="comment">        % select a column that not exist</span>
+      <span class="string">'mksqlite(''syntax error'');'</span>, <span class="keyword">...</span><span class="comment">                      % Unknown statements</span>
+      <span class="string">'mksqlite( -10, ''open'', '''' );'</span>, <span class="keyword">...</span><span class="comment">                 % Illegal dbid</span>
+      <span class="string">'mksqlite( ''open'', '''' );'</span>, <span class="keyword">...</span><span class="comment">                      % MATLAB syntax error (not catched!)</span>
+    };
+
+    <span class="keyword">for</span> i = 1:numel( commands )
+        <span class="keyword">if</span> i == numel( commands )
+            fprintf( <span class="string">'\nNext error will not be catched and thus terminates this script:'</span> );
+        <span class="keyword">end</span>
+
+        fprintf( <span class="string">'\nCalling %s\n'</span>, commands{i} );
+
+        <span class="keyword">try</span>
+            eval( commands{i} );
+            fprintf( <span class="string">'succeeded\n'</span> );
+
+        <span class="comment">% Exception handling</span>
+        <span class="keyword">catch</span> ex
+
+            <span class="comment">% Get the error identifier</span>
+            <span class="keyword">switch</span> ex.identifier
+                <span class="keyword">case</span> <span class="string">'MKSQLITE:ANY'</span>
+                    <span class="comment">% All errors from mksqlite</span>
+                    fprintf( <span class="string">'mksqlite omitted an error: "%s"\n'</span>, ex.message );
+
+                <span class="keyword">case</span> <span class="string">'SQLITE:ERROR'</span>
+                    <span class="comment">% Explicit handler for SQLite syntax errors</span>
+                    fprintf( <span class="string">'SQLite syntax error: "%s"\n'</span>, ex.message );
+
+                <span class="keyword">otherwise</span>
+                    <span class="comment">% Split "SQLITE:NAME" into its fields --&gt; C={'SQLITE','NAME'}</span>
+                    C = regexp( ex.identifier, <span class="string">':'</span>, <span class="string">'split'</span> );
+
+                    <span class="keyword">if</span> numel(C) == 2 &amp;&amp; strcmpi( C{1}, <span class="string">'SQLITE'</span> )
+                        <span class="comment">% Handler for all remaining SQLite errors</span>
+                        <span class="keyword">switch</span>( C{2} )
+                            <span class="keyword">case</span> {<span class="string">'AUTH'</span>, <span class="string">'CANTOPEN'</span> }
+                                <span class="comment">% Handle SQLITE:AUTH and SQLITE:CANTOPEN</span>
+                                fprintf( <span class="string">'SQLite error while open database: "%s"\n'</span>, ex.message );
+
+                            <span class="keyword">otherwise</span>
+                                <span class="comment">% Any other SQLite error</span>
+                                fprintf( <span class="string">'Any other SQLite error: "%s"\n'</span>, ex.message );
+                        <span class="keyword">end</span>
+                    <span class="keyword">else</span>
+                        <span class="comment">% Any other unknown exception, rethrow to outer scope</span>
+                        rethrow(ex);
+                    <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+
+
+
+Calling mksqlite('open','filenotfound.db', 'ro');
+SQLite error while open database: "unable to open database file"
+
+Calling mksqlite('open','');
+succeeded
+
+Calling mksqlite('select column_doesnt_exist');
+SQLite syntax error: "no such column: column_doesnt_exist"
+
+Calling mksqlite('syntax error');
+SQLite syntax error: "near "syntax": syntax error"
+
+Calling mksqlite( -10, 'open', '' );
+mksqlite omitted an error: "ungueltiger Datenbankhandle"
+
+Next error will not be catched and thus terminates this script:
+Calling mksqlite( 'open', '' );
+succeeded
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_exceptions
+
+    clear all
+    close all
+    clc
+    dummy = mksqlite('version mex');
+    fprintf( '\n\n' );
+
+    commands = { ...
+      'mksqlite(''open'',''filenotfound.db'', ''ro'');', ...  % opens non-existent file
+      'mksqlite(''open'','''');', ...                         % open in-memory file
+      'mksqlite(''select column_doesnt_exist'');', ...        % select a column that not exist
+      'mksqlite(''syntax error'');', ...                      % Unknown statements
+      'mksqlite( -10, ''open'', '''' );', ...                 % Illegal dbid
+      'mksqlite( ''open'', '''' );', ...                      % MATLAB syntax error (not catched!)
+    };
+
+    for i = 1:numel( commands )
+        if i == numel( commands )
+            fprintf( '\nNext error will not be catched and thus terminates this script:' );
+        end
+        
+        fprintf( '\nCalling %s\n', commands{i} );
+
+        try
+            eval( commands{i} );
+            fprintf( 'succeeded\n' );
+
+        % Exception handling
+        catch ex
+
+            % Get the error identifier
+            switch ex.identifier
+                case 'MKSQLITE:ANY'
+                    % All errors from mksqlite
+                    fprintf( 'mksqlite omitted an error: "%s"\n', ex.message );
+
+                case 'SQLITE:ERROR'
+                    % Explicit handler for SQLite syntax errors
+                    fprintf( 'SQLite syntax error: "%s"\n', ex.message );
+
+                otherwise
+                    % Split "SQLITE:NAME" into its fields REPLACE_WITH_DASH_DASH> C={'SQLITE','NAME'}
+                    C = regexp( ex.identifier, ':', 'split' );
+
+                    if numel(C) == 2 && strcmpi( C{1}, 'SQLITE' )
+                        % Handler for all remaining SQLite errors
+                        switch( C{2} )
+                            case {'AUTH', 'CANTOPEN' }
+                                % Handle SQLITE:AUTH and SQLITE:CANTOPEN
+                                fprintf( 'SQLite error while open database: "%s"\n', ex.message );
+
+                            otherwise
+                                % Any other SQLite error
+                                fprintf( 'Any other SQLite error: "%s"\n', ex.message );
+                        end
+                    else
+                        % Any other unknown exception, rethrow to outer scope
+                        rethrow(ex);
+                    end
+            end
+
+        end
+    end
+    
+##### SOURCE END #####
+--></body></html>

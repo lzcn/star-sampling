@@ -1,0 +1,296 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sqlite_test_bind_typed_compressed</title><meta name="generator" content="MATLAB 7.13"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-04-18"><meta name="DC.source" content="sqlite_test_bind_typed_compressed.m"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> sqlite_test_bind_typed_compressed
+
+    clear <span class="string">all</span>
+    close <span class="string">all</span>
+    clc
+    dummy = mksqlite(<span class="string">'version mex'</span>);
+    fprintf( <span class="string">'\n\n'</span> );
+
+    database = <span class="string">'demo.db'</span>;
+
+    mksqlite( <span class="string">'open'</span>, database );
+    mksqlite( <span class="string">'drop table if exists demo'</span> );
+
+    <span class="comment">% Create table</span>
+    mksqlite( [<span class="string">'CREATE TABLE demo '</span>   , <span class="keyword">...</span>
+               <span class="string">' ( id PRIMARY KEY, '</span>  , <span class="keyword">...</span>
+               <span class="string">'   type, '</span>            , <span class="keyword">...</span>
+               <span class="string">'   data, '</span>            , <span class="keyword">...</span>
+               <span class="string">'   size, '</span>            , <span class="keyword">...</span>
+               <span class="string">'   level, '</span>           , <span class="keyword">...</span>
+               <span class="string">'   pack_ratio, '</span>      , <span class="keyword">...</span>
+               <span class="string">'   pack_time, '</span>       , <span class="keyword">...</span>
+               <span class="string">'   unpack_time, '</span>     , <span class="keyword">...</span>
+               <span class="string">'   md5_hash '</span>         , <span class="keyword">...</span>
+               <span class="string">' )'</span>] );
+
+
+    fprintf( <span class="string">'Please wait, while generating 500 entries...\n'</span> );
+    <span class="keyword">for</span> n = 1:500
+        compression_level = randi(10)-1;  <span class="comment">% randomly choose compression rate...</span>
+        use_typed_blobs   = randi(2)-1;   <span class="comment">% and whether or not compression is used</span>
+
+        <span class="keyword">if</span> ~use_typed_blobs
+          compression_level = 0;  <span class="comment">% no compression</span>
+        <span class="keyword">end</span>
+
+        data = [];
+
+        <span class="comment">% randomly generate 3 types of data:</span>
+        <span class="comment">% 1: NxN matrix with N is 1..10 with random numbers</span>
+        <span class="comment">% 2: vector with length 10000..20000 with random numbers</span>
+        <span class="comment">% 3: like type 2, but as cumulated sum</span>
+
+        <span class="keyword">while</span> isempty( data )
+          type = randi(3);
+          <span class="keyword">switch</span> type
+            <span class="keyword">case</span> 1
+              <span class="keyword">if</span> use_typed_blobs <span class="comment">% Arrays assume typed blobs</span>
+                data = randn( 1 + randi( 9 ) );
+              <span class="keyword">end</span>
+            <span class="keyword">case</span> 2
+              data = randn( 1e4 + randi(1e4), 1);
+            <span class="keyword">case</span> 3
+              data = cumsum( randn( 1e4 + randi(1e4), 1) );
+          <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        nElements = numel( data );
+
+        <span class="comment">% You're not limited in mixing compressed and uncompressed data in the data base!</span>
+        mksqlite( <span class="string">'typedBLOBs'</span>, use_typed_blobs ); <span class="comment">% Using typed BLOBs</span>
+
+        <span class="comment">% Set compression for typed BLOBs</span>
+        mksqlite( <span class="string">'compression'</span>, <span class="string">'blosclz'</span>, compression_level );
+
+        <span class="comment">% insert data</span>
+        mksqlite( [<span class="string">'INSERT INTO demo '</span>, <span class="keyword">...</span>
+                   <span class="string">'(id, type, data, size, level) values (?,?,?,?,?)'</span>], <span class="keyword">...</span>
+                   n, type, data, nElements, compression_level );
+
+        <span class="comment">% note that BDC...() SQL user functions depend on current</span>
+        <span class="comment">% compression settings!</span>
+        mksqlite( [<span class="string">'UPDATE demo SET '</span>, <span class="keyword">...</span>
+                   <span class="string">'  pack_time   = BDCPackTime(data), '</span>   , <span class="keyword">...</span>
+                   <span class="string">'  unpack_time = BDCUnpackTime(data), '</span> , <span class="keyword">...</span>
+                   <span class="string">'  pack_ratio  = BDCRatio(data), '</span>      , <span class="keyword">...</span>
+                   <span class="string">'  md5_hash    = MD5(data) '</span>            , <span class="keyword">...</span>
+                   <span class="string">' WHERE id = ?'</span>], n );
+
+        <span class="keyword">if</span> length(dbstack) == 1
+            clc, fprintf( <span class="string">'%d\n'</span>, n );
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% Compression of "real" random numbers is generally poor:</span>
+    query = mksqlite( [<span class="string">'SELECT type, size, level, pack_ratio, '</span>, <span class="keyword">...</span>
+                       <span class="string">'pack_time, unpack_time FROM demo '</span>, <span class="keyword">...</span>
+                       <span class="string">'WHERE type&lt;3 AND level&gt;0'</span>] );
+
+    <span class="comment">% show histogram</span>
+    figure, hist( [query.pack_ratio]', 50 )
+
+    <span class="comment">% "natural" series, as in a measurement are slightly</span>
+    <span class="comment">% better to compress</span>
+    min_level = 0;
+    query = mksqlite( [<span class="string">'SELECT type, size, level, pack_ratio, '</span>, <span class="keyword">...</span>
+                       <span class="string">'pack_time, unpack_time FROM demo '</span>, <span class="keyword">...</span>
+                       <span class="string">'WHERE type=3 AND level&gt;?'</span>], min_level );
+
+    figure, hist( [query.pack_ratio]', 50 )
+
+    <span class="comment">% by the way: "lossy" compressors (QLIN16 and QLOG16) have a</span>
+    <span class="comment">% constant compression rate of 25%</span>
+
+    <span class="comment">% close database</span>
+    mksqlite( <span class="string">'close'</span> );
+</pre><pre class="codeoutput">mksqlite Version 2.2 build: 109, ein MATLAB Interface zu SQLite
+(c) 2008-2016 by Martin Kortmann &lt;mail@kortmann.de&gt;
+                 Andreas Martin  &lt;andimartin@users.sourceforge.net&gt;
+basierend auf SQLite Version 3.10.2 - http://www.sqlite.org
+mksqlite verwendet darueber hinaus:
+ - DEELX perl kompatible regex engine Version 1.3 (Sswater@gmail.com)
+ - BLOSC/LZ4 1.3.0-rc3.dev zur Datenkompression (Francesc Alted / Yann Collett) 
+ - MD5 Message-Digest Algorithm (RFC 1321) Implementierung von Alexander Peslyak
+   
+Platform: PCWIN64, little endian
+
+
+
+Please wait, while generating 500 entries...
+</pre><img vspace="5" hspace="5" src="sqlite_test_bind_typed_compressed_01.jpg" alt=""> <img vspace="5" hspace="5" src="sqlite_test_bind_typed_compressed_02.jpg" alt=""> <p class="footer"><br>
+      Published with MATLAB&reg; 7.13<br></p></div><!--
+##### SOURCE BEGIN #####
+function sqlite_test_bind_typed_compressed
+
+    clear all
+    close all
+    clc
+    dummy = mksqlite('version mex');
+    fprintf( '\n\n' );
+    
+    database = 'demo.db';
+
+    mksqlite( 'open', database );
+    mksqlite( 'drop table if exists demo' );
+
+    % Create table
+    mksqlite( ['CREATE TABLE demo '   , ...
+               ' ( id PRIMARY KEY, '  , ...
+               '   type, '            , ...
+               '   data, '            , ...
+               '   size, '            , ...
+               '   level, '           , ...
+               '   pack_ratio, '      , ...
+               '   pack_time, '       , ...
+               '   unpack_time, '     , ...
+               '   md5_hash '         , ...
+               ' )'] );
+
+
+    fprintf( 'Please wait, while generating 500 entries...\n' );
+    for n = 1:500
+        compression_level = randi(10)-1;  % randomly choose compression rate...
+        use_typed_blobs   = randi(2)-1;   % and whether or not compression is used
+
+        if ~use_typed_blobs
+          compression_level = 0;  % no compression
+        end
+
+        data = [];
+
+        % randomly generate 3 types of data:
+        % 1: NxN matrix with N is 1..10 with random numbers
+        % 2: vector with length 10000..20000 with random numbers
+        % 3: like type 2, but as cumulated sum
+
+        while isempty( data )
+          type = randi(3);
+          switch type
+            case 1
+              if use_typed_blobs % Arrays assume typed blobs
+                data = randn( 1 + randi( 9 ) );
+              end
+            case 2
+              data = randn( 1e4 + randi(1e4), 1);
+            case 3
+              data = cumsum( randn( 1e4 + randi(1e4), 1) );
+          end
+        end
+
+        nElements = numel( data );
+
+        % You're not limited in mixing compressed and uncompressed data in the data base!
+        mksqlite( 'typedBLOBs', use_typed_blobs ); % Using typed BLOBs
+        
+        % Set compression for typed BLOBs
+        mksqlite( 'compression', 'blosclz', compression_level ); 
+
+        % insert data
+        mksqlite( ['INSERT INTO demo ', ...
+                   '(id, type, data, size, level) values (?,?,?,?,?)'], ...
+                   n, type, data, nElements, compression_level );
+
+        % note that BDC...() SQL user functions depend on current
+        % compression settings!
+        mksqlite( ['UPDATE demo SET ', ...
+                   '  pack_time   = BDCPackTime(data), '   , ...
+                   '  unpack_time = BDCUnpackTime(data), ' , ...
+                   '  pack_ratio  = BDCRatio(data), '      , ...
+                   '  md5_hash    = MD5(data) '            , ...
+                   ' WHERE id = ?'], n );
+                 
+        if length(dbstack) == 1
+            clc, fprintf( '%d\n', n );
+        end
+    end
+
+    % Compression of "real" random numbers is generally poor:
+    query = mksqlite( ['SELECT type, size, level, pack_ratio, ', ...
+                       'pack_time, unpack_time FROM demo ', ...
+                       'WHERE type<3 AND level>0'] );
+                     
+    % show histogram 
+    figure, hist( [query.pack_ratio]', 50 )
+
+    % "natural" series, as in a measurement are slightly  
+    % better to compress
+    min_level = 0;
+    query = mksqlite( ['SELECT type, size, level, pack_ratio, ', ...
+                       'pack_time, unpack_time FROM demo ', ...
+                       'WHERE type=3 AND level>?'], min_level );
+
+    figure, hist( [query.pack_ratio]', 50 )
+    
+    % by the way: "lossy" compressors (QLIN16 and QLOG16) have a 
+    % constant compression rate of 25%
+
+    % close database
+    mksqlite( 'close' );
+
+##### SOURCE END #####
+--></body></html>
