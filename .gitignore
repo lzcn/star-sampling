@@ -1,3 +1,7 @@
+#sublime project
+*.sublime-project
+*.sublime-workspace
+
 #ignore pdf
 *.pdf
 #ignore data
@@ -8,6 +12,10 @@
 
 #My doc directory
 doc/
+
+# thired party code
+src/MSongsDB
+include\mksqlite
 
 #My data directory
 projectSampling/data
