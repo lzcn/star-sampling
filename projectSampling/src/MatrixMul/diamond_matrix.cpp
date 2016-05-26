@@ -59,8 +59,8 @@ struct Matrix
 		row = r;
 		col = c;
 		element = pr;
-		double*SumofCol = (double*)malloc(col*sizeof(double));
-		memcpy(SumofCol, 0, col*sizeof(double));
+		SumofCol = (double*)malloc(col*sizeof(double));
+		memset(SumofCol, 0, col*sizeof(double));
 		//get the absolute sum of each columns
 		double temp = 0;
 		for(size_t i = 0; i < col; ++i){
@@ -75,7 +75,7 @@ struct Matrix
 		free(SumofCol);
 	}
 	double GetEmelent(size_t i, size_t j){
-		return element[i*row + j];
+		return element[j*row + i];
 	}
 	double GetColSum(size_t column){
 		return SumofCol[column];
@@ -180,7 +180,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	double SumofW = 0;
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
-	memcpy(weight, 0, MatA.row*MatA.col*sizeof(double));
+	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
 	double tempW = 0;
 	start = clock();
 	for (size_t k = 0; k < MatA.row; ++k){
@@ -204,20 +204,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	start = clock();
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
-	memcpy(WeightInd, 0, NumSample*sizeof(size_t));
+	memset(WeightInd, 0, NumSample*sizeof(size_t));
 	int *freq_k = (int*)malloc(MatA.row*sizeof(int));
-	memcpy(freq_k, 0, MatA.row*sizeof(int));
+	memset(freq_k, 0, MatA.row*sizeof(int));
 	// sample S pairs (k, i) ,
 	sample_index(NumSample, WeightInd, \
 				 MatA.row, freq_k,\
 				 MatA.row*MatA.col, weight, SumofW);
 	// k, i, j, k'
 	size_t *IndforI = (size_t*)malloc(NumSample*sizeof(size_t));
-	memcpy(IndforI, 0, NumSample*sizeof(size_t));
+	memset(IndforI, 0, NumSample*sizeof(size_t));
 	size_t *IndforJ = (size_t*)malloc(NumSample*sizeof(size_t));
-	memcpy(IndforJ, 0, NumSample*sizeof(size_t));
+	memset(IndforJ, 0, NumSample*sizeof(size_t));
 	size_t *IndforKp = (size_t*)malloc(NumSample*sizeof(size_t));
-	memcpy(IndforKp, 0, NumSample*sizeof(size_t));
+	memset(IndforKp, 0, NumSample*sizeof(size_t));
 	// record all i = index / row; index = i * row + k;
 	// and sample k';
 	for (int s = 0; s < NumSample; ++s){
@@ -239,7 +239,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	std::map<struct indexIJ, double> IrJc;
 	for (int s = 0; s < NumSample ; ++s){
 		// sample k'
-		indk = WeightInd[s] / MatA.row;
+		indk = WeightInd[s] % MatA.row;
 		indkp = IndforKp[s];
 		indi = IndforI[s];
 		indj = IndforJ[s];
@@ -273,7 +273,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	printf("%f seconds during computer and sorting tenosor \n",duration);
+	printf("%f seconds during computer and sorting tensor \n",duration);
  
 	//--------------------------------
 	// Converting to Matlab
@@ -290,9 +290,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//value
 		plhs_result[m] = sortVec[m].second;
 		//i
-		plhs_pr[m] = (sortVec[m].first.indI);
+		plhs_pr[m] = (sortVec[m].first.indI + 1);
 		//j
-		plhs_pr[m + phls_row] = (sortVec[m].first.indJ);
+		plhs_pr[m + phls_row] = (sortVec[m].first.indJ + 1);
 	}
 
 	finish = clock();
@@ -307,11 +307,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	free(IndforI);
 	free(IndforJ);
 	free(IndforKp);
+	free(freq_k);
 
 }
 
 int sample_index(size_t n, size_t *index, \
-				 size_t L_HEAD, int *freq_k,\
+				 size_t row, int *freq_k,\
 				 size_t Range, double*pdf, double sum_pdf){
 	/* get n random numbers*/
 	std::vector<double> ind_u;
@@ -327,7 +328,7 @@ int sample_index(size_t n, size_t *index, \
 			sum_prob += pdf[++k];
 		}
 		index[i] = k;
-		freq_k[k / L_HEAD] ++;
+		freq_k[k % row] ++;
 	}
 	return 1;
 }

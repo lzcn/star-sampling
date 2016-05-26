@@ -8,8 +8,10 @@
 *.dat
 
 #matlab mexw
-*.mexw64
-
+*.mexw64*
+*.asv
+#debug file
+*.pdb*
 #My doc directory
 doc/
 
