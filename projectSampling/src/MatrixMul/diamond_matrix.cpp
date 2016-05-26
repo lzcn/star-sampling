@@ -4,16 +4,52 @@
 	Reference:"Diamond Sampling for Approximate Maximum 
 			All-pairs Dot-product(MAD) Search"
 */
-
+#include <utility>
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <cstdio>
 #include <cmath>
 #include <ctime>
-#include <stdio.h>
 #include "mex.h"
-#include "tensor.hpp"
-typedef struct 
+
+struct indexIJ
+{	
+	size_t indI;
+	size_t indJ;
+	indexIJ(size_t i,size_t j){
+		indI = i;
+		indJ = j;
+	}
+	~indexIJ(){}
+	bool operator<(const struct indexIJ &toCmp)const{
+		if(indI < toCmp.indI){
+			return true;
+		}else if(indI == toCmp.indI){
+			if(indJ < toCmp.indJ)
+				return true;
+		}
+		return false;
+	}
+	bool operator==(const struct indexIJ &toCmp){
+		if(indI == toCmp.indI && indJ == toCmp.indJ)
+			return true;
+		return false;
+	}
+
+	bool operator > (const struct indexIJ &toCmp){
+		if(indI > toCmp.indI){
+			return true;
+		}else if(indI == toCmp.indI){
+			if(indJ > toCmp.indJ)
+				return true;
+		}
+		return false;
+	}
+};
+
+typedef std::pair<struct indexIJ,double> indValue;
+struct Matrix
 {
 	size_t row;
 	size_t col;
@@ -30,9 +66,9 @@ typedef struct
 		for(size_t i = 0; i < col; ++i){
 			temp = 0;
 			for(size_t j = 0; j < row; ++j){
-				temp += abs(element(i*row + j));
+				temp += abs(element[i*row + j]);
 			}
-			SumofCol[i] = tmp;
+			SumofCol[i] = temp;
 		}
 	}
 	~Matrix(){
@@ -46,7 +82,7 @@ typedef struct
 	}
 	size_t randRow(size_t n){
 		double x,sum,temp;
-		sum = SumofCol[i];
+		sum = SumofCol[n];
 		x = sum*((double)rand()/(double)RAND_MAX);
 		temp = 0;
 		for (size_t i = 0; i < row; ++i){
@@ -57,54 +93,30 @@ typedef struct
 		}
 		return (row-1);
 	}
-}Matrix;
+};
 
-typedef std::vector<size_t> coordinate;
-typedef std::pair<coordinate,double> PAIR;
 
-int cmp(const PAIR &x,const PAIR&y){
+
+int cmp(const indValue &x,const indValue&y){
 	return x.second > y.second;
 }
 
 int sgn_foo(double x){
 	return x<0? -1:1;
 }
+
 /*
-	give an coord(i_0,i_1,i_2,...,i_(N-1))
-	compute the value of U_{(i_0,i_1,i_2,...,i_(N-1))}
+	give an pair(i, j)
+	compute the value of c_ij;
 */
-double vectors_mul(const coordinate &coord,\
- 				std::vector<FactorMatrix*> &vMatrixs,\
- 				size_t nrhs,size_t rank_size){
+double vectors_mul(const struct indexIJ &coord, struct Matrix &A, struct Matrix &B){
     double ans = 0;
-    double* temp = new double[rank_size];
-    /*initialize to the column of vMatrixs[0] */
-    for (size_t i = 0; i < rank_size; ++i){
-        temp[i] = vMatrixs[0]->get_element(i,coord[0]);
+    size_t indI = coord.indI;
+    size_t indJ = coord.indJ;
+    for (size_t k = 0; k < A.row; ++k){
+        ans += A.GetEmelent(k,indI) * B.GetEmelent(indJ,k);
     }
-    for (size_t i = 1; i < nrhs; ++i){
-        for(size_t j = 0; j < rank_size; ++j){
-            temp[j] *= vMatrixs[i]->get_element(coord[i],j);
-        }
-    }
-    for (size_t i = 0; i < rank_size; ++i){
-        ans += temp[i];
-    }
-    delete []temp;
     return ans;
-}
-void display(std::vector<size_t> v){
-	std::vector<size_t>::iterator itr;
-	for (itr = v.begin(); itr != v.end(); ++itr){
-		printf("%d, ",(*itr));
-	}
-}
-void display_map(std::map<std::vector<size_t>,double> v){
-	std::map<std::vector<size_t>,double> ::const_iterator itr;
-	for (itr = v.begin(); itr != v.end(); ++itr){
-		display(itr->first);
-		printf("%f\n",itr->second);
-	}
 }
 
 /* 
@@ -120,7 +132,7 @@ void display_map(std::map<std::vector<size_t>,double> v){
 */
 
 int sample_index(size_t S, size_t *index, \
-				 size_t dim, &freq_k,\
+				 size_t dim, int *freq_k,\
 				 size_t L, double*pdf, double sum_pdf);
 
 /* 
@@ -130,7 +142,7 @@ int sample_index(size_t S, size_t *index, \
 	A method with constant time per sample.
 */
 int vose_alias(size_t s, size_t *dst, \
-		`	   size_t n, double *pdf,double sum_pdf);
+			   size_t n, double *pdf,double sum_pdf);
 /*
 	C = AB;
 	A has d rows and m columns,
@@ -154,10 +166,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	Matirx MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
-	Matirx MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
-	const int top_t = static_cast(int)mxGetPr(prhs[2]);
-	const size_t NumSample = static_cast(size_t)mxGetPr(prhs[3]);
+	struct Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
+	struct Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
+	const int top_t = (int)mxGetPr(prhs[2])[0];
+	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during initialization\n",duration);
@@ -167,8 +179,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------------------
 
 	double SumofW = 0;
-	double *weight = (double*)malloc(MatA.row*MatA.col*szieof(double));
-	memcpy(weight, 0, MatA.row*MatA.col*szieof(double));
+	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
+	memcpy(weight, 0, MatA.row*MatA.col*sizeof(double));
 	double tempW = 0;
 	start = clock();
 	for (size_t k = 0; k < MatA.row; ++k){
@@ -193,18 +205,19 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
 	memcpy(WeightInd, 0, NumSample*sizeof(size_t));
-	int freq_k[MatA.row];
+	int *freq_k = (int*)malloc(MatA.row*sizeof(int));
+	memcpy(freq_k, 0, MatA.row*sizeof(int));
 	// sample S pairs (k, i) ,
 	sample_index(NumSample, WeightInd, \
 				 MatA.row, freq_k,\
 				 MatA.row*MatA.col, weight, SumofW);
 	// k, i, j, k'
 	size_t *IndforI = (size_t*)malloc(NumSample*sizeof(size_t));
-	memcpy(IndforI, 0, NumSample*sizeof(size_t))
+	memcpy(IndforI, 0, NumSample*sizeof(size_t));
 	size_t *IndforJ = (size_t*)malloc(NumSample*sizeof(size_t));
-	memcpy(IndforJ, 0, NumSample*sizeof(size_t))
+	memcpy(IndforJ, 0, NumSample*sizeof(size_t));
 	size_t *IndforKp = (size_t*)malloc(NumSample*sizeof(size_t));
-	memcpy(IndforKp, 0, NumSample*sizeof(size_t))
+	memcpy(IndforKp, 0, NumSample*sizeof(size_t));
 	// record all i = index / row; index = i * row + k;
 	// and sample k';
 	for (int s = 0; s < NumSample; ++s){
@@ -217,12 +230,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		vose_alias( freq_k[k], (IndforJ + offset), \
 					MatB.row, \
 					(MatB.element + offset*MatB.row), \
-					MatB.SumofCol(k));
+					MatB.SumofCol[k]);
 		offset += freq_k[k];
 	}
-	// compute update value
+	// compute update value and saved in map<pair, value>
 	double valueSampled = 1.0;
 	size_t indi,indj,indk,indkp;
+	std::map<struct indexIJ, double> IrJc;
 	for (int s = 0; s < NumSample ; ++s){
 		// sample k'
 		indk = WeightInd[s] / MatA.row;
@@ -235,62 +249,69 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		valueSampled *= sgn_foo(MatA.GetEmelent(indkp,indi));
 		valueSampled *= MatB.GetEmelent(indj,indkp);
 		// Update the element in coordinate
-		Tensor[ coords[s] ] += valueSampled;
+		IrJc[struct indexIJ(indi,indj)] += valueSampled;
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during sampling\n",duration);
-	/* sort value in tensor */
+
+	//-----------------------------------
+	//sort the values have been sampled
+	//-----------------------------------
+
 	start = clock();
-	std::vector<PAIR> pair_vec;
-	std::map<coordinate,double>::iterator map_itr;
+	std::vector<indValue> sortVec;
+	std::map<struct indexIJ, double>::iterator mapItr;
 	double true_value = 0;
 
-	for (map_itr = Tensor.begin(); map_itr != Tensor.end(); ++map_itr){
-
-		true_value = vectors_mul((map_itr->first),vMatrixs,nrhs,RANK);
-		pair_vec.push_back(make_pair(map_itr->first,true_value));
-		//pair_vec.push_back(make_pair(map_itr->first,map_itr->second));
+	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
+		true_value =  vectors_mul(mapItr->first,MatA, MatB);
+		sortVec.push_back(std::make_pair(mapItr->first,true_value));
+		//sortVec.push_back(make_pair(mapItr->first,mapItr->second));
 	}
-	sort(pair_vec.begin(),pair_vec.end(),cmp);
-
+	sort(sortVec.begin(),sortVec.end(),cmp);
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during computer and sorting tenosor \n",duration);
-
+ 
+	//--------------------------------
+	// Converting to Matlab
+	//--------------------------------
 	start = clock();
-	size_t phls_row = pair_vec.size();
-	plhs[0] = mxCreateNumericMatrix(phls_row, nrhs, mxUINT64_CLASS, mxREAL);
+	size_t phls_row = sortVec.size();
+	// pair
+	plhs[0] = mxCreateNumericMatrix(phls_row, 2, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[0]);
+	// value
 	plhs[1] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
 	double *plhs_result = mxGetPr(plhs[1]);
-	for(size_t m = 0; m < pair_vec.size(); ++m){
-		plhs_result[m] = pair_vec[m].second;
-		//plhs_result[m] = vectors_mul(pair_vec[m].first,vMatrixs,nrhs,RANK);
-		for(size_t n = 0; n < nrhs; ++n){
-			/*index start with 1*/
-			plhs_pr[m+n*phls_row] = ((pair_vec[m].first[n])+1);
-		}
+	for(size_t m = 0; m < sortVec.size(); ++m){
+		//value
+		plhs_result[m] = sortVec[m].second;
+		//i
+		plhs_pr[m] = (sortVec[m].first.indI);
+		//j
+		plhs_pr[m + phls_row] = (sortVec[m].first.indJ);
 	}
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during converting \n",duration);
+	
+	//---------------
+	// free
+	//---------------
+	free(weight);
+	free(WeightInd);
+	free(IndforI);
+	free(IndforJ);
+	free(IndforKp);
 
-	//display_map(Tensor);
-	delete []weight;
-	delete []WeightInd;
-	std::vector<FactorMatrix*>::iterator itr;
-	for (itr = vMatrixs.begin(); itr != vMatrixs.end() ; ++itr){
-		delete *itr;
-	}
 }
 
-
-
 int sample_index(size_t n, size_t *index, \
-				 size_t L_HEAD, &freq_k,\
+				 size_t L_HEAD, int *freq_k,\
 				 size_t Range, double*pdf, double sum_pdf){
 	/* get n random numbers*/
 	std::vector<double> ind_u;
@@ -315,7 +336,7 @@ int sample_index(size_t n, size_t *index, \
 	Vose's alias method for sample
 */
 int vose_alias(size_t s, size_t *dst, \
-		`	   size_t n, double *pdf,double sum_pdf){
+			   size_t n, double *pdf,double sum_pdf){
 	double *scaled_prob = new double[n];
 	double *table_prob = new double[n];
 	size_t *table_alias = new size_t[n];
@@ -379,4 +400,3 @@ int vose_alias(size_t s, size_t *dst, \
 	delete []table_large;
 	return 1;
 }
-
