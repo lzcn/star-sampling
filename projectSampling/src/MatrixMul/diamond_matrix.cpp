@@ -229,7 +229,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (int k = 0; k < MatA.row; ++k){
 		vose_alias( freq_k[k], (IndforJ + offset), \
 					MatB.row, \
-					(MatB.element + offset*MatB.row), \
+					(MatB.element + k*MatB.row), \
 					MatB.SumofCol[k]);
 		offset += freq_k[k];
 	}
