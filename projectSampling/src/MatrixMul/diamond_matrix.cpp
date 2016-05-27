@@ -349,7 +349,7 @@ int sample_index(size_t S, size_t *index, \
 		index[i] = ind;
 		IndforI[i] = ind % n;
 		IndforK[i] = ind / n;
-		freq_k[ind / n] ++;
+		freq_k[IndforK[i]] ++;
 	}
 	return 1;
 }
