@@ -225,8 +225,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t *IndforKp = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforKp, 0, NumSample*sizeof(size_t));
 	// sampled k's frequency 
-	size_t *freq_k = (size_t*)malloc(MatA.row*sizeof(int));
-	memset(freq_k, 0, MatA.row*sizeof(int));
+	size_t *freq_k = (size_t*)malloc(MatA.row*sizeof(size_t));
+	memset(freq_k, 0, MatA.row*sizeof(size_t));
 	// Do sample S pairs (k, i) ,
 	sample_index(NumSample, WeightInd, \
 				 IndforI, IndforK, \
@@ -349,7 +349,7 @@ int sample_index(size_t S, size_t *index, \
 		index[i] = ind;
 		IndforI[i] = ind % n;
 		IndforK[i] = ind / n;
-		freq_k[IndforK[i]] ++;
+		freq_k[ind / n] ++;
 	}
 	return 1;
 }
