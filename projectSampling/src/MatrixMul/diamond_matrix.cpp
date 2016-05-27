@@ -120,20 +120,26 @@ double vectors_mul(const struct indexIJ &coord, struct Matrix &A, struct Matrix 
 }
 
 /* 
-	sample the pair(k, i)
-	S: times needed to be sampled;
-	index: will return the result index = i * row + k,
-		it is sorted according to i then k;
-	dim: the length of freq_k;
+	Sample the pair(k, i)
+	Suppose the size of weight/ pdf is (m, n);
+	It requires the weight/ pdf to be stored like that
+		weight[index] = weight[k * n + i]:
+	S: number of samples needed to be sampled;
+	index:  the result which index = k * col + i,
+		so that it is sorted according to k then i;
+		and it will be convenience for the next stage;
 	freq_k: will return the number of each k has been sampled;
-	L: the length of the pdf;
+	m and n : the shape of weight;
+		the dimension of feature vector.
 	sum_pdf: the sum of the pdf, which is not one, for the decease
 		of computation cost.
 */
 
 int sample_index(size_t S, size_t *index, \
-				 size_t dim, int *freq_k,\
-				 size_t L, double*pdf, double sum_pdf);
+				 size_t *IndforI, size_t *IndforK, \
+				 size_t *freq_k, \
+				 size_t m, size_t n, \
+				 double*pdf, double sum_pdf);
 
 /* 
 	Vose's alias method for sample;
@@ -184,15 +190,15 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
 	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
 	double tempW = 0;
-	// weight[i * row + k] : i-th column k-th row
-	for(size_t i = 0; i < MatA.col; ++i){
-		for (size_t k = 0; k < MatA.row; ++k){
+	// weight[k * MatA.col + i] : i-th column k-th row
+	for (size_t k = 0; k < MatA.row; ++k){
+		for(size_t i = 0; i < MatA.col; ++i){
 			//w_{ki} = |a_{ki}|*||a_{*i}||_1*||b_{*k}||_1
 			tempW = 1;
 			tempW *= abs(MatA.GetEmelent(k,i));
 			tempW *= MatA.SumofCol[i];
 			tempW *= MatB.SumofCol[k];
-			weight[i*MatA.row + k] = tempW;
+			weight[k*MatA.col + i] = tempW;
 			SumofW += tempW;
 		}
 	}
@@ -206,26 +212,30 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------
 
 	start = clock();
+	// sampled index  for weight
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
 	memset(WeightInd, 0, NumSample*sizeof(size_t));
-	int *freq_k = (int*)malloc(MatA.row*sizeof(int));
-	memset(freq_k, 0, MatA.row*sizeof(int));
-	// sample S pairs (k, i) ,
-	sample_index(NumSample, WeightInd, \
-				 MatA.row, freq_k,\
-				 MatA.row*MatA.col, weight, SumofW);
-	// k, i, j, k'
+	// sampled k, i, j, k'
+	size_t *IndforK = (size_t*)malloc(NumSample*sizeof(size_t));
+	memset(IndforK, 0, NumSample*sizeof(size_t));	
 	size_t *IndforI = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforI, 0, NumSample*sizeof(size_t));
 	size_t *IndforJ = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforJ, 0, NumSample*sizeof(size_t));
 	size_t *IndforKp = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforKp, 0, NumSample*sizeof(size_t));
-	// record all i = index / row; index = i * row + k;
-	// and sample k';
+	// sampled k's frequency 
+	size_t *freq_k = (size_t*)malloc(MatA.row*sizeof(int));
+	memset(freq_k, 0, MatA.row*sizeof(int));
+	// Do sample S pairs (k, i) ,
+	sample_index(NumSample, WeightInd, \
+				 IndforI, IndforK, \
+				 freq_k, \
+				 MatA.row, MatA.col, \
+				 weight, SumofW);
+	// sample k';
 	for (int s = 0; s < NumSample; ++s){
-		IndforI[s] = WeightInd[s] / MatA.row;
-		IndforKp[s] = MatA.randRow(WeightInd[s] / MatA.row);
+		IndforKp[s] = MatA.randRow(IndforI[s]);
 	}
 	// sample j;
 	size_t offset = 0;
@@ -241,8 +251,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t indi,indj,indk,indkp;
 	std::map<struct indexIJ, double> IrJc;
 	for (int s = 0; s < NumSample ; ++s){
-		// sample k'
-		indk = WeightInd[s] % MatA.row;
+		indk = IndforK[s];
 		indkp = IndforKp[s];
 		indi = IndforI[s];
 		indj = IndforJ[s];
@@ -309,29 +318,38 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	free(WeightInd);
 	free(IndforI);
 	free(IndforJ);
+	free(IndforK);
 	free(IndforKp);
 	free(freq_k);
 
 }
 
-int sample_index(size_t n, size_t *index, \
-				 size_t row, int *freq_k,\
-				 size_t Range, double*pdf, double sum_pdf){
-	/* get n random numbers*/
-	std::vector<double> ind_u;
-	for (size_t i = 0; i < n; ++i){
-		ind_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
+int sample_index(size_t S, size_t *index, \
+				 size_t *IndforI, size_t *IndforK, \
+				 size_t *freq_k, \
+				 size_t m, size_t n, \
+				 double*pdf, double sum_pdf){
+	// pdf has size (m, n) the sample 
+	// and the sampled index = k * n + i;
+	// First stage : get S uniform random numbers
+	std::vector<double> rand_u;
+	for (size_t i = 0; i < S; ++i){
+		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
 	}
-	/* sort the random values*/
-	sort(ind_u.begin(),ind_u.end());
-	size_t k = 0;
+	// Sort the random values
+	// It will be sorted according to k then i;
+	sort(rand_u.begin(),rand_u.end());
+	size_t ind = 0;
+	size_t range = m * n;
 	double sum_prob = pdf[0];
-	for (size_t i = 0; i < n; ++i){
-		while((ind_u[i] >= sum_prob) && (k < (Range-1))){
-			sum_prob += pdf[++k];
+	for (size_t i = 0; i < S; ++i){
+		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
+			sum_prob += pdf[++ind];
 		}
-		index[i] = k;
-		freq_k[k % row] ++;
+		index[i] = ind;
+		IndforI[i] = ind % n;
+		IndforK[i] = ind / n;
+		freq_k[IndforK[i]] ++;
 	}
 	return 1;
 }

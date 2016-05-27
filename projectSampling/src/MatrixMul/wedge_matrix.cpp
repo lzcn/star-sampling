@@ -1,8 +1,10 @@
 /*
-	Diamond Sampling for matrix multiplication
+	Wedge Sampling for matrix multiplication
 	Author: Zhi Lu
-	Reference:"Diamond Sampling for Approximate Maximum 
-			All-pairs Dot-product(MAD) Search"
+	References:	[1] "Diamond Sampling for Approximate Maximum 
+					All-pairs Dot-product(MAD) Search";
+				[2] "Approximation Matrix Multiplication 
+					for Pattern Recognition Tasks"
 */
 #include <utility>
 #include <vector>
@@ -49,6 +51,7 @@ struct indexIJ
 };
 
 typedef std::pair<struct indexIJ,double> indValue;
+
 struct Matrix
 {
 	size_t row;
@@ -62,9 +65,9 @@ struct Matrix
 		SumofCol = (double*)malloc(col*sizeof(double));
 		memset(SumofCol, 0, col*sizeof(double));
 		//get the absolute sum of each columns
-		double temp = 0;
+		double temp = 0.0;
 		for(size_t i = 0; i < col; ++i){
-			temp = 0;
+			temp = 0.0;
 			for(size_t j = 0; j < row; ++j){
 				temp += abs(element[i*row + j]);
 			}
@@ -81,9 +84,8 @@ struct Matrix
 		return SumofCol[column];
 	}
 	size_t randRow(size_t n){
-		double x,sum,temp;
-		sum = SumofCol[n];
-		x = sum*((double)rand()/(double)RAND_MAX);
+		double x,temp;
+		x = SumofCol[n]*((double)rand()/(double)RAND_MAX);
 		temp = 0;
 		for (size_t i = 0; i < row; ++i){
 			temp += abs(element[i + n*row]);
@@ -121,10 +123,11 @@ double vectors_mul(const struct indexIJ &coord, struct Matrix &A, struct Matrix 
 
 /* 
 	sample the pair(k, i)
-	S: times needed to be sampled;
+	S: number of samples needed to be sampled;
 	index: will return the result index = i * row + k,
 		it is sorted according to i then k;
-	dim: the length of freq_k;
+	dim: the length of freq_k; also equals to the row of A, or
+		the dimension of feature vector.
 	freq_k: will return the number of each k has been sampled;
 	L: the length of the pdf;
 	sum_pdf: the sum of the pdf, which is not one, for the decease
@@ -162,10 +165,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	clock_t start,finish;
 	double duration;
 	srand(unsigned(time(NULL)));
-	start = clock();
 	//--------------------
 	// Initialization
 	//--------------------
+	start = clock();
 	struct Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	struct Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
 	const int top_t = (int)mxGetPr(prhs[2])[0];
@@ -178,18 +181,21 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Compute weight
 	//-------------------------------------
 
+	start = clock();
 	double SumofW = 0;
+	//weight has the same size of A
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
 	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
 	double tempW = 0;
-	start = clock();
-	for (size_t k = 0; k < MatA.row; ++k){
-		for(size_t i = 0; i < MatA.col; ++i){
+	// weight[i * row + k] : i-th column k-th row
+	for(size_t i = 0; i < MatA.col; ++i){
+		for (size_t k = 0; k < MatA.row; ++k){
+			//w_{ki} = |a_{ki}|*||a_{*i}||_1*||b_{*k}||_1
 			tempW = 1;
 			tempW *= abs(MatA.GetEmelent(k,i));
 			tempW *= MatA.SumofCol[i];
 			tempW *= MatB.SumofCol[k];
-			weight[i*MatA.col + k] = tempW;
+			weight[i*MatA.row + k] = tempW;
 			SumofW += tempW;
 		}
 	}
@@ -347,7 +353,7 @@ int vose_alias(size_t s, size_t *dst, \
 	size_t large_index = 0;
 	/* stage 1: initialization */
 	for (size_t i = 0; i < n; ++i){
-		scaled_prob[i] = abs(pdf[i]) * n;
+		scaled_prob[i] = abs(*(pdf+i)) * n;
 		if ( scaled_prob[i] < sum_pdf ){
 			table_small[small_index] = i;
 			++small_index;
@@ -389,9 +395,9 @@ int vose_alias(size_t s, size_t *dst, \
 		fair_die = rand() % n;
 		u = sum_pdf*(double)rand()/(double)RAND_MAX;
 		if (table_prob[fair_die] >= u){
-			dst[i] = fair_die;
+			*(dst + i) = fair_die;
 		}else{
-			dst[i] = table_alias[fair_die];
+			*(dst + i) = table_alias[fair_die];
 		}
 	}
 	delete []table_prob;
