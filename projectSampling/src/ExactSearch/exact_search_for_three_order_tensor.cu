@@ -44,8 +44,8 @@ struct cuSubIndex
 {
 	size_t x;
 	size_t y;
-	const size_t xLoop;
-	const size_t yLoop;
+	size_t xLoop;
+	size_t yLoop;
 	bool isDone;
 	__device__ cuSubIndex(size_t a,size_t b){
 		x = 0;
@@ -306,7 +306,7 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 							size_t numXaxis, \
 							size_t numYaxis, \
 							int dim, \
-							float *h_maxValue){
+							float *d_maxValue){
 	// shared memory to save top 1024 value of each thread in this block
 	__shared__ float cache[16*16*1024];
 	__shared__ int potIdx[16*16];
@@ -341,7 +341,7 @@ __global__ void GetMaxValue(Matrix *dev_data,\
   	size_t xLoop = (numXaxis + 16*64 - 1) / 16*64;
   	size_t yLoop = (numYaxis + 16*64 - 1) / 16*64;
   	// indicate the current work progress
-  	struct SubIndex subIndex(xLoop,yLoop);
+  	struct cuSubIndex subIndex(xLoop,yLoop);
 
   	// do loop
   	while(!subIndex.isDone){
@@ -360,7 +360,7 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 			           	dev_data[1].element[thread_2D_pos.y*dim + d];
 		}
 		// compute X(i, j, :) and put into the cache
-		for(size_t k = 0; k < dev_dat[2].num; ++k){
+		for(size_t k = 0; k < dev_data[2].num; ++k){
 			temp = 0.0;
 			for(int d = 0; d < dim; ++d){
 				temp += dev_data[2].element[k*dim + d] * \
@@ -468,7 +468,7 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 			}  
 		}
 		for(int i = 0; i < top_t; ++i){
-			h_maxValue[(blockIdx.x + blockIdx.y * 64)*1024 + i] = potV[i];
+			d_maxValue[(blockIdx.x + blockIdx.y * 64)*1024 + i] = potV[i];
 		}
 		free(potV);
   	}
@@ -476,6 +476,7 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 }
 
 __global__ void getPot(float*src, int *potIdxBlock){
+	double temp;
 	int index = 0;
 	bool doneSearch = false;
 	size_t pos = (blockIdx.x + blockIdx.y*64)*top_t;
@@ -530,7 +531,7 @@ __global__ void getPot(float*src, int *potIdxBlock){
   	
 }
 
-__global__ mergeSort(float*src,float*dst, int *potIdxBlock){
+__global__ void mergeSort(float*src,float*dst, int *potIdxBlock){
   	int count = 0;
  	for(int m = 0; m < 64; ++m){
 		for(int n = 0; n < 64; ++n){
