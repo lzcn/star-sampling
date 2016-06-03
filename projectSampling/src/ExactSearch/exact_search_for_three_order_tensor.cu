@@ -9,6 +9,10 @@
 // find top 1024 value
 #define top_t 1024
 
+const dim3 blockSize(16, 16, 1);
+const dim3 gridSize(64, 64, 1);
+const size_t BlockSize = gridSize.x * gridSize.y;
+
 static char *line = NULL;
 static int max_line_len;
 
@@ -29,17 +33,13 @@ static char* readline(FILE *input)
 	}
 	return line;
 }
-//------------------------------------------------
-// cuSubIndex is used for loop
+
 /* 
+	cuSubIndex is used for loop
 	data: 
-		index_cur: indicate the current index for 
-		index_max: each element is the number vector
-				of corresponding matrix
-	method: 
-		+ :add t to current index
+		x, y: indicate the current index;
+		xLoop, yLoop: the max for x and y;
 */
-//------------------------------------------------
 struct cuSubIndex
 {
 	size_t x;
@@ -69,19 +69,31 @@ struct cuSubIndex
 };
 
 
-// data struct : matrix
+/* 
+	matrix
+*/
 typedef struct 
 {
+	// dimension of each vector
 	size_t dim;
+	// number of vectors
 	size_t num;
+	// element of the matrix
 	float *element;
 }Matrix;
 
-__host__ __device__ int doInsert(float value, float* toInsert, int num){
+/*
+	insert the value to a sorted list
+	value: the value to be inserted
+	toInset: the list
+	num: the length of list
+*/
+__device__ int doInsert(float value, float* toInsert, int num){
 	float front,next;
 	for(int i = 0; i < num; ++i){
+		// find where to insert
 		if(value > toInsert[i]){
-			// find ans insert
+			// insert the value before i
 			front = toInsert[i];
 			toInsert[i] = value;
 			// shift the left element
@@ -90,6 +102,7 @@ __host__ __device__ int doInsert(float value, float* toInsert, int num){
 				toInsert[j] = front;
 				front = next;
 			}
+			// return the insert position
 			return i;
 		}
 
@@ -97,15 +110,36 @@ __host__ __device__ int doInsert(float value, float* toInsert, int num){
 	return num;
 }
 
-__global__ 
-void GetMaxValue(Matrix *dev_data, \
-						int numMat, \
-						size_t *d_maxValue, \
-						int d, \
-						float*max_value);
-__global__
-void mergeSort();
+/*
+	h_maxValue has size gridSize*top-t;
+	each block will compute their own top-t value and 
+	then save into the corresponding position in h_maxValue;
+	numXaxis, numYaxis : the number of vector of 
+	Matrix X and Matrix Y;
+*/
+__global__ void GetMaxValue(Matrix *dev_data,\
+							size_t numXaxis, \
+							size_t numYaxis, \
+							int dim, \
+							float *h_maxValue);
+/*
+	see h_maxValue has gridSize vectors
+	for each vector containing top-t values in h_maxValue
+	find how many values the vector has that has the potential 
+	to be in order top-t in global;
+*/
+__global__ void getPot(float*h_maxValue,int*potIdxBlock);
 
+/*
+	merge the h_maxValue into one vector (top-t)
+	according to the potential we get;
+*/
+__global__ void mergeSort(float*h_maxValue,float*dst,int*potIdxBlock);
+
+/*	
+	main function
+	input: data-filename, out-filename
+*/
 int main(int argc, char const *argv[])
 {
 	//----------------------------
@@ -173,11 +207,9 @@ int main(int argc, char const *argv[])
 	if(readline(fp) != NULL){
 		dim = atoi(line);
 	}
-	printf(">> Loading data completed!\n");
 	//-----------------------------------
 	// Load data's element from file
 	//-----------------------------------
-	printf(">> Starting exact search!\n");
 	Matrix *data = (Matrix*)malloc(numMat*sizeof(Matrix));
 	for(int i = 0; i < numMat; ++i){
 		data[i].num = max_index[i];
@@ -199,13 +231,9 @@ int main(int argc, char const *argv[])
 	//-----------------------------------
 	// Copy the data in host to device
 	//-----------------------------------
-
+	printf(">> Copying data to device!\n");
 	Matrix *h_data = (Matrix*)malloc(numMat*sizeof(Matrix));
 	memcpy(h_data, data, numMat *sizeof(Matrix));
-	// max index stored in device
-	size_t *dev_index_max;
-	cudaMalloc(&dev_index_max,numMat*sizeof(size_t));
-	cudaMemcpy(dev_index_max, max_index, numMat*sizeof(size_t), cudaMemcpyHostToDevice);
 	for(int i = 0; i < numMat; ++i){
 		cudaMalloc( &(h_data[i].element), \
 					data[i].dim*data[i].num*sizeof(float));
@@ -214,54 +242,44 @@ int main(int argc, char const *argv[])
 					data[i].dim*data[i].num*sizeof(float), \
 					cudaMemcpyHostToDevice);
 	}
-
 	Matrix* dev_data;
 	cudaMalloc(&dev_data, numMat*sizeof(Matrix));
 	cudaMemcpy(dev_data, h_data, numMat*sizeof(Matrix), cudaMemcpyHostToDevice);
+	
+	printf(">> Loading data completed!\n");
 	//--------------------------------------------------------------
 	// Create variables to save the top 1024 value of each block
 	//--------------------------------------------------------------
-	const size_t numRows = data[0].num;
-	const size_t numCols = data[1].num;
-
-	const dim3 blockSize(16, 16, 1);
-	const dim3 gridSize(64, 64, 1);
-
-	size_t BlockSize = gridSize.x * gridSize.y;
-
+	printf(">> Starting search!\n");
 	float *h_maxValue,*d_maxValue;
+	float *h_top_t, *d_top_t;
 	// d_maxValue is the place to save the top-t values of each block
 	cudaMalloc(&d_maxValue, BlockSize*top_t*sizeof(float));
-	h_maxValue = (float*)malloc(BlockSize*top_t*sizeof(float));
-	//-----------------
+	cudaMalloc(&h_top_t, top_t*sizeof(float));
+	d_top_t = (float*)malloc(top_t*sizeof(float));
+	//------------------------------------------------------------
 	// Invoke kernel
-	//-----------------
+	//------------------------------------------------------------
 	GetMaxValue<<<gridSize,blockSize>>>(dev_data, \
-									    numMat, \
-										dev_index_max, \
+									    data[0].num, data[1].num, \
 										dim, \
 										d_maxValue);
+	cudaDeviceSynchronize();
+	int *potIdxBlock;
+	cudaMalloc(&potIdxBlock, BlockSize*sizeof(int));
+	getPot<<<gridSize,1>>>(d_maxValue,potIdxBlock);
+	cudaDeviceSynchronize();
+	mergeSort<<<1,1>>>(d_maxValue,d_top_t,potIdxBlock);
 	//--------------------------------------------------
 	// Copy result from device memory to host memory
 	//--------------------------------------------------
-	cudaMemcpy(max_value,d_maxValue,BlockSize*top_t*sizeof(float),cudaMemcpyDeviceToHost);
-	//------------------------------------
-	// Get the top 1K of max_value
-	//------------------------------------
-	for(int i = 1; i < BlockSize; ++i){
-		for(int j = 0; j < top_t; ++j){
-			if(max_value[i*top_t + j] > max_value[top_t-1]){
-				//insert
-				doInsert(max_value[i*top_t + j], max_value, top_t);
-			}
-		}
-	}
+	cudaMemcpy(h_top_t, d_top_t, top_t*sizeof(float),cudaMemcpyDeviceToHost);
 	//----------------------------
-	// write the top-1K to file
+	// write the top-t value to file
 	//----------------------------
 	FILE *fp_out = fopen(resultfile, "w");
 	for (int i = 0; i < top_t; ++i){
-		fprintf(fp_out,"%f\n",max_value[i]);
+		fprintf(fp_out,"%f\n",h_top_t[i]);
 	}
 	fclose(fp_out);
 	//-----------------------------------
@@ -271,30 +289,27 @@ int main(int argc, char const *argv[])
 		cudaFree(h_data[i].element);
 		free(data[i].element); 
 	}
-	cudaFree(dev_index_max);
 	cudaFree(dev_data);
 	cudaFree(d_maxValue);
+	cudaFree(d_top_t);
+	cudaFree(potIdxBlock);
 	free(line);
 	free(max_index);
 	free(data);
 	free(h_data);
-	free(max_value);
-
+	free(h_top_t);
 	return 0;
 }
 
-/*
-	
-*/
+
 __global__ void GetMaxValue(Matrix *dev_data,\
-							int numMat, \
 							size_t numXaxis, \
 							size_t numYaxis, \
 							int dim, \
-							float *max_value){
+							float *h_maxValue){
 	// shared memory to save top 1024 value of each thread in this block
 	__shared__ float cache[16*16*1024];
-
+	__shared__ int potIdx[16*16];
 	// the thread's potions
   	// for each thread in the block
 	// the index of this thread is the block is
@@ -358,26 +373,30 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 		++subIndex;
 	}
 	__syncthreads();
+
 	//------------------------------------------------------
-	// merge the cache to one vector contain the top-t value
+	// merge the cache to one vector containing the top-t value
 	//------------------------------------------------------
 
-	// for each vector in cache, there are 16 * 16 vectors we called beams
+	// there are 16 * 16 vectors,
+	// for each vector called a beam
 	// 16 * 16 is the same size of thread size per block;
-	// each thread deal with on beam
-	// if one element in a beam is the top-t of all
-	// then put it into the final vector in global memory
-	size_t index = 0;
+	// each thread process on beam
+	// find the top-s value in a beam are potential to 
+	// be top-t of global
+	// using all of top-s values in every beam 
+	// we can get the global top-t values of this block
+	int index = 0;
 	bool doneSearch = false;
 	for(int i = 0; i < top_t; ++i){
-		// the position is at least i
-		index = i;
+		// the order of cache[cache_pos + i] is at least i
 		temp = cache[cache_pos + i];
+		index = i;
 		doneSearch = false;
 		// compare this value to others
 		// if encounter a value is other beam which bigger than it
 		// increment index and go on, otherwise 
-		// if encounter a value no bigger than it
+		// encountering a value no bigger than it
 		// go to another beam to do comparison
 		for(int m = 0; m < 16; ++m){
 			for(int n = 0; n < 16; ++n){
@@ -396,37 +415,153 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 						break;
 					}
 					// if this value is out of the top-t
-					// we can finish search
+					// we can finish searching
 					if(index >= top_t){
 						doneSearch = true;
 						break;
-					}	
+					}
 				}
 				if(doneSearch) break;
 			}
-		if(doneSearch) break;
+			if(doneSearch){
+				break;
+			}
 		}
-		// we have found the index of the value
-		// if it is within top-t
+		// if beam[i] has no potential to be the top-t
+		// then the number of elements have the potential
+		// is i then record it;
 		if(doneSearch){
+			potIdx[threadIdx.x + threadIdx.y * 16] = i;
 			break;
-		}else{
-			// write to the global memory
-			// 
-			dev_max_value[(blockIdx.x + blockIdx.y*gridSize.x)*top_t + index] = temp;
 		}
-	
   	}
   	
-
-	
-
-	// until now we have compute all values of X(i, j, k)
-	// and write the top-t values of each block to
-	// global memory , obtain BlockSize * top-t values 
-	// to be merge in the same way
-	// it need to be done by another kernel.
-
+  	__syncthreads();
+  	if(threadIdx.x == 0 && threadIdx.y == 0){
+  		int count = 0;
+ 		for(int m = 0; m < 16; ++m){
+			for(int n = 0; n < 16; ++n){
+				count += potIdx[threadIdx.x + threadIdx.y * 16];
+			}
+		}
+		float *potV = (float*)malloc(count*sizeof(float));
+		int p = 0;
+ 		for(int m = 0; m < 16; ++m){
+			for(int n = 0; n < 16; ++n){
+				for(int i = 0 ; i < potIdx[threadIdx.x + threadIdx.y * 16];++i){
+					potV[p] = cache[(m + n * 16) * 1024 + i];
+					++p;
+				}
+			}
+		}
+		//sort potV
+		for(int i = 1; i < count; i++){  
+			if(potV[i] > potV[i-1]){
+			    int j = i - 1;
+			    float x = potV[i];
+			    potV[i] = potV[i-1];
+			    while(j >=0 && x > potV[j]){
+			        potV[j + 1] = potV[j];
+			        j--;
+			    }
+			    potV[j+1] = x;
+			}  
+		}
+		for(int i = 0; i < top_t; ++i){
+			h_maxValue[(blockIdx.x + blockIdx.y * 64)*1024 + i] = potV[i];
+		}
+		free(potV);
+  	}
 	free(mulValue);
-	
+}
+
+__global__ void getPot(float*src, int *potIdxBlock){
+	int index = 0;
+	bool doneSearch = false;
+	size_t pos = (blockIdx.x + blockIdx.y*64)*top_t;
+	float *potV = (float*)malloc(64*64*sizeof(float));
+	for(int i = 0; i < top_t; ++i){
+		// the order of cache[cache_pos + i] is at least i
+		temp = src[pos + i];
+		index = i;
+		doneSearch = false;
+		// compare this value to others
+		// if encounter a value is other beam which bigger than it
+		// increment index and go on, otherwise 
+		// encountering a value no bigger than it
+		// go to another beam to do comparison
+		for(int m = 0; m < blockDim.x; ++m){
+			for(int n = 0; n < blockDim.y; ++n){
+				// escape self beam
+				if(m == blockDim.x && n == blockDim.y){
+					continue; 
+				}
+				// search in other beam
+				for(int k = 0; k < top_t; ++k){
+					// encounter a bigger value 
+					if(temp < src[pos + k]){
+						++index;
+					}else{
+						// this value is bigger than the left
+						// of this beam, so no need to search deeper
+						break;
+					}
+					// if this value is out of the top-t
+					// we can finish searching
+					if(index >= top_t){
+						doneSearch = true;
+						break;
+					}
+				}
+				if(doneSearch) break;
+			}
+			if(doneSearch){
+				break;
+			}
+		}
+		// if beam[i] has no potential to be the top-t
+		// then the number of elements have the potential
+		// is i then record it;
+		if(doneSearch){
+			potIdxBlock[(blockIdx.x + blockIdx.y*64)] = i;
+			break;
+		}
+  	}
+  	
+}
+
+__global__ mergeSort(float*src,float*dst, int *potIdxBlock){
+  	int count = 0;
+ 	for(int m = 0; m < 64; ++m){
+		for(int n = 0; n < 64; ++n){
+			count += potIdxBlock[m + n * 64];
+		}
+	}
+	float *potV = (float*)malloc(count*sizeof(float));
+	int p = 0;
+ 	for(int m = 0; m < 64; ++m){
+		for(int n = 0; n < 64; ++n){
+			for(int i = 0 ; i < potIdxBlock[m + n * 64];++i){
+				potV[p] = src[(m + n * 64) * 1024 + i];
+				++p;
+			}
+		}
+	}
+	//sort potV
+	for(int i = 1; i < count; i++){  
+		if(potV[i] > potV[i-1]){
+		    int j = i - 1;
+		    float x = potV[i];
+		    potV[i] = potV[i-1];
+		    while(j >= 0 && x > potV[j]){
+		        potV[j + 1] = potV[j];
+		        j--;
+		    }
+		    potV[j+1] = x;
+		}  
+	}
+	for(int i = 0; i < top_t; ++i){
+		dst[i] = potV[i];
+	}
+	free(potV);
 }
