@@ -262,7 +262,7 @@ int main(int argc, char const *argv[])
 	//------------------------------------------------------------
 	// Invoke kernel
 	//------------------------------------------------------------
-	GetMaxValue<<<gridSize,blockSize,16*16*1024*sizeof(float)>>>(dev_data, \
+	GetMaxValue<<<gridSize,blockSize,16*16*1025*sizeof(float)>>>(dev_data, \
 									    data[0].num, data[1].num, \
 										dim, \
 										d_maxValue);

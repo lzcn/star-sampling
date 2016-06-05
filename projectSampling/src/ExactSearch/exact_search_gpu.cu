@@ -7,11 +7,11 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 // find top 1K value
-#define TOP1K 1000
+#define TOP_T 1024
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 const int threadsPerBlock = 4;
-const int BlockSize = 2000;
+const int BlockSize = 500000;
 
 static char *line = NULL;
 static int max_line_len;
@@ -119,6 +119,7 @@ __host__ __device__ int doInsert(float value, float* toInsert, int num){
 	}
 	return num;
 }
+void mergeSort(float*src,float*dst, int *potIdxBlock);
 
 __global__ void GetMaxValue(Matrix *dev_data, \
 						int numMat, \
@@ -126,6 +127,7 @@ __global__ void GetMaxValue(Matrix *dev_data, \
 						int d, \
 						float*max_value);
 
+__global__ void getPot(float *src, int *potIdxBlock);
 int main(int argc, char const *argv[])
 {
 	//----------------------------
@@ -194,11 +196,9 @@ int main(int argc, char const *argv[])
 	if(readline(fp) != NULL){
 		dim = atoi(line);
 	}
-	printf(">> Laoding data comleted!\n");
 	//-----------------------------------
 	// Load data's element from file
 	//-----------------------------------
-	printf(">> Starting exact search!\n");
 	Matrix *data = (Matrix*)malloc(numMat*sizeof(Matrix));
 	for(int i = 0; i < numMat; ++i){
 		data[i].num = max_index[i];
@@ -243,37 +243,69 @@ int main(int argc, char const *argv[])
 	// Varible to save the top BlockSize parts of 1K value
 	//----------------------------------------------------
 	float *max_value,*dev_max_value;
-	cudaMalloc(&dev_max_value, BlockSize*TOP1K*sizeof(float));
-	max_value = (float*)malloc(BlockSize*TOP1K*sizeof(float));
+	cudaMalloc(&dev_max_value, BlockSize*TOP_T*sizeof(float));
+	max_value = (float*)malloc(BlockSize*TOP_T*sizeof(float));
+	printf(">> Laoding data comleted!\n");
 	//-----------------
 	// Invoke kernel
 	//-----------------
+	printf(">> Starting exact search!\n");
+	cudaEvent_t start, stop;
+	float elapsedTime = 0;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
 	GetMaxValue<<<BlockSize,threadsPerBlock>>>(dev_data, \
 											   numMat, \
 											   dev_index_max, \
 											   dim, \
 											   dev_max_value);
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&elapsedTime, start, stop);
+	printf(">> GetMaxValue costs %f\n", elapsedTime);
+	cudaDeviceSynchronize();
+	//-------------------------------------------------
+	// merge the BlockSize of TOP_T values into one
+	//-------------------------------------------------
+	int *potIdxBlock;
+	cudaMalloc(&potIdxBlock, BlockSize*sizeof(int));
+	cudaEventRecord(&start, 0);
+	getPot<<<BlockSize,1>>>(dev_max_value,potIdxBlock);
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&elapsedTime, start, stop);
+	printf(">> getPot costs %f\n", elapsedTime);
+	
 	//--------------------------------------------------
 	// Copy result from device memory to host memory
 	//--------------------------------------------------
-	cudaMemcpy(max_value,dev_max_value,BlockSize*TOP1K*sizeof(float),cudaMemcpyDeviceToHost);
+	int *h_potIdxBlock;
+	h_potIdxBlock = (int*)malloc(BlockSize*sizeof(int));
+	cudaMemcpy(h_potIdxBlock,potIdxBlock,BlockSize*sizeof(int),cudaMemcpyDeviceToHost);
+	cudaMemcpy(max_value,dev_max_value,BlockSize*TOP_T*sizeof(float),cudaMemcpyDeviceToHost);
 	//------------------------------------
 	// Get the top 1K of max_value
 	//------------------------------------
+	float *top_t = (float*)malloc(TOP_T*sizeof(float));
+	mergeSort(max_value,top_t,h_potIdxBlock);
+	/*
 	for(int i = 1; i < BlockSize; ++i){
-		for(int j = 0; j < TOP1K; ++j){
-			if(max_value[i*TOP1K + j] > max_value[TOP1K-1]){
+		for(int j = 0; j < TOP_T; ++j){
+			if(max_value[i*TOP_T + j] > max_value[TOP_T-1]){
 				//insert
-				doInsert(max_value[i*TOP1K + j], max_value, TOP1K);
+				doInsert(max_value[i*TOP_T + j], max_value, TOP_T);
 			}
 		}
 	}
+	*/
 	//----------------------------
 	// write the top-1K to file
 	//----------------------------
 	FILE *fp_out = fopen(resultfile, "w");
-	for (int i = 0; i < TOP1K; ++i){
-		fprintf(fp_out,"%f\n",max_value[i]);
+	for (int i = 0; i < TOP_T; ++i){
+		fprintf(fp_out,"%f\n",top_t[i]);
+		//fprintf(fp_out,"%f\n",max_value[i]);
 	}
 	fclose(fp_out);
 	//-----------------------------------
@@ -286,11 +318,14 @@ int main(int argc, char const *argv[])
 	cudaFree(dev_index_max);
 	cudaFree(dev_data);
 	cudaFree(dev_max_value);
+	cudaFree(potIdxBlock);
 	free(line);
 	free(max_index);
 	free(data);
 	free(h_data);
 	free(max_value);
+	free(h_potIdxBlock);
+	free(top_t);
 
 	return 0;
 }
@@ -301,7 +336,7 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 							int d, \
 							float *max_value){
 	// shared memory to save threadsPerBlock parts of top 1K value
-	__shared__ float cache[threadsPerBlock][TOP1K];
+	__shared__ float cache[threadsPerBlock][TOP_T];
 	int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
 
@@ -309,10 +344,10 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 	float *mul_value;
 	float tmp_max;
 	struct cuSubIndex subIndex(numMat, max_index);
-	thread_max_value = (float*)malloc(TOP1K*sizeof(float));
+	thread_max_value = (float*)malloc(TOP_T*sizeof(float));
 	mul_value = (float*)malloc(d*sizeof(float));
 
-	for(int i = 0; i < TOP1K; ++i){
+	for(int i = 0; i < TOP_T; ++i){
 		thread_max_value[i] = 0;
 	}
 	for(int i = 0; i < d; ++i){
@@ -329,13 +364,13 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 		for(int i = 0; i < d; ++i){
 			tmp_max += mul_value[i];
 		}
-		if(tmp_max > thread_max_value[TOP1K - 1]){
-			doInsert(tmp_max,thread_max_value,TOP1K);
+		if(tmp_max > thread_max_value[TOP_T - 1]){
+			doInsert(tmp_max,thread_max_value,TOP_T);
 		}
 		subIndex = subIndex + blockDim.x * gridDim.x;
 	}
 	// put the top 1K value of thread to global memory
-	for(int i = 0; i < TOP1K; ++i){
+	for(int i = 0; i < TOP_T; ++i){
 		cache[threadIdx.x][i] = thread_max_value[i];
 	}
 	__syncthreads();
@@ -344,10 +379,10 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 	// merge two 1K value vector into one vector
 	while(cacheIndex != 0){
 		if(threadIdx.x < cacheIndex){
-			for(int i = 0; i < TOP1K; ++i){
-				if(cache[threadIdx.x + cacheIndex][i] > cache[threadIdx.x][TOP1K - 1]){
+			for(int i = 0; i < TOP_T; ++i){
+				if(cache[threadIdx.x + cacheIndex][i] > cache[threadIdx.x][TOP_T - 1]){
 					doInsert(cache[threadIdx.x + cacheIndex][i],\
-							&(cache[threadIdx.x][0]),TOP1K);
+							&(cache[threadIdx.x][0]),TOP_T);
 				}
 			}
 		}
@@ -358,10 +393,89 @@ __global__ void GetMaxValue(Matrix *dev_data,\
 	// put it into global memory.
 	// final BlockSize 1K value vector
 	if(threadIdx.x == 0){
-		for(int i = 0; i < TOP1K; ++i){
-			max_value[TOP1K*blockIdx.x + i] = cache[0][i];
+		for(int i = 0; i < TOP_T; ++i){
+			max_value[TOP_T*blockIdx.x + i] = cache[0][i];
 		}
 	}
 	free(thread_max_value);
 	free(mul_value);
+}
+
+
+__global__ void getPot(float *src, int *potIdxBlock){
+	double temp;
+	int index = 0;
+	bool doneSearch = false;
+	size_t pos = blockIdx.x*TOP_T;
+	float *potV = (float*)malloc(BlockSize*sizeof(float));
+	for(int i = 0; i < TOP_T; ++i){
+		// the order of cache[cache_pos + i] is at least i
+		temp = src[pos + i];
+		index = i;
+		doneSearch = false;
+		// compare this value to others
+		// if encounter a value is other beam which bigger than it
+		// increment index and go on, otherwise 
+		// encountering a value no bigger than it
+		// go to another beam to do comparison
+		for(int m = 0; m < blockDim.x; ++m){
+			// escape self beam
+			if(m == blockIdx.x) continue; 
+			// search in other beam
+			for(int k = 0; k < TOP_T; ++k){
+				// encounter a bigger value 
+				if(temp < src[pos + k]){
+					++index;
+				}else{
+					break;
+				}
+				// if this value is out of the top-t
+				// we can finish searching
+				if(index >= TOP_T){
+					doneSearch = true;
+					break;
+				}
+			}
+		}
+		// if beam[i] has no potential to be the top-t
+		// then the number of elements have the potential
+		// is i then record it;
+		if(doneSearch){
+			potIdxBlock[blockIdx.x] = i;
+			break;
+		}
+  	}
+  	
+}
+
+void mergeSort(float*src,float*dst, int *potIdxBlock){
+  	int count = 0;
+ 	for(int m = 0; m < BlockSize; ++m){
+		count += potIdxBlock[m];
+	}
+	float *potV = (float*)malloc(count*sizeof(float));
+	int p = 0;
+ 	for(int m = 0; m < BlockSize; ++m){
+		for(int i = 0 ; i < potIdxBlock[m]; ++i){
+			potV[p] = src[m*TOP_T + i];
+			++p;
+		}
+	}
+	//sort potV
+	for(int i = 1; i < count; i++){  
+		if(potV[i] > potV[i-1]){
+		    int j = i - 1;
+		    float x = potV[i];
+		    potV[i] = potV[i-1];
+		    while(j >= 0 && x > potV[j]){
+		        potV[j + 1] = potV[j];
+		        j--;
+		    }
+		    potV[j+1] = x;
+		}  
+	}
+	for(int i = 0; i < TOP_T; ++i){
+		dst[i] = potV[i];
+	}
+	free(potV);
 }
