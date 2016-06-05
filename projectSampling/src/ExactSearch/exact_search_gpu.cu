@@ -250,32 +250,25 @@ int main(int argc, char const *argv[])
 	// Invoke kernel
 	//-----------------
 	printf(">> Starting exact search!\n");
-	cudaEvent_t start, stop;
-	float elapsedTime = 0;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-	cudaEventRecord(start, 0);
+	GpuTimer timer;
+	timer.Start();
 	GetMaxValue<<<BlockSize,threadsPerBlock>>>(dev_data, \
 											   numMat, \
 											   dev_index_max, \
 											   dim, \
 											   dev_max_value);
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&elapsedTime, start, stop);
-	printf(">> GetMaxValue costs %f\n", elapsedTime);
+	timer.Stop();
+	printf(">> GetMaxValue costs %f\n", timer.Elapsed());
 	cudaDeviceSynchronize();
 	//-------------------------------------------------
 	// merge the BlockSize of TOP_T values into one
 	//-------------------------------------------------
 	int *potIdxBlock;
 	cudaMalloc(&potIdxBlock, BlockSize*sizeof(int));
-	cudaEventRecord(&start, 0);
+	timer.Start();
 	getPot<<<BlockSize,1>>>(dev_max_value,potIdxBlock);
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&elapsedTime, start, stop);
-	printf(">> getPot costs %f\n", elapsedTime);
+	timer.Stop();
+	printf(">> getPot costs %f msecs\n", timer.Elapsed());
 	
 	//--------------------------------------------------
 	// Copy result from device memory to host memory
