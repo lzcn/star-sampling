@@ -251,7 +251,9 @@ int main(int argc, char const *argv[])
 	// Create variables to save the top 1024 value of each block
 	//--------------------------------------------------------------
 	printf(">> Starting search!\n");
-	float *h_maxValue,*d_maxValue;
+	// the temporary max value for every block
+	float *d_maxValue;
+	// the top-t value of global
 	float *h_top_t, *d_top_t;
 	// d_maxValue is the place to save the top-t values of each block
 	cudaMalloc(&d_maxValue, BlockSize*top_t*sizeof(float));
@@ -260,7 +262,7 @@ int main(int argc, char const *argv[])
 	//------------------------------------------------------------
 	// Invoke kernel
 	//------------------------------------------------------------
-	GetMaxValue<<<gridSize,blockSize>>>(dev_data, \
+	GetMaxValue<<<gridSize,blockSize,16*16*1024*sizeof(float)>>>(dev_data, \
 									    data[0].num, data[1].num, \
 										dim, \
 										d_maxValue);
