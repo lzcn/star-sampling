@@ -65,6 +65,11 @@ public:
 	compute the dot product of two matrices' column
 	ans = A(:,m)'*B(:,n)
 */
-double MatrixColMul(const Matrix &A, cosnt Matrix &B, \
+double MatrixColMul(const Matrix &A, const Matrix &B, \
 					size_t m, size_t n);
+
+double MatrixColMul(const Matrix &A, \
+					const Matrix &B, \
+					const Matrix &C, \
+					size_t m, size_t n, size_t p);
 #endif

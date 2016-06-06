@@ -130,3 +130,19 @@ double MatrixColMul(const Matrix &A, const Matrix &B, \
 	}
 	return temp;
 }
+
+double MatrixColMul(const Matrix &A, \
+					const Matrix &B, \
+					const Matrix &C, \
+					size_t m, size_t n, size_t p){
+		if(A.row != B.row || B.row != C.row){
+		printf("<TrackBack:MatrixColMul>row size doesn't match\n");
+		return 0;
+	}
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t i = 0; i < row; ++i){
+		temp += A[m * row + i]*B[n * row + i]*C[p * row + i];
+	}
+	return temp;
+}
