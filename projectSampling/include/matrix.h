@@ -3,6 +3,7 @@
 
 
 #include <vector>
+#include <list>
 
 /*
 	class for point2D
@@ -77,5 +78,5 @@ double MatrixColMul(const Matrix &A, \
 	insert p to the list;
 	length: size of list;
 */
-int doInsert(double p, double*list, int length);
+void doInsert(double p, std::list<double> &listTop);
 #endif

@@ -147,21 +147,19 @@ double MatrixColMul(const Matrix &A, \
 	return temp;
 }
 
-int doInsert(double p, double *list, int length){
-    double front,next;
-    for(size_t i = 0; i < length; ++i){
-        if(p > list[i]){
-            // find and insert
-            front = list[i];
-            list[i] = p;
-            // shift the left element
-            for(int j = (i + 1); j < length; ++j){
-                next = list[j];
-                list[j] = front;
-                front = next;
-            }
-            return i;
+void doInsert(double p, std::list<double> &listTop){
+    std::list<double>::iterator itr = listTop.begin();
+    if(p > listTop.front()){
+        listTop.push_front(p);
+        listTop.pop_back();
+        return;
+    }
+    itr++;
+    for(;itr != listTop.end(); ++itr){
+        if(p > (*itr)){
+            listTop.insert(itr,p);
+            listTop.pop_back();
+            return;
         }
     }
-    return length;
 }
