@@ -1,7 +1,7 @@
 % run demo
 %% moivelens
 % read data userID , itemID ,tagID ,posts
-filename = 'movielens.dat';
+filename = 'data\movielens.dat';
 delimiter = '\t';
 startRow = 2;
 formatSpec = '%f%f%f%f%[^\n\r]';
