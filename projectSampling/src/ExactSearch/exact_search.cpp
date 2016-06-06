@@ -15,6 +15,7 @@ void disp_coord(const size_t* cur_ind,int nrhs){
     printf("\n");
 
 }
+
 class IndexforLoop
 {
 public:
