@@ -72,4 +72,10 @@ double MatrixColMul(const Matrix &A, \
 					const Matrix &B, \
 					const Matrix &C, \
 					size_t m, size_t n, size_t p);
+/*
+	list is sorted in ascending order;
+	insert p to the list;
+	length: size of list;
+*/
+int doInsert(double p, double*list, int length);
 #endif
