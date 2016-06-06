@@ -130,10 +130,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     */
 
     double max_v = 0.0;
-    printf(">>dealing      ");
     while(!cloop.isdone()){
-
-        printf("\b\b\b\b%.2f",1.0*cloop.get_ind()[nrhs-1]/p[nrhs-1]);
         temp_value = all_col_mul(cloop.get_ind(),v_pr,rank_size,nrhs);
         if(temp_value > max_value[num_top]){
             doInsert(temp_value,max_value,num_top);
