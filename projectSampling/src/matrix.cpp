@@ -115,3 +115,18 @@ size_t Martrix::randRow(size_t n){
 	}
 	return (row-1);
 }
+
+
+double MatrixColMul(const Matrix &A, const Matrix &B, \
+					size_t m, size_t n){
+	if(A.row != B.row){
+		printf("<TrackBack:MatrixColMul>row size doesn't match\n");
+		return 0;
+	}
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t i = 0; i < row; ++i){
+		temp += A[m * row + i]*B[n * row + i];
+	}
+	return temp;
+}

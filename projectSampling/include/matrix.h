@@ -61,6 +61,10 @@ public:
 	// with probability abs(M_{m,n})/SumofCol(n)
 	size_t randRow(size_t n);
 };
-
-
+/*
+	compute the dot product of two matrices' column
+	ans = A(:,m)'*B(:,n)
+*/
+double MatrixColMul(const Matrix &A, cosnt Matrix &B, \
+					size_t m, size_t n);
 #endif
