@@ -79,4 +79,5 @@ double MatrixColMul(const Matrix &A, \
 	length: size of list;
 */
 void doInsert(double p, std::list<double> &listTop);
+
 #endif

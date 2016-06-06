@@ -15,7 +15,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     Matrix B(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
     Matrix C(mxGetM(prhs[2]),mxGetN(prhs[2]),mxGetPr(prhs[2]));
 
-    std::list<float> listTop;
+    std::list<double> listTop;
 
     const int top_t = 1000;
     double temp = 0.0;
@@ -47,7 +47,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     plhs[0] = mxCreateDoubleMatrix(listTop.size(),1,mxREAL);
     double *topValue = mxGetPr(plhs[0]);
+    std::list<double>::iterator itr = listTop.begin();
     for(int i = 0; i < listTop.size(); ++i){
-        topValue[i] = listTop[i];
+        topValue[i] = (*itr);
+        ++itr;
     }
 }
