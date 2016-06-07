@@ -17,7 +17,3 @@ mex ('-v','-largeArrayDims',[src_path,'exact_search.cpp']);
 mex ('-v',[src_path,'merge.cpp']);
 % compile diamondsamping
 mex ('-v','-largeArrayDims',[src_path,'diamondsampling.cpp'],[src_path,'tensor.cpp'],ipath);
-mex ('-v','-largeArrayDims',[src_path,'ds100k.cpp'],[src_path,'tensor.cpp'],ipath);
-mex ('-v','-largeArrayDims',[src_path,'ds1k.cpp'],[src_path,'tensor.cpp'],ipath);
-mex ('-v','-largeArrayDims',[src_path,'ds10k.cpp'],[src_path,'tensor.cpp'],ipath);
-mex ('-v','-largeArrayDims',[src_path,'ds1m.cpp'],[src_path,'tensor.cpp'],ipath);
