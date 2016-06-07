@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <list>
+#include <map>
+#include <algorithm>
 
 /*
 	class for point2D
@@ -12,10 +14,10 @@ class point2D
 {
 public:
 	point2D(size_t i, size_t j);
-	~point2D();
-	bool operator<(const point2D &toCmp);
-	bool operator==(const point2D &toCmp);
-	bool operator>(const point2D &toCmp);
+	~point2D(){};
+	bool operator<(const point2D &toCmp)const;
+	bool operator==(const point2D &toCmp)const;
+	bool operator>(const point2D &toCmp)const;
 	size_t x;
 	size_t y;
 };
@@ -28,10 +30,10 @@ class point3D
 {
 public:
 	point3D(size_t i, size_t j, size_t k);
-	~point3D();
-	bool operator<(const point3D &toCmp);
-	bool operator==(const point3D &toCmp);
-	bool operator>(const point3D &toCmp);
+	~point3D(){};
+	bool operator<(const point3D &toCmp)const;
+	bool operator==(const point3D &toCmp)const;
+	bool operator>(const point3D &toCmp)const;
 	size_t x;
 	size_t y;
 	size_t z;
@@ -80,4 +82,34 @@ double MatrixColMul(const Matrix &A, \
 */
 void doInsert(double p, std::list<double> &listTop);
 
+/* 
+	Vose's alias method for sample;
+	It is used for the situation when 
+		L is not much bigger than S;
+	A method with constant time per sample.
+*/
+int vose_alias(size_t s, size_t *dst, \
+			   size_t n, double *pdf,double sum_pdf);
+
+/* 
+	Sample the pair(k, i)
+	Suppose the size of weight/ pdf is (m, n);
+	It requires the weight/ pdf to be stored like that
+		weight[index] = weight[k * n + i]:
+	S: number of samples needed to be sampled;
+	index:  the result which index = k * col + i,
+		so that it is sorted according to k then i;
+		and it will be convenience for the next stage;
+	freq_k: will return the number of each k has been sampled;
+	m and n : the shape of weight;
+		the dimension of feature vector.
+	sum_pdf: the sum of the pdf, which is not one, for the decease
+		of computation cost.
+*/
+
+int sample_index(size_t S, size_t *index, \
+				 size_t *IndforI, size_t *IndforK, \
+				 size_t *freq_k, \
+				 size_t m, size_t n, \
+				 double*pdf, double sum_pdf);
 #endif
