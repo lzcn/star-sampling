@@ -26,6 +26,9 @@ clearvars tagID userID posts itemID;
 Rank = 200;
 CP = cp_als(sp_tensor,Rank,'maxiters',100); 
 lambda = CP.lambda;
+A = zeros(size(CP.u{1}));
+B = zeros(size(CP.u{2}));
+C = zeros(size(CP.u{3}));
 for i =1:Rank
     A(:,i) = CP.u{1}(:,i)*lambda(i); 
     B(:,i) = CP.u{2}(:,i)*lambda(i); 
