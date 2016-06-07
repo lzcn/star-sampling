@@ -76,7 +76,7 @@ plot(log10(samples),log10(exactTime),'b','LineWidth',2);
 plot(log10(samples),log10(diamondTimes),'r','LineWidth',2); 
 plot(log10(samples),log10(wedgeTimes),'--g','LineWidth',2);
 legend('exhaustive','diamond','wedge');
-saveas(timeSample,'sample-time-diamond.png'); 
+saveas(timeSample,'result\lastfm\sample-time-diamond.png'); 
 % draw recall - sample
 recallSample = figure; hold on; title('Recall'); 
 xlabel('log_{10}Samples'); 
@@ -88,4 +88,4 @@ for i = 1:size(top,2)
     plot(log10(samples),wedgeRecall(:,i),['--',c(i)],'LineWidth',2); 
 end
 legend('t=1','t=10','t=100','t=1000'); 
-saveas(recallSample,'sample-recall-diamond.png'); 
+saveas(recallSample,'result\lastfm\sample-recall-diamond.png'); 
