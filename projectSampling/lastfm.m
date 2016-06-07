@@ -1,4 +1,4 @@
-addpath('bin');
+addpath('bin'); clc;
 % read data
 filename = 'data\lastfm.dat';
 delimiter = '\t';
@@ -32,9 +32,9 @@ for i =1:Rank
     C(:,i) = CP.u{3}(:,i)*lambda(i);
 end
 clearvars sp_tensor CP lambda Rank;
-save('data\lastfm\A.mat',A);
-save('data\lastfm\B.mat',B);
-save('data\lastfm\C.mat',C);
+save('data\lastfm\A.mat','A');
+save('data\lastfm\B.mat','B');
+save('data\lastfm\C.mat','C');
 % vars to record
 samples = power(10,3:7);
 top = power(10,0:3);
@@ -48,8 +48,8 @@ wedgeTimes = zeros(size(samples));
 tic;
 valueTrue = exact_search_three_order_tensor(A,B,C);
 exactTime = toc*ones(size(samples)); 
-save('data\lastfm\valueTrue.mat',valueTrue);
-save('data\lastfm\exactTime.mat',exactTime);
+save('data\lastfm\valueTrue.mat','valueTrue');
+save('data\lastfm\exactTime.mat','exactTime');
 % arrange data formate
 B = B'; C = C';
 
