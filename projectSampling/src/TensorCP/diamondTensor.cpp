@@ -135,6 +135,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					MatB.SumofCol[k]);
 		offset += freq_k[k];
 	}
+	
 	// sample p;
 	offset = 0;
 	for (int k = 0; k < MatA.row; ++k){
