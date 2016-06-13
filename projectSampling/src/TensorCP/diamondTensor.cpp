@@ -79,11 +79,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			tempW *= abs(MatA.GetEmelent(k,i));
 			tempW *= MatA.SumofCol[i];
 			tempW *= MatB.SumofCol[k];
+			tempW *= MatC.SumofCol[k];
 			weight[k*MatA.col + i] = tempW;
 			SumofW += tempW;
 		}
 	}
-
+	for (size_t k = 0; k < MatA.row; ++k){
+		for(size_t i = 0; i < MatA.col; ++i){
+			weight[k*MatA.col + i] /= SumofW;
+		}
+	}
+	SumofW = 1.0;
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during computing weight\n",duration);

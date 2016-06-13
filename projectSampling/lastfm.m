@@ -48,11 +48,14 @@ diamondTimes = zeros(size(samples));
 wedgeTimes = zeros(size(samples)); 
 
 % do exhaustive search
+A = A'; B = B'; C= C';
 tic;
 valueTrue = exact_search_three_order_tensor(A,B,C);
 exactTime = toc*ones(size(samples)); 
 save('data\lastfm\valueTrue.mat','valueTrue');
 save('data\lastfm\exactTime.mat','exactTime');
+
+
 % arrange data formate
 B = B'; C = C';
 
@@ -67,8 +70,15 @@ for i = 1:size(samples,2)
     diamondTimes(i) = toc;
     for j = 1 : size(top,2)
         t = top(j);
-        diamondRecall(i,j) = 1.0*(diamondValues(t) >= valueTrue(t))/t;
-        wedgeRecall(i,j) = 1.0*(wegdeValues(t) >= valueTrue(t))/t; 
+        if(size(diamondValues,1) < t)
+            t = size(diamondValues,1);
+        end
+        diamondRecall(i,j) = sum(diamondValues(1:t) >= valueTrue(t))/t;
+        t = top(j);
+        if(size(wedgeValues,1) < t)
+            t = size(wedgeValues,1);
+        end        
+        wedgeRecall(i,j) = sum(wedgeValues(1:t) >= valueTrue(t))/t; 
     end
 end 
 % draw time - sample
@@ -90,5 +100,8 @@ for i = 1:size(top,2)
     plot(log10(samples),diamondRecall(:,i),c(i),'LineWidth',2);
     plot(log10(samples),wedgeRecall(:,i),['--',c(i)],'LineWidth',2); 
 end
-legend('t=1','t=10','t=100','t=1000'); 
+legend('diamond:t=1','wedge:t=1',...
+       'diamond:t=10','wedge:t=10',...
+       'diamond:t=100','wedge:t=100',...
+       'diamond:t=1000','wedge:t=1000');  
 saveas(recallSample,'result\lastfm\sample-recall-diamond.png'); 

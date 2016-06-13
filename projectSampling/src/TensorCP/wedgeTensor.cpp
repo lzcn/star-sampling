@@ -79,6 +79,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			tempW *= abs(MatA.GetEmelent(k,i));
 			tempW *= MatA.SumofCol[i];
 			tempW *= MatB.SumofCol[k];
+			tempW *= MatC.SumofCol[k];
 			weight[k*MatA.col + i] = tempW;
 			SumofW += tempW;
 		}
