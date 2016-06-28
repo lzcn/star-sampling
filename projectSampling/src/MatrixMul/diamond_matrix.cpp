@@ -150,15 +150,15 @@ int sample_index(size_t S, size_t *index, \
 int vose_alias(size_t s, size_t *dst, \
 			   size_t n, double *pdf,double sum_pdf);
 /*
-	C = AB;
-	A has d rows and m columns,
-	B has n rows and d columns;
-	It is needed for data structure;
-	Matlab function:
-		[result, index] = function_name(A,B,,top-t,sample_number);
+	c = ab;
+	a has d rows and m columns,
+	b has n rows and d columns;
+	it is needed for data structure;
+	matlab function:
+		[result, index] = function_name(a,b,,top-t,sample_number);
 		result: the desired top-t maximums;
-		index: the corresponding instances from A and B;
-		sample_number = S: control the numbers to do sampling .
+		index: the corresponding instances from a and b;
+		sample_number = s: control the numbers to do sampling .
 
 */
 

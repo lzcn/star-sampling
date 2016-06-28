@@ -1,6 +1,6 @@
 /*
-	Diamond Sapmling with N factor matrixes
-	It will return a sparse tansor stored 
+	Diamond Sampling with N factor matrices
+	It will return a sparse tensor stored 
 	the sampled result
 */
 
@@ -16,7 +16,7 @@
 typedef std::pair<point3D,double> indValue;
 
 int cmp(const indValue &x,const indValue&y){
-	return x.second > y.second;
+	return (x.second > y.second);
 }
 
 int sgn_foo(double x){
@@ -25,23 +25,26 @@ int sgn_foo(double x){
 
 /*
 	give an pair(m, n, p)
-	compute the value of c_ij;
+	compute the value of c_mnp;
 */
 double vectors_mul(const point3D &coord, \
 			Matrix &A, Matrix &B, Matrix &C){
     double ans = 0;
-    size_t m = coord.x;
-    size_t n = coord.y;
-    size_t p = coord.z;
     for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetEmelent(k,m) * \
-        	   B.GetEmelent(n,k) * \
-        	   C.GetEmelent(p,k);
+        ans += A.GetEmelent(k,coord.x) * \
+        	   B.GetEmelent(coord.y,k) * \
+        	   C.GetEmelent(coord.z,k);
     }
     return ans;
 }
 
 
+/*
+	suppose the dimension of feature is d;
+	The first matrix has d rows;
+	The left matrices have d columns;
+
+*/
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -103,19 +106,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
 	memset(WeightInd, 0, NumSample*sizeof(size_t));
 	// sampled k, m, n, p, k'
-	size_t *IndforK = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IndforK, 0, NumSample*sizeof(size_t));	
 	size_t *IndforM = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforM, 0, NumSample*sizeof(size_t));
 	size_t *IndforN = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforN, 0, NumSample*sizeof(size_t));
 	size_t *IndforP = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforP, 0, NumSample*sizeof(size_t));
+	size_t *IndforK = (size_t*)malloc(NumSample*sizeof(size_t));
+	memset(IndforK, 0, NumSample*sizeof(size_t));	
 	size_t *IndforKp = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforKp, 0, NumSample*sizeof(size_t));
 	// sampled k's frequency 
 	size_t *freq_k = (size_t*)malloc(MatA.row*sizeof(size_t));
 	memset(freq_k, 0, MatA.row*sizeof(size_t));
+
 	// Do sample S pairs (k, i) ,
 	sample_index(NumSample, WeightInd, \
 				 IndforM, IndforK, \
@@ -144,10 +148,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					(MatC.element + k*MatC.row), \
 					MatC.SumofCol[k]);
 		offset += freq_k[k];
-	}	
+	}
 	// compute update value and saved in map<pair, value>
 	double valueSampled = 1.0;
-	size_t idxm,idxn,idxp,idxk,idkp;
+	size_t idxm, idxn, idxp, idxk, idkp;
+	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
 	for (int s = 0; s < NumSample ; ++s){
 		idxk = IndforK[s];
@@ -179,9 +184,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double true_value = 0;
 
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
-		true_value =  vectors_mul(mapItr->first, MatA, MatB, MatC);
+		true_value = vectors_mul(mapItr->first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(mapItr->first,true_value));
-		//sortVec.push_back(make_pair(mapItr->first,mapItr->second));
+		//sortVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	sort(sortVec.begin(),sortVec.end(),cmp);
 
@@ -214,7 +219,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during converting \n",duration);
-	
 	//---------------
 	// free
 	//---------------
@@ -222,6 +226,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	free(WeightInd);
 	free(IndforM);
 	free(IndforN);
+	free(IndforP);
 	free(IndforK);
 	free(IndforKp);
 	free(freq_k);

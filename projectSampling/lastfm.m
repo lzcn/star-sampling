@@ -16,15 +16,16 @@ userID = dataArray{:, 1};
 itemID = dataArray{:, 2};
 tagID = dataArray{:, 3};
 posts = dataArray{:, 4};
-sp_tensor = sptensor([userID,itemID,tagID],posts);
 
+% construct sparse tensor
+sp_tensor = sptensor([userID,itemID,tagID],posts);
 clearvars filename delimiter startRow formatSpec ;
 clearvars fileID dataArray ans ;
 clearvars tagID userID posts itemID;
 
-% CP decomposition
+% use cp_als to do decomposition
 Rank = 200;
-CP = cp_als(sp_tensor,Rank,'maxiters',100); 
+CP = cp_als(sp_tensor,Rank); 
 lambda = CP.lambda;
 A = zeros(size(CP.u{1}));
 B = zeros(size(CP.u{2}));
@@ -35,32 +36,33 @@ for i =1:Rank
     C(:,i) = CP.u{3}(:,i)*lambda(i);
 end
 clearvars sp_tensor CP lambda Rank;
+% save the result
 save('data\lastfm\A.mat','A');
 save('data\lastfm\B.mat','B');
 save('data\lastfm\C.mat','C');
+
 % vars to record
-samples = power(10,3:7);
-top = power(10,0:3);
+
+samples = power(10,3:7); % number of samples
+top = power(10,0:3); % find the top-t value
 varSize = [size(samples,2),size(top,2)];
-diamondRecall = zeros(varSize); 
-wedgeRecall = zeros(varSize); 
-diamondTimes = zeros(size(samples)); 
-wedgeTimes = zeros(size(samples)); 
+diamondRecall = zeros(varSize); % recall of diamond sampling 
+wedgeRecall = zeros(varSize); % recall of wedge sampling
+diamondTimes = zeros(size(samples));
+wedgeTimes = zeros(size(samples));
 
 % do exhaustive search
 A = A'; B = B'; C= C';
 tic;
 valueTrue = exact_search_three_order_tensor(A,B,C);
-exactTime = toc*ones(size(samples)); 
+exactTime = toc*ones(size(samples));
+% save the true value and time
 save('data\lastfm\valueTrue.mat','valueTrue');
 save('data\lastfm\exactTime.mat','exactTime');
 
-
-% arrange data formate
+% arrange data formate to do sampling
 B = B'; C = C';
-
 % sampling
-
 for i = 1:size(samples,2) 
     tic;
     [~,wedgeValues] = wedgeTensor(A,B,C,samples(i),samples(i)); 
@@ -80,7 +82,8 @@ for i = 1:size(samples,2)
         end        
         wedgeRecall(i,j) = sum(wedgeValues(1:t) >= valueTrue(t))/t; 
     end
-end 
+end
+
 % draw time - sample
 timeSample = figure; hold on;title('Time-Samples'); 
 xlabel('log_{10}Samples'); 
@@ -89,7 +92,7 @@ plot(log10(samples),log10(exactTime),'b','LineWidth',2);
 plot(log10(samples),log10(diamondTimes),'r','LineWidth',2); 
 plot(log10(samples),log10(wedgeTimes),'--g','LineWidth',2);
 legend('exhaustive','diamond','wedge');
-saveas(timeSample,'result\lastfm\sample-time-diamond.png'); 
+saveas(timeSample,'sample-time-diamond.png'); 
 % draw recall - sample
 recallSample = figure; hold on; title('Recall'); 
 xlabel('log_{10}Samples'); 
@@ -104,4 +107,4 @@ legend('diamond:t=1','wedge:t=1',...
        'diamond:t=10','wedge:t=10',...
        'diamond:t=100','wedge:t=100',...
        'diamond:t=1000','wedge:t=1000');  
-saveas(recallSample,'result\lastfm\sample-recall-diamond.png'); 
+saveas(recallSample,'sample-recall-diamond.png'); 
