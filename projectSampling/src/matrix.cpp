@@ -45,10 +45,12 @@ point3D::point3D(size_t i, size_t j, size_t k){
 bool point3D::operator<(const point3D &toCmp)const{
 	if(x < toCmp.x){
 		return true;
-	}else if(x == toCmp.x){
+	}
+	if(x == toCmp.x){
 		if(y < toCmp.y)
 			return true;
-	}else if(y == toCmp.y){
+	}
+	if(x == toCmp.x && y == toCmp.y){
 		if(z < toCmp.z)
 			return true;
 	}
@@ -62,14 +64,16 @@ bool point3D::operator==(const point3D &toCmp)const{
 bool point3D::operator > (const point3D &toCmp)const{
 	if(x > toCmp.x){
 		return true;
-	}else if(x == toCmp.x){
+	}
+	if(x == toCmp.x){
 		if(y > toCmp.y)
 			return true;
-	}else if(y == toCmp.y){
+	}
+	if(x == toCmp.x && y == toCmp.y){
 		if(z > toCmp.z)
 			return true;
 	}
-	return false;
+	return false;	
 }
 
 /*
