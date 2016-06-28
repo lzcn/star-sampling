@@ -1,5 +1,5 @@
+#include <cstdio>
 #include "../include/matrix.h"
-
 
 /*
 	class for point2D
@@ -99,7 +99,7 @@ Matrix::~Matrix(){
 	free(SumofCol);
 }
 
-double Matrix::GetEmelent(size_t i, size_t j){
+double Matrix::GetElement(size_t i, size_t j){
 	return element[j*row + i];
 }
 
@@ -266,4 +266,58 @@ int sample_index(size_t S, size_t *index, \
 		freq_k[IndforK[i]] ++;
 	}
 	return 1;
+}
+
+SubIndex::SubIndex(int n, size_t *max){
+	idxSize = n;
+	maxIdx = max;
+	doneFlag = false;
+	curIdx = (size_t*)malloc((n + 1)*sizeof(size_t));
+	memset(curIdx, 0, (n + 1)*sizeof(size_t));
+}
+SubIndex::~SubIndex(){
+	free(curIdx);
+}
+
+bool SubIndex::reset(){
+	memset(curIdx, 0, idxSize*sizeof(size_t));
+	return true;
+}
+SubIndex& SubIndex::operator+(const size_t step){
+	size_t a, b;
+	a = step;
+	b= 0;
+	size_t *temp = (size_t *)malloc(idxSize*sizeof(size_t));
+	memset(temp, 0, idxSize*sizeof(size_t));
+	for(size_t i = 0; i< idxSize;++i){
+		b = a % maxIdx[i];
+		a = a / maxIdx[i];
+		temp[i] = b;
+		curIdx[i] += b;
+		while(curIdx[i] >= maxIdx[i]){
+			curIdx[i] -= maxIdx[i];
+			++curIdx[i + 1];
+		}
+		if(a > 0){
+			curIdx[idxSize] += a;
+		}
+		if(curIdx[idxSize] > 0){
+			doneFlag = true;
+		}
+		free(temp);
+		return *this;
+	}
+}
+SubIndex& SubIndex::operator++(){
+	curIdx[0]++;
+	for(int i = 0; i < idxSize; ++i){
+		if(curIdx[i] == maxIdx[i]){
+			curIdx[i] =0;
+			++curIdx[i + 1];
+		}
+		if(curIdx[idxSize] == 1){
+			doneFlag = true;
+		}
+	}
+	return *this;
 }
