@@ -31,9 +31,9 @@ double vectors_mul(const point3D &coord, \
 			Matrix &A, Matrix &B, Matrix &C){
     double ans = 0;
     for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetEmelent(k,coord.x) * \
-        	   B.GetEmelent(coord.y,k) * \
-        	   C.GetEmelent(coord.z,k);
+        ans += A.GetElement(k,coord.x) * \
+        	   B.GetElement(coord.y,k) * \
+        	   C.GetElement(coord.z,k);
     }
     return ans;
 }
@@ -79,7 +79,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for(size_t i = 0; i < MatA.col; ++i){
 			//w_{ki} = |a_{ki}|*||a_{*i}||_1*||b_{*k}||_1
 			tempW = 1;
-			tempW *= abs(MatA.GetEmelent(k,i));
+			tempW *= abs(MatA.GetElement(k,i));
 			tempW *= MatA.SumofCol[i];
 			tempW *= MatB.SumofCol[k];
 			tempW *= MatC.SumofCol[k];
@@ -161,12 +161,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		idxn = IndforN[s];
 		idxp = IndforP[s];
 		valueSampled = 1.0;
-		valueSampled *= sgn_foo(MatA.GetEmelent(idxk,idxm));
-		valueSampled *= sgn_foo(MatB.GetEmelent(idxn,idxk));
-		valueSampled *= sgn_foo(MatC.GetEmelent(idxp,idxk));
-		valueSampled *= sgn_foo(MatA.GetEmelent(idkp,idxm));
-		valueSampled *= MatB.GetEmelent(idxn,idkp);
-		valueSampled *= MatC.GetEmelent(idxp,idkp);
+		valueSampled *= sgn_foo(MatA.GetElement(idxk,idxm));
+		valueSampled *= sgn_foo(MatB.GetElement(idxn,idxk));
+		valueSampled *= sgn_foo(MatC.GetElement(idxp,idxk));
+		valueSampled *= sgn_foo(MatA.GetElement(idkp,idxm));
+		valueSampled *= MatB.GetElement(idxn,idkp);
+		valueSampled *= MatC.GetElement(idxp,idkp);
 		// Update the element in coordinate
 		IrJc[point3D(idxm,idxn,idxp)] += valueSampled;
 	}

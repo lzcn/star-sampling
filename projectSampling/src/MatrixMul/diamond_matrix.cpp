@@ -75,7 +75,7 @@ struct Matrix
 	~Matrix(){
 		free(SumofCol);
 	}
-	double GetEmelent(size_t i, size_t j){
+	double GetElement(size_t i, size_t j){
 		return element[j*row + i];
 	}
 	double GetColSum(size_t column){
@@ -114,7 +114,7 @@ double vectors_mul(const struct indexIJ &coord, struct Matrix &A, struct Matrix 
     size_t indI = coord.indI;
     size_t indJ = coord.indJ;
     for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetEmelent(k,indI) * B.GetEmelent(indJ,k);
+        ans += A.GetElement(k,indI) * B.GetElement(indJ,k);
     }
     return ans;
 }
@@ -195,7 +195,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for(size_t i = 0; i < MatA.col; ++i){
 			//w_{ki} = |a_{ki}|*||a_{*i}||_1*||b_{*k}||_1
 			tempW = 1;
-			tempW *= abs(MatA.GetEmelent(k,i));
+			tempW *= abs(MatA.GetElement(k,i));
 			tempW *= MatA.SumofCol[i];
 			tempW *= MatB.SumofCol[k];
 			weight[k*MatA.col + i] = tempW;
@@ -256,10 +256,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		indi = IndforI[s];
 		indj = IndforJ[s];
 		valueSampled = 1.0;
-		valueSampled *= sgn_foo(MatA.GetEmelent(indk,indi));
-		valueSampled *= sgn_foo(MatB.GetEmelent(indj,indk));
-		valueSampled *= sgn_foo(MatA.GetEmelent(indkp,indi));
-		valueSampled *= MatB.GetEmelent(indj,indkp);
+		valueSampled *= sgn_foo(MatA.GetElement(indk,indi));
+		valueSampled *= sgn_foo(MatB.GetElement(indj,indk));
+		valueSampled *= sgn_foo(MatA.GetElement(indkp,indi));
+		valueSampled *= MatB.GetElement(indj,indkp);
 		// Update the element in coordinate
 		IrJc[struct indexIJ(indi,indj)] += valueSampled;
 	}
