@@ -1,4 +1,3 @@
-mex -setup C++;
 % include path
 ipath = ['-I' '../../include'];
 

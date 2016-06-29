@@ -1,5 +1,5 @@
+#include <cstdio>
 #include "../include/matrix.h"
-
 
 /*
 	class for point2D
@@ -99,7 +99,7 @@ Matrix::~Matrix(){
 	free(SumofCol);
 }
 
-double Matrix::GetEmelent(size_t i, size_t j){
+double Matrix::GetElement(size_t i, size_t j){
 	return element[j*row + i];
 }
 
@@ -120,6 +120,9 @@ size_t Matrix::randRow(size_t n){
 	return (row-1);
 }
 
+int sgn_foo(double x){
+	return x<0? -1:1;
+}
 
 double MatrixColMul(const Matrix &A, const Matrix &B, \
 					size_t m, size_t n){
@@ -153,7 +156,28 @@ double MatrixColMul(const Matrix &A, \
 	}
 	return temp;
 }
-
+double vectors_mul(const point2D &coord, \
+				   Matrix &A, \
+				   Matrix &B){
+	double ans = 0;
+    for (size_t k = 0; k < A.row; ++k){
+        ans += A.GetElement(k,coord.x) * \
+        	   B.GetElement(coord.y,k);
+    }
+    return ans;
+}
+double vectors_mul(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C){
+	double ans = 0;
+    for (size_t k = 0; k < A.row; ++k){
+        ans += A.GetElement(k,coord.x) * \
+        	   B.GetElement(coord.y,k) * \
+        	   C.GetElement(coord.z,k);
+    }
+    return ans;
+}
 void doInsert(double p, std::list<double> &listTop){
     std::list<double>::iterator itr = listTop.begin();
     if(p > listTop.front()){
@@ -266,4 +290,58 @@ int sample_index(size_t S, size_t *index, \
 		freq_k[IndforK[i]] ++;
 	}
 	return 1;
+}
+
+SubIndex::SubIndex(int n, size_t *max){
+	idxSize = n;
+	maxIdx = max;
+	doneFlag = false;
+	curIdx = (size_t*)malloc((n + 1)*sizeof(size_t));
+	memset(curIdx, 0, (n + 1)*sizeof(size_t));
+}
+SubIndex::~SubIndex(){
+	free(curIdx);
+}
+
+bool SubIndex::reset(){
+	memset(curIdx, 0, idxSize*sizeof(size_t));
+	return true;
+}
+SubIndex& SubIndex::operator+(const size_t step){
+	size_t a, b;
+	a = step;
+	b= 0;
+	size_t *temp = (size_t *)malloc(idxSize*sizeof(size_t));
+	memset(temp, 0, idxSize*sizeof(size_t));
+	for(size_t i = 0; i< idxSize;++i){
+		b = a % maxIdx[i];
+		a = a / maxIdx[i];
+		temp[i] = b;
+		curIdx[i] += b;
+		while(curIdx[i] >= maxIdx[i]){
+			curIdx[i] -= maxIdx[i];
+			++curIdx[i + 1];
+		}
+		if(a > 0){
+			curIdx[idxSize] += a;
+		}
+		if(curIdx[idxSize] > 0){
+			doneFlag = true;
+		}
+		free(temp);
+		return *this;
+	}
+}
+SubIndex& SubIndex::operator++(){
+	curIdx[0]++;
+	for(int i = 0; i < idxSize; ++i){
+		if(curIdx[i] == maxIdx[i]){
+			curIdx[i] =0;
+			++curIdx[i + 1];
+		}
+		if(curIdx[idxSize] == 1){
+			doneFlag = true;
+		}
+	}
+	return *this;
 }

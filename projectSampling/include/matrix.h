@@ -38,8 +38,11 @@ public:
 	size_t y;
 	size_t z;
 };
-
+/*
+	type for n-dimension coordinate
+*/
 typedef	std::vector<size_t> pointnD;
+
 /*
 	class for Matrix: column major order
 	that is a matrix A will be stored in 
@@ -58,12 +61,16 @@ public:
 	double* SumofCol;
 	Matrix(size_t r, size_t c, double*pr);
 	~Matrix();
-	double GetEmelent(size_t i, size_t j);
+	double GetElement(size_t i, size_t j);
 	double GetColSum(size_t column);
 	// given a column index n sample a row index m 
 	// with probability abs(M_{m,n})/SumofCol(n)
 	size_t randRow(size_t n);
 };
+/*
+	sign function
+*/
+int sgn_foo(double x);
 /*
 	compute the dot product of two matrices' column
 	ans = A(:,m)'*B(:,n)
@@ -75,6 +82,15 @@ double MatrixColMul(const Matrix &A, \
 					const Matrix &B, \
 					const Matrix &C, \
 					size_t m, size_t n, size_t p);
+
+double vectors_mul(const point2D &coord, \
+				   Matrix &A, \
+				   Matrix &B);
+double vectors_mul(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C);
+
 /*
 	list is sorted in ascending order;
 	insert p to the list;
@@ -112,4 +128,29 @@ int sample_index(size_t S, size_t *index, \
 				 size_t *freq_k, \
 				 size_t m, size_t n, \
 				 double*pdf, double sum_pdf);
+/* 
+	SubIndex is used for loop
+	data: 
+		index_cur: indicate the current index for 
+		index_max: each element is the number vector
+				of correspongding maxtirx
+	method: 
+		+ :add t to current index
+*/
+class SubIndex{
+public:
+	SubIndex(int n, size_t *max);
+	~SubIndex();
+	bool isDone(){return doneFlag;};
+	bool reset();
+	SubIndex& operator+(const size_t step);
+	SubIndex& operator++();
+	const size_t *getIdx(){return curIdx;};
+private:
+	int idxSize;
+	bool doneFlag;
+	size_t *curIdx;
+	const size_t *maxIdx;
+};
+
 #endif
