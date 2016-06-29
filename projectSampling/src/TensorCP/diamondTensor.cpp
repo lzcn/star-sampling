@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cmath>
 #include <ctime>
+
 #include "mex.h"
 #include "../../include/matrix.h"
 
@@ -18,26 +19,6 @@ typedef std::pair<point3D,double> indValue;
 int cmp(const indValue &x,const indValue&y){
 	return (x.second > y.second);
 }
-
-int sgn_foo(double x){
-	return x<0? -1:1;
-}
-
-/*
-	give an pair(m, n, p)
-	compute the value of c_mnp;
-*/
-double vectors_mul(const point3D &coord, \
-			Matrix &A, Matrix &B, Matrix &C){
-    double ans = 0;
-    for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetElement(k,coord.x) * \
-        	   B.GetElement(coord.y,k) * \
-        	   C.GetElement(coord.z,k);
-    }
-    return ans;
-}
-
 
 /*
 	suppose the dimension of feature is d;

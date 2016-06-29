@@ -120,6 +120,9 @@ size_t Matrix::randRow(size_t n){
 	return (row-1);
 }
 
+int sgn_foo(double x){
+	return x<0? -1:1;
+}
 
 double MatrixColMul(const Matrix &A, const Matrix &B, \
 					size_t m, size_t n){
@@ -153,7 +156,28 @@ double MatrixColMul(const Matrix &A, \
 	}
 	return temp;
 }
-
+double vectors_mul(const point2D &coord, \
+				   Matrix &A, \
+				   Matrix &B){
+	double ans = 0;
+    for (size_t k = 0; k < A.row; ++k){
+        ans += A.GetElement(k,coord.x) * \
+        	   B.GetElement(coord.y,k);
+    }
+    return ans;
+}
+double vectors_mul(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C){
+	double ans = 0;
+    for (size_t k = 0; k < A.row; ++k){
+        ans += A.GetElement(k,coord.x) * \
+        	   B.GetElement(coord.y,k) * \
+        	   C.GetElement(coord.z,k);
+    }
+    return ans;
+}
 void doInsert(double p, std::list<double> &listTop){
     std::list<double>::iterator itr = listTop.begin();
     if(p > listTop.front()){

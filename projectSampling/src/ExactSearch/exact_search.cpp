@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include "mex.h"
-#include "../../matrix.h"
+#include "../../include/matrix.h"
 
 /*coordinate to save the result*/
 
@@ -16,48 +16,28 @@ void disp_coord(const size_t* cur_ind,int nrhs){
 
 }
 
-double getValue( const size_t *curIdx, \
-                    std::vector<double*> &vecMat, \
-                    size_t rank,int num ){
-    double ans = 0;
-    double *temp = new double[rank];
-    /*initialize to 1 */
-    for (size_t i = 0; i < rank; ++i){
-        temp[i] = 1;
-    }
-    double *p;
+double getValue(const size_t *curIdx, \
+                std::vector<double*> &vecMat, \
+                size_t rank, int num ){
+    // temp value
+    double *temp = (double*)malloc(rank*sizeof(double));
+    memset(temp, 1, rank*sizeof(double));
+    // the feature vector 
+    double *feature;
     for (int i = 0; i < num; ++i){
-        /*element-wise multiplication*/
-        p = (vecMat[i] + curIdx[i]*rank);
+        // element-wise multiplication
+        // the address of curIdx[i]-th feature of i-th matrix
+        feature = (vecMat[i] + curIdx[i]*rank);
         for(size_t j = 0; j < rank; ++j){
-            temp[j] *= *(p+j);
+            temp[j] *= *(feature+j);
         }
     }
+    double result = 0;
     for (size_t i = 0; i < rank; ++i){
-        ans += temp[i];
+        result += temp[i];
     }
     delete []temp;
-    return ans;
-}
-
-
-int doInsert(double value,double*toInsert,size_t top_t){
-    double front,next;
-    for(size_t i = 0; i < top_t; ++i){
-        if(value > toInsert[i]){
-            // find and insert
-            front = toInsert[i];
-            toInsert[i] = value;
-            // shift the left element
-            for(int j = (i + 1); j < top_t; ++j){
-                next = toInsert[j];
-                toInsert[j] = front;
-                front = next;
-            }
-            return i;
-        }
-    }
-    return top_t;
+    return result;
 }
 
 
@@ -71,48 +51,56 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //---------------------
     // initialization
     //---------------------
-    const size_t rank = mxGetM(prhs[0]);
+
+    const int rank = mxGetM(prhs[0]);
     const int top_t = (int)mxGetPr(prhs[nrhs-1])[0];
     std::vector<double*> vecMat;
-    size_t *max = (size_t *);malloc((nrhs - 1)*sizeof(size_t));
+    size_t *max = (size_t *)malloc((nrhs - 1)*sizeof(size_t));
     memset(max, 0, (nrhs - 1)*sizeof(size_t));
     // matrices
     for(int i = 0; i < nrhs - 1; ++i){
-        vecMat.push(mxGetPr(prhs[i]));
+        vecMat.push_back(mxGetPr(prhs[i]));
         max[i] = mxGetN(prhs[i]);
     }
-    // subIndex for loop
-    SubIndex subIndex(nrhs - 1, max);
     //------------------------
     // Do exhaustive computing
     //------------------------
     std::list<double> listTop;
+    // subIndex for loop
+    SubIndex subIndex(nrhs - 1, max);
     int count  = 0;
-    while(!subIndex.isdone()){
-        temp_value = getValue(subIndex.get_ind(),vecMat,rank,nrhs);
-        if(temp_value > max_value[top_t]){
-            doInsert(temp_value,max_value,top_t);
-        }
-        ++count;
+    double tempValue = 0.0;
+    // compute top_t values as the initial list
+    while(!subIndex.isDone() && count < top_t){
+        tempValue = getValue(subIndex.getIdx(), \
+                             vecMat, rank, nrhs-1);
+        listTop.push_back(tempValue);
     }
-    double temp_value = 0;
-    double init_val = getValue(subIndex.get_ind(),vecMat,rank,nrhs);
-    double *max_value = new double[top_t];
-    double max_v = 0.0;
-    while(!subIndex.isdone()){
-        temp_value = getValue(subIndex.get_ind(),vecMat,rank,nrhs);
-        if(temp_value > max_value[top_t]){
-            doInsert(temp_value,max_value,top_t);
+    // sort the list in descending order
+    listTop.sort();
+    listTop.reverse();
+    // do exhaustive search
+    subIndex.reset();
+    while(!subIndex.isDone()){
+        tempValue = getValue(subIndex.getIdx(),vecMat,rank,nrhs-1);
+        if(tempValue > listTop.back()){
+            doInsert(tempValue, listTop);
         }
         ++subIndex;
     }
-    delete []p;
-    plhs[0] = mxCreateDoubleMatrix(top_t,1,mxREAL);
-    double *plhs_max;
-    plhs_max = mxGetPr(plhs[0]);
-    for(size_t i = 0; i < top_t; ++i){
-        plhs_max[i] = max_value[i];
+    //-----------------------------
+    // convert the result to Matlab
+    //-----------------------------
+    plhs[0] = mxCreateDoubleMatrix(listTop.size(), 1, mxREAL);
+    double *topValue = mxGetPr(plhs[0]);
+    std::list<double>::iterator itr = listTop.begin();
+    for(int i = 0; i < listTop.size(); ++i){
+        topValue[i] = (*itr);
+        ++itr;
     }
-    delete []max_value;
+    //-------------------
+    // free
+    //--------------------
+    free(max);
 
 }

@@ -19,28 +19,6 @@ int cmp(const indValue &x,const indValue&y){
 	return x.second > y.second;
 }
 
-int sgn_foo(double x){
-	return x<0? -1:1;
-}
-
-/*
-	give an pair(m, n, p)
-	compute the value of c_ij;
-*/
-double vectors_mul(const point3D &coord, \
-			Matrix &A, Matrix &B, Matrix &C){
-    double ans = 0;
-    size_t m = coord.x;
-    size_t n = coord.y;
-    size_t p = coord.z;
-    for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetElement(k,m) * \
-        	   B.GetElement(n,k) * \
-        	   C.GetElement(p,k);
-    }
-    return ans;
-}
-
 
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
