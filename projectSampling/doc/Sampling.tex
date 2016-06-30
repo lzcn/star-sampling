@@ -115,8 +115,13 @@ x_{ijk} = \sum_{r=1}^{R} a_{ir}\cdot b_{jr}\cdot c_{kr}
 Where $\M{A}\in R^{I\times R},\M{B}\in R^{J\times R},\M{C}\in R^{K\times R}$.
 \subsection{Graph representation}
 Those N factor matrices are represented by a weighted $(N+1)$-partite graph. And we call those N+1 partitions $\overline{V},V_{1},V_{2},\ldots,V_{N}$ that $V_{n}$ has $L_n$ vertices, $\overline{V}$ has $R$ vertices. Every two vertices from different partition classes $V_i$ are nonadjacent. A vertice $\overline{v}_r$ in $\overline{V}$ is adjacent to the vertice $v^n_i$ in $V_n$ only when $\Sca{a}{n}{r}$ is non-zero, and then assigned the weight to be $\Sca{a}{n}{r}$.
-\subsection{Preprocessing Stage}
 
+Under the presentation, our sampling method can be expressed in plain English: we firstly pick an edge $e=(v^1_{i_1},\overline{v}_k)$ with some probability, then walk N-1 times randomly from the $\overline{v}_k$ to the other partitions, record the N-1 vertices $i_2,i_3,\ldots,i_N$. Secondly, we walk from $v^1_{i_1}$ randomly to $\overline{V}$ and end in $\overline{v}_k'$. According to these N+2 vertices, we give a score to the coordinate $\V{i}=(i_1,i_2,\ldots,i_N)$
+
+\subsection{Probability of edges and walks}
+
+When we start from a vertice in $V_1$ to $\overline{V}$, or from a vertice in $\overline{V}$ to $V_1$, we choose the edge according to the weight. That is given $i_1$, pick $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, pick $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
+Assign $|\Sca{a}{n}{k}|/\norm{\Vacol{n}}{1}$ to 
 \section{Two Approaches}
 In this section, we introduce wedge sampling and the advanced edition diamond sampling.
 \subsection{Wedge Approach}
