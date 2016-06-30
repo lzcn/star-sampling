@@ -1,0 +1,453 @@
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage[text={148mm,220mm},left=21mm,top=25.5mm]{geometry}
+\usepackage{amsthm,amsmath,amsfonts,amssymb}
+\usepackage{bm}
+\usepackage[mathscr]{eucal}
+\usepackage{stmaryrd}
+\usepackage{paralist}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[colorlinks,urlcolor=blue,citecolor=blue,linkcolor=blue]{hyperref}
+
+\newcommand{\Sca}[3]{{#1}^{(#2)}_{i_#2#3}}%Scalar with superscript and subscript
+\newcommand{\Scah}[3]{h^{(#1,#2)}_{#3}(\V{x}_{i_#1})}
+\newcommand{\T}[1]{\boldsymbol{\mathscr{\MakeUppercase{#1}}}}%Tensor
+\newcommand{\V}[1]{{\bm{{\MakeLowercase{#1}}}}}%Vector
+\newcommand{\VnC}[3]{\V{#1}^{(#2)}_{#3}}%Vector with superscript and subscript
+\newcommand{\Varow}[1]{\V{a}^{(#1)}_{i_#1*}}
+\newcommand{\Vacol}[1]{\V{a}^{(#1)}_{*k}}
+\newcommand{\Vh}[2]{\V{h}^{(#1,#2)}{(\V{x}_{i_#1}})}
+\newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}}%Matrix
+\newcommand{\Mn}[2]{\M{#1}^{(#2)}}%Matrix with superscript
+
+
+\newcommand{\norm}[2]{\parallel#1\parallel_{#2}}
+
+\newcommand{\Def}[1]{\hyperref[def:#1]{Definition~\ref*{def:#1}}}
+\newcommand{\Eqn}[1]{\hyperref[eq:#1]{{\rm (\ref*{eq:#1})}}}
+\newcommand{\Fig}[1]{\hyperref[fig:#1]{Figure~\ref*{fig:#1}}} %
+\newcommand{\Alg}[1]{\hyperref[alg:#1]{Algorithm~\ref*{alg:#1}}}
+\newcommand{\AlgLine}[2]{\hyperref[alg:#1]{line~\ref*{line:#2} of Algorithm~\ref*{alg:#1}}}
+\newcommand{\AlgLines}[3]{\hyperref[alg:#1]{lines~\ref*{line:#2}--\ref*{line:#3} of Algorithm~\ref*{alg:#1}}}
+\newcommand{\KT}[1]{\left\llbracket #1 \right\rrbracket}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newcommand{\Lem}[1]{\hyperref[lem:#1]{Lemma~\ref*{lem:#1}}} %
+\newcommand{\Prop}[1]{\hyperref[prop:#1]{Property~\ref*{prop:#1}}} %
+\def\VX{\V{X}_{i_1}}
+\def\VY{\V{Y}_{i_2}}
+\def\VZ{\V{Z}_{i_3}}
+
+\begin{document}
+\title{Sampling}
+\date{}
+\author{}
+\maketitle
+
+
+
+\section{Introducing}
+Consider a $N$th-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition of this tensor is
+
+\begin{equation}\label{eq:CPDecomposition}
+\T{X}= \KT{ \Mn{A}{1},\dots,\Mn{A}{N}} =
+\sum_{r=1}^{R}\VnC{A}{1}{r} \circ \cdots \circ \VnC{A}{N}{r}
+\end{equation}
+
+where
+
+\begin{gather*}\label{eq:ColumnVectorsForm}
+\M{A}^{(1)} =
+\begin{bmatrix}\VnC{a}{1}{1},\VnC{a}{1}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_1\times R}\\
+\M{A}^{(2)} =
+\begin{bmatrix}\VnC{a}{2}{1},\VnC{a}{2}{2},\cdots,\VnC{a}{2}{r}\end{bmatrix}\in R^{L_2\times R}\\
+\vdots\\
+\M{A}^{(N)} =
+\begin{bmatrix}\VnC{a}{N}{1},\VnC{a}{N}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_N\times R}\\
+\end{gather*}
+
+The column size $R$ is the rank of this tenor, which means $\T{X}$ can be represented by a sum of $R$ rank one tensor. $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
+In general, let $\Vacol{n}$ be the $k$-th column of $\M{A}^{(n)}$, $\Varow{n}$ be the $i_n$-th row vector of $\M{A}^{(n)}$, and $\Sca{a}{n}{k}$ be the element of $\M{A}^{(n)}$.
+
+The element in $\T{X}$ satisfies the equation:
+
+\begin{equation}\label{eq:ValueInTensor}
+x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}
+\end{equation}
+
+$\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. We propose a method for
+estimating the maximum elements $x_\V{i}$ given factor matrices $\Mn{A}{n}, n = 1,2,\ldots,N$.
+
+\begin{table}
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+    Notation & Explanation \\
+    \hline
+    $\T{A}$ & tensor \\
+    $\M{A}$ & matrix \\
+    $\Mn{A}{n}$ & $n$-th factor matrix of tensor\\
+    $\V{A}_{*r},\V{A}_r$ & $k$-th column of matrix \\
+    $\V{A}_{i*}$ & $i$-th row of matrix \\
+    $\V{A}$ & vector \\
+    $a_{ir}$ & element of matrix\\
+    \hline
+  \end{tabular}
+  \caption{Notation}\label{table:Notation}
+\end{table}
+\section{Diamond Sampling}
+Without the loss of generality, suppose $\T{X}$ is a three order tensor with size $I\times J\times K$, and the CP decomposition is given by
+
+\begin{equation}\label{eq:ThreeWayTensorCP}
+\T{X}= \KT{\M{A},\M{B},\M{C}}=
+\sum_{r=1}^{R}\V{a}_r \circ \V{b}_r \circ \V{c}_r
+\end{equation}
+
+\begin{equation}\label{eq:ValueInThreeWayTensor}
+x_{ijk} = \sum_{r=1}^{R} a_{ir}\cdot b_{jr}\cdot c_{kr}
+\end{equation}
+Where $\M{A}\in R^{I\times R},\M{B}\in R^{J\times R},\M{C}\in R^{K\times R}$.
+\subsection{Graph representation}
+Those N factor matrices are represented by a weighted $(N+1)$-partite graph. And we call those N+1 partitions $\overline{V},V_{1},V_{2},\ldots,V_{N}$ that $V_{n}$ has $L_n$ vertices, $\overline{V}$ has $R$ vertices. Every two vertices from different partition classes $V_i$ are nonadjacent. A vertice $\overline{v}_r$ in $\overline{V}$ is adjacent to the vertice $v^n_i$ in $V_n$ only when $\Sca{a}{n}{r}$ is non-zero, and then assigned the weight to be $\Sca{a}{n}{r}$.
+\subsection{Preprocessing Stage}
+
+\section{Two Approaches}
+In this section, we introduce wedge sampling and the advanced edition diamond sampling.
+\subsection{Wedge Approach}
+A random-sampling based algorithm that identifies high-valued entries of nonnegative matrix products, by assigning scores to each entry of $\V{q}^T\M{A}$, where $\M{A}\in R^{d\times n}=[\V{a}_1,\V{a}_2,\ldots,\V{a}_n]$ is a matrix whose rows are the instance, and $d$ is the dimension of feature vector. Our task is to find the most relevant instance $\V{a}_i$ that maximize dot product $\V{q}^T\V{a}_i$,
+\subsection{Graph representation}
+
+Consider a product $\M{m} = \M{q}\M{A}$, where $\M{q}\in R^{m\times d},\M{A}\in R^{d\times n}$ are represented by a layered graph with three layers, and treat matrix $\M{q},\M{A}$ as weighted directed bipartite graph. There are $m$ nodes $\{v_1^1,v_2^1,\ldots,v_m^1\}$ in first layer, $d$ nodes $\{v_1^2,v_2^2,\ldots,v_d^2\}$ in second layer  , and $n$ nodes $\{v_1^2,v_2^2,\ldots,v_d^2\}$in the third. For a query vector $\V{q}^T$, see it as the $i$-th row of $\M{Q}$, and $\V{m} = \V{q}^T\M{A}$, then define a trace: random walks from the $i$-th node, which is the query vector $\V{q}^T$ in first layer, and terminates at the $j$-th node in third layer. In this situation, the first layer has one node.
+
+Walk $S$ times randomly will terminate in third layer $S$ times, and record the time node $j\in\{1,2,\ldots,n\}$ has been reached to $S_j$, clearly $\sum_{j=1}^{n}S_j = S$. If $j\in\{1,2,\ldots,n\}$ is select with probability $m_j/\sum_{h=1}^{n}m_h $, then the expected value of $S_j$ equals $m_jS/\sum_{h=1}^{n}m_h$. Hence, $S_j\sum_{h=1}^{n}m_h/S$ is an unbiased estimator for $m_j$.
+
+For every pair of nodes $\{v_k^2,v_j^3\}$, assign the probability to the edge
+
+\[p(e_{kj}) = a_{kj}/\sum_{h=1}^{d}a_{kh}\]
+
+Processing goes in ~\Alg{WedgeSampling}. Think the trace as first walk to node $v_k^2$, and then $v_j^3$. So firstly, compute the times $c_k$ expected to go through node $v_k^2$, and sample $c_k$ times to arrive $v_j^3$.
+\begin{algorithm}[t]
+    \caption{Wedge Sampling}
+    \label{alg:WedgeSampling}
+    Given  matrix $\M{A}$ and query$\V{q}$\\
+    Let $S$ be the number of samples.
+    \begin{algorithmic}[1]
+    \State Preprocessing stage
+    \For{k=1,\ldots,d}
+    \State compute $a_k = \sum_{h=1}^{n}a_{kh}$ and $q'_k = q_ka_k$
+    \EndFor
+    \For{k=1,\ldots,d} determine the number of samples $c_i$ needed for
+    \State
+    \begin{equation*}c_i=
+    \left\{
+      \begin{array}{ll}
+        \lfloor \frac{Sq'_k}{\sum q'_k} \rfloor,
+        & \hbox{w/prob. $\lceil \frac{Sq'_k}{\sum q'_k} \rceil - \frac{Sq'_k}{\sum q'_k}$} \\
+        \lceil \frac{Sq'_k}{\sum q'_k} \rceil,
+        & \hbox{w/prob. $\lfloor \frac{Sq'_k}{\sum q'_k} \rfloor - \frac{Sq'_k}{\sum q'_k}$}
+      \end{array}
+    \right.
+    \end{equation*}
+    \EndFor
+    \For {$k= 1,\ldots,d$}
+    \State  \label{line:edge}
+    Sample $j\in \{1,\ldots,n\}$ $c_k$ times with probability
+    $p(e_{kj}) = a_{kj}/\sum_{h=1}^{n}a_{kh}$.
+    \State Increase the counter of $S_j$.
+    \EndFor
+    \State Postprocessing
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{itemize}
+  \item The expect of $c_k$.
+        \[ E[c_k] = \frac{Sq'_k}{\sum q'_k}\]
+  \item The expect of $S_j$.
+        \begin{align*}
+        E[S_j] &= \sum_{k=1}^{d} c_kp(e_{kj})\\
+               &= \sum_{k=1}^{d} \frac{Sq_ka_k}{\sum q_ka_k}\frac{a_{kj}}{a_k}\\
+               &= \frac{S}{{\sum q_ka_k}}\sum_{k=1}^{d}q_ka_{kj}\\
+               &= \frac{Sm_j}{{\sum q_ka_k}}= \frac{Sm_j}{{\sum m_h}}
+        \end{align*}
+\end{itemize}
+
+As we can see, $S_j\sum_{h=1}^{n}m_h/S$ is an unbiased estimator for $m_j$.
+
+\subsection{Implementing details for the wedge sampling}
+
+To find the maximum of $\M{m} = \M{q}\M{A}$, see $\M{q}$ as a bunch of query vector $\V{q_i}$. Replace the matrix $\M{A}$ by lists $L_1,L_2,\ldots,L_d$ of indices $\{1,2,\ldots,n\}$. For each input query $\V{q}$, the algorithm first processes $\V{q}$ to determine how many samples are needed for each of the $d$ lists $L_k$ ,or the times $c_k$ expected to go through node $v_k^2$. It then retrieves these samples from the appropriate stored lists and counts how many times each of $\{1,2,\ldots,n\}$ was sampled. It saves the time for repeating sampling of different query in ~\AlgLine{WedgeSampling}{edge}.
+
+\subsection{Diamond Approach}
+
+For $\V{m} = \V{q}^T\M{A}$, the diamond sampling aim to find two intersecting wedges, so that the probability to terminate at $j = \{1,2,\ldots,n\}$ is proportional to $m_j^2$.
+
+\section{Sampling in Tensor}
+
+We can consider the problem as finding some pair of vectors that from two different bunch of vector set, in previous, to have the the top-t maximum dot products.
+
+Now, we extend the problem from two vector set to $N$ vector sets. And find a list of vectors $\{\VnC{A}{1}{i_1},\ldots,\VnC{A}{N}{i_N}\}$, where $\VnC{A}{n}{i_n}$ is a vector from the $n$-th vector set $\M{A}^{(n)}$ and $i_n \in \{1,\ldots,L^{(n)}\}$, according to the value of
+
+\[\sum_{k=1}^{R}\Sca{a}{1}{k}\Sca{a}{2}{k}\cdots\Sca{a}{N}{k}\]
+
+A more mathematic interpretation is: given factor matrixes $\M{A}^{(n)}\in R^{L^{(n)}\times R},n=\{1,2,\ldots,N\}$, which is the CP decomposition of tensor $\T{X}$. Find the top-t value in tensor $\T{X}$.
+\subsection{Wedge Sampling in Tensor}
+
+We separated those matrixes into three lapsers, the first layer has $L^{1}$ nodes, indicated by the first factor matrix $\M{A}^{(1)}$. And the second layer called the middle layer has $R$ nodes, which picture the feature dimension or the rank of CP decomposition. The layer has $N-1$ parallel layers, each layer has $L^{n}$ nodes.Under this assumption, we define a trace: walk from the first layers at node $v_{i_1}^1$ to middle layer $v_{k}^m$ , then terminates at each parallel layers with nodes $\{v_{i_2}^2,v_{i_3}^3,\ldots,v_{i_N}^N\}$.
+
+As similar, define the probability of $\{v_k^m,v_{i_n}^n\}$:
+
+\[P(e_{ki_n}) = \Sca{a}{n}{k}/\sum_{h=1}^{R}\Sca{a}{n}{h}\]
+\subsubsection{Find the most relevant vector lists of query $q$}
+
+Given a query $\V{q}$, find the most relevant vector lists. It is the same when $\M{A}^{(1)}$ is a vector or see $\V{q}$ as one column of $\M{A}^{(1)}$, since we define the row of factor matrix is the number of instances.
+
+\begin{itemize}
+  \item Preprocessing\\
+   $q'_k = q_k\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1}$, where $\norm{\Vacol{n}}{1} = \sum_{h=1}^{R}\Sca{a}{n}{h}$.
+  \item Compute the times $c_k$ expected to go through node $v_k^m$\\
+    \begin{equation*}c_i=
+    \left\{
+      \begin{array}{ll}
+        \lfloor \frac{Sq'_k}{\sum q'_k} \rfloor,
+        & \hbox{w/prob. $\lceil \frac{Sq'_k}{\sum q'_k} \rceil - \frac{Sq'_k}{\sum q'_k}$} \\
+        \lceil \frac{Sq'_k}{\sum q'_k} \rceil,
+        & \hbox{w/prob. $\lfloor \frac{Sq'_k}{\sum q'_k} \rfloor - \frac{Sq'_k}{\sum q'_k}$}
+      \end{array}
+    \right.
+    \end{equation*}
+    As we can see \[ E[c_k] = \frac{Sq'_k}{\sum q'_k}\]
+  \item Sample each node in parallel layers $c_k$ times with probability $P(e_{ki_n})$, and increase the counter of $S_{i_2,\ldots,i_N}$ \\
+  The expect of $S_{i_2,\ldots,i_N}$.
+        \begin{align*}
+        E[S_{i_2,\ldots,i_N}] &= \sum_{k=1}^{R} c_k p(e_{ki_2}) p(e_{ki_3}) \cdots p(e_{ki_N})\\
+               &= \frac{S}{{\sum q'_k}}\sum_{k=1}^{R}q_k\cdot\Sca{a}{2}{k}\cdots\Sca{a}{N}{k}\\
+               &= \frac{Sm_{i_2,\ldots,i_N}}{{\sum q'_k}}\\
+               &= \frac{Sm_{i_2,\ldots,i_N}}{{\sum m_{i_2,\ldots,i_N}}}
+        \end{align*}
+    So the  $S_{i_2,\ldots,i_N}{\sum m_{i_2,\ldots,i_N}}/S$ is an unbiased estimator for $m_{i_2,\ldots,i_N}$.
+\end{itemize}
+
+\subsubsection{Find the maximum value in tensor }
+The counter can only indicate the relatively relation of one vector list to query, which can not be used to compare different query. So we need to consider the value overall. Query a single vector , however, is still useful in some application like recommendation system, for at most time we only need to find the most relevant item for on user(query), and the global maximum is useless and time consuming. The trick of replace data instance by a list of indices used in pervious is also helpful when we consider a number of user at a time.
+
+To find the maximum is tensor $\T{X}$, the diamond sampling supply referenced method.
+\begin{itemize}
+  \item \emph{\textbf{Preprocessing}}\\
+    For every $i_1,k$ compute the weight\\
+   $w_{i_1k} = \mid \Sca{a}{1}{k}\mid  \norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1}$, where $\norm{\Vacol{n}}{1} = \sum_{h=1}^{R}\Sca{a}{n}{h}$.
+  \item \emph{\textbf{Random walk to $v_k^m$.}}\\
+    Sample $S$ times  with the probability $w_{i_1k}/\norm{\M{W}}{1}$
+
+  \item Sample each node in parallel layers \\
+    Given $k$ sample ${i_2,\ldots,i_N}$ with probability $P(e_{ki_n})$, and increase the value of $c_{i_1,i_2,\ldots,i_N}$ by $\Sca{a}{2}{k}\cdots\Sca{a}{N}{k} $ \\
+  The expect of $x_{i_1,i_2,\ldots,i_N}$.
+        \begin{align*}
+        E[x_{i_1,i_2,\ldots,i_N}] &= \sum_{k=1}^{R} p(i_1,k) p(e_{ki_2}) p(e_{ki_3}) \cdots p(e_{ki_N})\\
+               &= \frac{S}{\norm{\M{W}}{1}}\sum_{k=1}^{R}\Sca{a}{1}{k}\cdot\Sca{a}{2}{k}\cdots\Sca{a}{N}{k}\\
+               &= \frac{S}{\norm{\M{W}}{1}}x_{i_1,i_2,\ldots,i_N}
+        \end{align*}
+    So the  $c_{i_1,i_2,\ldots,i_N}\frac{S}{\norm{\M{W}}{1}}$ is an unbiased estimator for $x_{i_2,\ldots,i_N}$.
+\end{itemize}
+
+
+\subsection{Diamond Sampling in Tensor}
+Diamond sampling is the advanced edition of wedge sampling, which can deal with the negative value.
+\subsubsection{Find the maximum value in tensor }
+A direct extension for diamond sampling in tensor is stated in ~\Alg{DiamondSampling}.
+\begin{algorithm}[t]
+    \caption{Diamond Sampling with factor matrixes}
+    \label{alg:DiamondSampling}
+    Given factor matrix $\M{A}^{(n)}, n = 1,2,\ldots,N$.\\
+    Let $s$ be the number of samples.
+    \begin{algorithmic}[1]
+    \For{all $\Sca{a}{1}{k} \neq 0$}
+    \State $w_{i_1k} \leftarrow \mid \Sca{a}{1}{k}\mid
+    \norm{\Varow{1}}{1}\norm{\Vacol{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1} $
+    \EndFor
+    \State $\T{X} \leftarrow$ all-zeros tensor of size
+    $L^{(1)}\times L^{(2)}\ldots\times L^{(N)}$
+    \For{$ \ell = 1,\ldots,s$}
+    \State Sample $(i_1,k)$ with probability $w_{i_1k}/\norm{\M{W}}{1}$
+    \label{line:ik}
+    \For {$n=2,...,N$}
+    \State Sample $i_n$ with probability $|\Sca{a}{n}{k}|/\norm{\Vacol{n}}{1}$
+    \label{line:in}
+    \EndFor
+    \State Sample $k'$ with probability $|\Sca{a}{1}{k'}|/\norm{\Varow{1}}{1}$
+    \label{line:kp}
+    \State $x_{i_1,i_2,\cdots,i_N}\leftarrow x_{i_1,i_2,\cdots,i_N} +
+    sgn(\Sca{a}{1}{k}\cdot\Sca{a}{2}{k}\cdots\Sca{a}{N}{k}\cdot\Sca{a}{1}{k'})
+    \Sca{a}{2}{k'}\cdots\Sca{a}{N}{k'}$
+    \EndFor\\
+    Postprocessing
+    \end{algorithmic}
+\end{algorithm}
+\subsubsection{Find the most relevant vector lists of query $u$}
+
+Consider query $\V{u}$ is one column of $\M{a}^{(1)}$, and the retrieve tensor
+
+\[
+\T{X}_u= \KT{\V{U},\Mn{A}{2},\dots,\Mn{A}{N}} =
+\sum_{r=1}^{R}\VnC{A}{2}{r} \circ \cdots \circ \VnC{A}{N}{r}\circ u_r
+\]
+
+We can use the counter to indicate the value, but is will not deal with the negative value, so a degenerate method of diamond sampling was proposed.
+The way to find the maximum of $x_{u,\V{i}}$ may be more concise when sampling starts with $\V{U}$ as we can see in ~\AlgLine{DSamplingU}{StartU}.
+
+
+\begin{algorithm}[ht]
+    \caption{Diamond Sampling with a query vector}
+    \label{alg:DSamplingU}
+    Given factor matrix $\M{A}^{(n)}\in R^{L^{(n)}\times R}, n = 2,\ldots,N,\V{U}\in R^{1\times R}$.\\
+    Let $s$ be the number of samples.
+    \begin{algorithmic}[1]
+    \For{all $u_k \neq 0$}
+    \State \label{line:StartU}
+    $w_k \leftarrow \mid u_k \mid\norm{\V{U}}{1}
+    \norm{\Vacol{2}}{1}\norm{\Vacol{3}}{1}\ldots\norm{\Vacol{N}}{1} $
+    \EndFor
+    \State $\T{X}_u \leftarrow$ all-zeros tensor of size
+    $L^{(2)}\times L^{(3)}\ldots\times L^{(N)}$
+    \For{$ \ell = 1,\ldots,s$}
+    \State Sample $k$ with probability $w_k/\norm{\V{w}}{1}$
+    \label{line:Samplek}
+    \For {$n=2,...,N$}
+    \State Sample $i_n$ with probability $|\Sca{a}{n}{k}|/\norm{\Vacol{n}}{1}$
+    \label{line:in}
+    \EndFor
+    \State Sample $k'$ with probability $\mid u_{k'}\mid/\norm{\V{U}}{1}$
+    \label{line:kp}
+    \State $x_{i_2,i_3,\cdots,i_N}\leftarrow x_{i_2,i_3,\cdots,i_N} +
+    sgn(\Sca{a}{2}{k}\cdot\Sca{a}{3}{k}\cdots\Sca{a}{N}{k}\cdot u_k\cdot u_{k'})
+    \Sca{a}{2}{k'}\Sca{a}{3}{k'}\cdots\Sca{a}{N}{k'}$
+    \label{line:update}
+    \EndFor
+    \State Postprocessing
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+\section{Implementation issues}
+*************************\\
+\subsection{Determined Sample Numbers Online }
+Pre-sample a number of instance, and it can be used with the accuracy bound to determine a reasonable number of samples.
+\subsection{Dealing with query}
+When we want to find the maximus relevant vectors for a number of queries. It is effective to save the the sampled instances into lists $L_1,L_2,\ldots,L_d$. When processes a query, sampled the nodes in middle layer. It then retrieves these samples form the stored lists.
+\section{Experiments}
+
+--------------------------------------\\
+
+*************************\\
+
+--------------------------------------\\
+
+\section{Sampling in Fashion Recommendation}
+
+\subsection{Structure of $U$ and $A^{(n)}$}
+Using sampling to solve a fashion recommendation problem.
+ \begin{align*}
+r_{u,\T{O}_t} =
+&\sum_{n=1}^{N}\V{u}^{(n)}\cdot\Vh{n}{n}+\\
+&\sum_{n=1}^{N}\sum_{m=n+1}^{N}\Vh{n}{m}\cdot\Vh{m}{n}\\
+\end{align*}
+
+Given a user $\V{u}^{(n)}\in R^{D}$, and the latent space vector $\Vh{n}{m}\in R^{D}$, we need to find the maximum value in tensor $r_{u,\T{O}_t}$, which is the outfit most be like by this user. To do so, we need to reform the vectors into factor matrixes before hand.
+
+We introduce a matrix called \emph{Matrix}$(\Varow{n})$ with size $N\times ND$, which is the reshaped matrix of vector $\Varow{n}\in R^{N^2D}$.
+
+\begin{equation}
+\label{eq:VMA}
+\emph{Matrix}(\Varow{n})=
+\bordermatrix{
+~ & ~     & ~     & ~      & \text{$i_n$-th column} & ~      &   ~   \cr
+~ & \V{e} & \V{e} & \cdots & \frac{1}{2}\Vh{n}{1}   & \cdots & \V{e} \cr
+~ & \V{e} & \V{e} & \cdots & \frac{1}{2}\Vh{n}{2}   & \cdots & \V{e} \cr
+~ & \vdots&\vdots&\vdots& \vdots& \vdots & \vdots\cr
+\text{$i_n$-th row}& \frac{1}{2}\Vh{n}{1} &\frac{1}{2}\Vh{n}{2} &\cdots &\Vh{n}{n} &\cdots &\frac{1}{2}\Vh{n}{N}\cr
+~ &\vdots&\vdots&\vdots&\vdots& \vdots & \vdots\cr
+~ & \V{e} & \V{e} & \cdots & \frac{1}{2}\Vh{n}{N}   & \cdots & \V{e} \cr
+}
+\end{equation}
+Where $\V{x_{i_n}}$ is the $i_n$-th item in $n$-th category, $\Vh{n}{m}$, a row vector, is the function to map the $n$-th category's items to the latent space for matching with the $m$-th category's items, $\V{e}$ a row vector with all ones. And every vector can be see as a block of this matrix. Use $\Varow{n}$ to form the factor matrix $\M{A}^{(n)}\in R^{L^{(n)}\times{N^2D}}$.
+
+And similarly, we define the \emph{Matrix}$(\M{U})$, as the reshaped matrix of row vector $\V{U}$.
+\begin{equation}
+\label{eq:VMU}
+\emph{Matrix}(\V{U})=
+\begin{pmatrix}
+\V{u}^{(1)} & \V{e}       & \cdots & \V{e} \cr
+\V{e}       & \V{u}^{(2)} & \cdots & \V{e}\cr
+\vdots      & \vdots      & \vdots & \vdots\cr
+\V{e}       & \V{e}       & \cdots & \V{u}^{(N)}\cr
+\end{pmatrix}
+\end{equation}
+
+With the definition of equation ~\ref{eq:VMA} and equation ~\ref{eq:VMU}, we can conclude that:
+\begin{align*}
+r_{u,\T{O}_t} =
+&\sum_{n=1}^{N}\V{u}^{(n)}\cdot\Vh{n}{n}+\\
+&\sum_{n=1}^{N}\sum_{m=n+1}^{N}\Vh{n}{m}\cdot\Vh{m}{n}\\
+=&\sum_{k=1}^{N^2D}u_{k}\Sca{a}{1}{k}\Sca{a}{2}{k}\cdots\Sca{a}{N}{k}\\
+=&x_{\V{i}}
+\end{align*}
+
+Suppose $k-1 = xND + yD + z$, then $(x+1,y+1)$ represents the block vector's position in \emph{Matrix}$(\Varow{n})$ or \emph{Matrix}$(\V{U})$, and $z+1$ represents the element's index in $(x+1,y+1)$-th block. i.e
+
+\begin{equation*}
+\Sca{a}{n}{k}=
+\left\{
+  \begin{array}{ll}
+    1, & \hbox{$x+1\neq n,y+1\neq n$;} \\
+    (1/2)h^{(n,y+1)}_{z+1}(\V{x}_{i_{n}}), & \hbox{$x+1 = n,y+1\neq n$;} \\
+    (1/2)h^{(n,x+1)}_{z+1}(\V{x}_{i_{n}}), & \hbox{$x+1 \neq n,y+1 = n$;} \\
+    h^{(n,n)}_{z+1}(\V{x}_{i_{n}}), & \hbox{$x+1 = y+1 = n$.}
+  \end{array}
+\right.
+u_k =
+\left\{
+  \begin{array}{ll}
+    1, & \hbox{$x+1\neq n$ or $y+1\neq n$;} \\
+    u^{(n)}_{z+1}, & \hbox{$x+1 = y+1 = n$.}
+  \end{array}
+\right.
+\end{equation*}
+Base on the special structure of $\V{U}$ and $\M{A}^{(n)}$, the ~\Alg{DSamplingU} can have more concise formation.
+
+\subsection{Compute the weight $u_k$}
+See the \AlgLine{DSamplingU}{StartU}
+\begin{asparaitem}
+\item
+$\norm{\M{U}}{1}$ is redundant.
+\item
+Only two of $\{\mid u_k \mid,\norm{\Vacol{1}}{1},\norm{\Vacol{2}}{1},\ldots,\norm{\Vacol{N}}{1} \}$ need to be computed. For robustness, the weight $w_k$ is replaced by $\mid u_k \mid
+    \norm{\Vacol{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1}/(L^{(1)}\times L^{(2)}\ldots\times L^{(N)})$. In each turn, two components is calculated, and divided by the corresponding length.
+\end{asparaitem}
+
+
+\subsection{Compute the $x_{i_1,i_2,\cdots,i_N}$}
+\begin{asparaitem}
+\item
+In each round of \AlgLine{DSamplingU}{in}, only two indexes of $\{i_1,i_2,...,i_N\}$ need to be sampled with particular distribution ($\V{p}_n = \Vacol{n}/\norm{\Vacol{n}}{1}$).
+\item Update values $\Delta x$\\
+\[\Delta x = sgn(\Sca{a}{1}{k}\Sca{a}{2}{k}\cdot\Sca{a}{3}{k}\cdots\Sca{a}{N}{k}\cdot u_k\cdot u_{k'})
+\Sca{a}{1}{k'}\Sca{a}{2}{k'}\Sca{a}{3}{k'}\cdots\Sca{a}{N}{k'}\]
+And only four of elements need to be calculated.
+\item
+Suppose $k-1 = xND + yD + z$ and $x+1 = y+1 = n$, then only $i_n$ need to be sampled with specific distribution.
+After sampled $i_n,k'$,we update $x_{i_1,i_2,i_3,\cdots,i_N}$ for $i_m = \{1,\ldots,L^{(m)}\},m\neq n$
+\[x_{i_1,i_2,i_3,\cdots,i_N}\leftarrow x_{i_1,i_2,i_3,\cdots,i_N} + \frac{1}{\prod_{m\neq n}L^{(m)}}\Delta x\]
+\item
+Or only $i_n,i_m$ need to be sampled with specific distribution.
+After sampled $i_n,i_m,k'$, then we update $x_{i_1,i_2,i_3,\cdots,i_N}$ for $i_h = \{1,\ldots,L^{(h)}\},h\neq m,n$
+\[x_{i_1,i_2,i_3,\cdots,i_N}\leftarrow x_{i_1,i_2,i_3,\cdots,i_N} + \frac{1}{\prod_{h\neq m,n}L^{(h)}}\Delta x\]
+
+\end{asparaitem}
+\end{document}
+
