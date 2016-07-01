@@ -20,7 +20,7 @@
 \newcommand{\V}[1]{{\bm{{\MakeLowercase{#1}}}}}%Vector
 \newcommand{\VnC}[3]{\V{#1}^{(#2)}_{#3}}%Vector with superscript and subscript
 \newcommand{\Varow}[1]{\V{a}^{(#1)}_{i_#1*}}
-\newcommand{\Vacol}[1]{\V{a}^{(#1)}_{*k}}
+\newcommand{\Vacol}[1]{\V{a}^{(#1)}_{*r}}
 \newcommand{\Vh}[2]{\V{h}^{(#1,#2)}{(\V{x}_{i_#1}})}
 \newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}}%Matrix
 \newcommand{\Mn}[2]{\M{#1}^{(#2)}}%Matrix with superscript
@@ -37,6 +37,7 @@
 \newcommand{\KT}[1]{\left\llbracket #1 \right\rrbracket}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}[section]
 \newcommand{\Lem}[1]{\hyperref[lem:#1]{Lemma~\ref*{lem:#1}}} %
 \newcommand{\Prop}[1]{\hyperref[prop:#1]{Property~\ref*{prop:#1}}} %
 \def\VX{\V{X}_{i_1}}
@@ -120,8 +121,141 @@ Under the presentation, our sampling method can be expressed in plain English: w
 
 \subsection{Probability of edges and walks}
 
-When we start from a vertice in $V_1$ to $\overline{V}$, or from a vertice in $\overline{V}$ to $V_1$, we choose the edge according to the weight. That is given $i_1$, pick $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, pick $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
-Assign $|\Sca{a}{n}{k}|/\norm{\Vacol{n}}{1}$ to 
+\begin{itemize}
+  \item Walk with probability
+
+  When we start from a vertice in $V_1$ to $\overline{V}$, or from a vertice in $\overline{V}$ to $V_i$, we choose the path according to the weight. That is given $i_1$, pick $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, pick $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
+
+  \item Assign probabilities to  edges
+
+  If $ \Sca{a}{1}{k} \neq 0 $ than assign the
+  Assign pair $(v^1_{i_1},\overline{v}_r)$ to be
+  \[
+    p(e) = \mid\Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
+  \]
+  Where
+  \[
+    \norm{\M{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
+  \]
+
+\end{itemize}
+
+\subsection{Scoring samples}
+
+We walk $S$ times, and each time we will get an coordinate $\V{i} = (i_1,i_2,\ldots,\i_N) $. If this coordinate has not been sampled previous, let the score
+$ \M{X}_{\V{i},\ell} $ in the $\ell $-th turn be
+$ sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
+\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'} $,
+and assign $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$. Otherwise, assign $\widehat{x}_{\V{i}}$ by $\M{X}_{\V{i},\ell}$.
+
+\subsection{Correctness and error bounds}
+We define the walk to be event $\varepsilon_{\V{i},r',r}$, that is pick a pair $(v^1_{i_1},\overline{v}_r)$ then pick pathes from $V^1_{i_1}$ in $V_1$ to $\overline{V}$ and  an addition path from $\overline{v}_r$ in $\overline{V}$ to $V_1$.
+
+\begin{lemma}\label{lemma:Expectation}
+The expectation of $\widehat{x}_{\V{i}}$ equals to $s\cdot x_{\V{i}}/\norm{\M{W}}{1}$.
+\end{lemma}
+\begin{proof}[Proof:]
+Suppose each walk is independent. And the final score $\widehat{x}_{\V{i}} = \sum_{\ell=1}\M{X}_{\V{i},\ell}$. So that
+\begin{equation}\label{eq:Expectation}
+\mathbb{E}[\widehat{x}_{\V{i}}] = \mathbb{E}[\sum_{\ell=1}\M{X}_{\V{i},\ell}]=s\mathbb{E}[\M{X}_{\V{i},1}]
+\end{equation}
+
+The probability of $\varepsilon_{\V{i},r',r}$ is
+\begin{align*}
+Pr(\varepsilon_{\V{i},r',r})
+&=Pr({\rm pick\ }(v^1_{i_1},\overline{v}_r)\cdot
+\prod_{n=2}^{n=N}
+Pr({\rm pick\ }(v^n_{i_n},\overline{v}_r)| {\rm given\ }\overline{v}_r)\cdot
+Pr({\rm pick\ }(v^1_{i_1},\overline{v}_r')| {\rm given\ }v^1_{i_1})\\
+&=\frac{w_{i_1r}}{\norm{W}{1}}\cdot
+  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
+  \prod_{n=2}^{n=N}
+  \frac{|\Sca{a}{n}{r}|}{\norm{{\VnC{a}{n}{*r}}}{1}}\\
+&=\frac{|\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\prod_{n=2}^{n=N}\norm{{\VnC{a}{n}{*r}}}{1}}{\norm{W}{1}}\cdot
+  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
+  \prod_{n=2}^{n=N}
+  \frac{|\Sca{a}{n}{r}|}{\norm{{\VnC{a}{n}{*r}}}{1}}\\
+&=\frac{|\Sca{a}{1}{r'}|\prod_{n=1}^{n=N}|||\Sca{a}{1}{r'}|}{\norm{W}{1}}
+\end{align*}
+We get the probability of one walk.
+\begin{equation}\label{eq:ProbabilityOneWalk}
+Pr(\varepsilon_{\V{i},r',r})=\frac{|\Sca{a}{1}{r'}|\prod_{n=1}^{n=N}|||\Sca{a}{1}{r'}|}{\norm{W}{1}}
+\end{equation}
+
+Using equation in \ref{eq:Expectation} and \ref{eq:ProbabilityOneWalk}.
+\begin{align*}
+\mathbb{E}[x_{\V{i}}/s]
+&= \mathbb{E}[\M{X}_{\V{i},1}]\\
+&=\sum_{r}\sum_{r'}Pr(\varepsilon_{\V{i},r',r})\cdot sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
+\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}\\
+&=\frac{1}{\norm{\M{W}}{1}}\sum_{r}\sum_{r'}|\Sca{a}{1}{r}|\cdot|\Sca{a}{2}{r}|\cdots|\Sca{a}{N}{r}|\cdot|\Sca{a}{1}{r'}|sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
+\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}\\
+&=\frac{1}{\norm{\M{W}}{1}} \sum_{r}\sum_{r'} \Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'} \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}\\
+&=\frac{1}{\norm{\M{W}}{1}}\{\sum_{r}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\}^2\\
+&=\frac{x_{\V{i}}^2}{\norm{\M{W}}{1}}
+\end{align*}
+\end{proof}
+
+
+
+\begin{lemma}\label{Bound}
+Fix $\varepsilon > 0$ and error probability $\sigma \in (0,1)$. Assuming all entries in factor matrices are nonnegative and at most $K$. If the number of samples
+\[
+s \leq 3K^N\norm{\M{W}}{1}\log{2/\sigma}/(\varepsilon ^2{x_{\V{i}}}^2),
+\]
+then
+\[
+Pr[|{\widehat{x}_{\V{i}}}\norm{\M{W}}{1}/s-{x_{\V{i}}}^2| \geq \varepsilon{x_{\V{i}}}^2] \leq \sigma
+\]
+\end{lemma}
+\begin{theorem}
+Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^N\norm{\M{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indices $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
+\end{theorem}
+
+\subsection{Finding top-t largest value}
+
+
+\subsection{Finding k-NN for query}
+At this situation, we use on row of matrix $\M{A}^{(1)}$ each time called $\V{u}$. And the tenor of N-1 order called rank tensor for query $\V{u}$.
+
+\begin{equation}\label{eq:RankTensorCP}
+\T{X}_{\V{u}}= \KT{ \V{u},\Mn{A}{2}\dots,\Mn{A}{N}} =
+\sum_{r=1}^{R} u_r \cdot \VnC{A}{2}{r}\circ \cdots \circ \VnC{A}{N}{r}
+\end{equation}
+
+And find the k most revelent vector sets, each vector set consist N-1 vectors and the
+
+The biggest difference between different queries in sampling processing is the probability for picking vertice in partition $\overline{V}$, or the frequency sequence $(c_1,c_2,\ldots,c_R)$ of $\overline{v}_r$ to be sampled. Notice that, $\sum_{r=1}^{R}c_r = s$.
+
+For effectively implementation, we use the lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to record the sub-path(walk from vertice $\overline{v}_r$ in $\overline{V}$ to $V_i,i\in\{2,\ldots,N\}$ .
+
+
+\subsubsection{Weight assigning and frequency generating}
+For each $1 \leq r \leq R$, let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$. 
+Instead of sampling $r$ directly $s$ times, choosing the $c_r$ randomly such that $c_r$ has the expected value $su'_r/\norm{u'}{1}$ will still works.
+
+ \begin{equation*}c_r=
+    \left\{
+      \begin{array}{ll}
+        \lfloor su'_r/\norm{u'}{1} \rfloor,
+        & \hbox{with probability $\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\
+        \lceil su'_r/\norm{u'}{1} \rceil,
+        & \hbox{with probability $\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
+      \end{array}
+    \right.
+    \end{equation*}
+    
+\subsubsection{Sub-walks}
+When given some $r$, sampling method need to pick the left indices $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$, which has been stored in the previous query, it saves a lot of computation.
+\begin{itemize}
+  \item for $r = 1,2,\ldots,R$:
+  
+        sample $r'$ $c_r$ times with the probability $|u_r|/\norm{u}{1}$.
+        
+  \item for $r = 1,2,\ldots,R$:
+  
+  \item 
+\end{itemize}
 \section{Two Approaches}
 In this section, we introduce wedge sampling and the advanced edition diamond sampling.
 \subsection{Wedge Approach}
