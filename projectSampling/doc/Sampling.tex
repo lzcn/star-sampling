@@ -53,7 +53,7 @@
 
 
 \section{Introducing}
-Consider a $N$th-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition of this tensor is
+Consider a $N$-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition of this tensor is
 
 \begin{equation}\label{eq:CPDecomposition}
 \T{X}= \KT{ \Mn{A}{1},\dots,\Mn{A}{N}} =
@@ -72,23 +72,22 @@ where
 \begin{bmatrix}\VnC{a}{N}{1},\VnC{a}{N}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_N\times R}\\
 \end{gather*}
 
-The column size $R$ is the rank of this tenor, which means $\T{X}$ can be represented by a sum of $R$ rank one tensor. $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
+In equation \ref{eq:CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix, and the column size $R$ represents the rank of this tenors, which means that $\T{X}$ can be represented by a sum of these $R$ rank one tensors. The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
 In general, let $\Vacol{n}$ be the $k$-th column of $\M{A}^{(n)}$, $\Varow{n}$ be the $i_n$-th row vector of $\M{A}^{(n)}$, and $\Sca{a}{n}{k}$ be the element of $\M{A}^{(n)}$.
 
-The element in $\T{X}$ satisfies the equation:
+The element in $\T{X}$ satisfies the following equation:
 
 \begin{equation}\label{eq:ValueInTensor}
 x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}
 \end{equation}
 
-$\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. We propose a method for
-estimating the maximum elements $x_\V{i}$ given factor matrices $\Mn{A}{n}, n = 1,2,\ldots,N$.
+The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. We propose two methods, which are wedge sampling and diamond sampling, for
+estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}{n}, n = 1,2,\ldots,N$ are given. The wedge sampling is so much like the diamond sampling, and the diamond sampling an improvement of wedge sampling.
 
 \begin{table}
   \centering
   \begin{tabular}{|c|c|}
     \hline
-    % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
     Notation & Explanation \\
     \hline
     $\T{A}$ & tensor \\
@@ -102,60 +101,75 @@ estimating the maximum elements $x_\V{i}$ given factor matrices $\Mn{A}{n}, n = 
   \end{tabular}
   \caption{Notation}\label{table:Notation}
 \end{table}
+
 \section{Diamond Sampling}
-Without the loss of generality, suppose $\T{X}$ is a three order tensor with size $I\times J\times K$, and the CP decomposition is given by
+The diamond sampling is a way to sample the multi-index $\V{i}:(i_1,i_2,\ldots,\i_N)$  proportional to $x_{\V{i}}^2$.
+We consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_{A}$. Meanwhile, in the adjacent matrix of the graph we use $0$ instead of $\infty$ to represent the two vertices are not adjacent. So the adjacent matrix of $G_{A}$ is:
+\[
+\left(
+  \begin{array}{cc}
+    \V{0}_{m\times m} & A \\
+    A^T & \V{0}_{n\times n} \\
+  \end{array}
+\right)
+\]
 
-\begin{equation}\label{eq:ThreeWayTensorCP}
-\T{X}= \KT{\M{A},\M{B},\M{C}}=
-\sum_{r=1}^{R}\V{a}_r \circ \V{b}_r \circ \V{c}_r
-\end{equation}
-
-\begin{equation}\label{eq:ValueInThreeWayTensor}
-x_{ijk} = \sum_{r=1}^{R} a_{ir}\cdot b_{jr}\cdot c_{kr}
-\end{equation}
-Where $\M{A}\in R^{I\times R},\M{B}\in R^{J\times R},\M{C}\in R^{K\times R}$.
 \subsection{Graph representation}
-Those N factor matrices are represented by a weighted $(N+1)$-partite graph. And we call those N+1 partitions $\overline{V},V_{1},V_{2},\ldots,V_{N}$ that $V_{n}$ has $L_n$ vertices, $\overline{V}$ has $R$ vertices. Every two vertices from different partition classes $V_i$ are nonadjacent. A vertice $\overline{v}_r$ in $\overline{V}$ is adjacent to the vertice $v^n_i$ in $V_n$ only when $\Sca{a}{n}{r}$ is non-zero, and then assigned the weight to be $\Sca{a}{n}{r}$.
+In equation \ref{eq:CPDecomposition}, we have $N$ factor matrices $\Mn{A}{1},\dots,\Mn{A}{N}$.
+Those $N$ factor matrices are represented by a weighted $(N+1)$-partite graph $G_{T}$. And we call those $N+1$ partitions as $\overline{V},V_{1},V_{2},\ldots,V_{N}$. Partition $V_{n}$ has $L_n$ vertexes and partition $\overline{V}$ has $R$ vertexes which is the same size of tensor rank. We call $v^n_{i_n}$ the $i_n$-th vertex in partition $V_{n}$, and $\overline{v}_{r}$ the $r$-th vertex in partition $\overline{V}$. Every two vertexes from different partition classes $V_i,V_j,i,j\in {1,2,\ldots,N}$ are not adjacent. A vertex $\overline{v}_r$ in $\overline{V}$ is only adjacent to vertexes $v^n_i$ in $V_n$ when $\Sca{a}{n}{r}$ is non-zero with the edge weight $\Sca{a}{n}{r}$. And the adjacent matrix of $G_{T}$ is :
+\[
+\left(
+  \begin{array}{cccc}
+    \M{0}_{R\times R}   & {\Mn{A}{1}}^T         & \ldots & {\Mn{A}{N}}^T \\
+    \Mn{A}{1}           & \M{0}_{L_1\times L_1} & \ldots & \M{0}_{L_1\times L_N} \\
+    \vdots              & \vdots                & \ddots & \vdots \\
+    \Mn{A}{N}           & \M{0}_{L_N\times L_1} & \ldots & \M{0}_{L_1\times L_N} \\
+  \end{array}
+\right)
+\]
 
-Under the presentation, our sampling method can be expressed in plain English: we firstly pick an edge $e=(v^1_{i_1},\overline{v}_k)$ with some probability, then walk N-1 times randomly from the $\overline{v}_k$ to the other partitions, record the N-1 vertices $i_2,i_3,\ldots,i_N$. Secondly, we walk from $v^1_{i_1}$ randomly to $\overline{V}$ and end in $\overline{v}_k'$. According to these N+2 vertices, we give a score to the coordinate $\V{i}=(i_1,i_2,\ldots,i_N)$
+Under the graph presentation, we define an event $\varepsilon_{\V{i},r',r}$: phase 1. Pick an edge $e=(v^1_{i_1},\overline{v}_r)$; phase 2. Walk $N-1$ times from the $\overline{v}_r$ to other partitions $V_2,\ldots,V_N$, arrive at $v^2_{i_2},v^3_{i_3},\ldots,v^N_{i_N}$; phase 3. Walk from $v^1_{i_1}$ to $\overline{V}$ and end in $\overline{v}_r'$. After this event happened, we give a score according to indexes $\V{i}:(i_1,i_2,\ldots,i_N)$. We assign each phase a probability so that the final score of $\V{i}:(i_1,i_2,\ldots,i_N)$ will be a good estimation of $x_{\V{i}}$.
 
-\subsection{Probability of edges and walks}
+\subsection{Probability of picking edge and walking to other partition}
 
 \begin{itemize}
-  \item Walk with probability
+  \item Walking with probability
 
-  When we start from a vertice in $V_1$ to $\overline{V}$, or from a vertice in $\overline{V}$ to $V_i$, we choose the path according to the weight. That is given $i_1$, pick $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, pick $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
+  In phase 2 we start from a vertex in $\overline{V}$ to $V_i$, and phase 3 from a vertex in $V_1$ to $\overline{V}$. We choose the path(edge) that we walk through according to its weight, which is given $i_1$, pick $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, pick $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
 
-  \item Assign probabilities to  edges
+  \item Picking an edge
 
-  If $ \Sca{a}{1}{k} \neq 0 $ than assign the
-  Assign pair $(v^1_{i_1},\overline{v}_r)$ to be
+  When we pick an edge $e=(v^1_{i_1},\overline{v}_r)$, we are picking the vertexes pair $(v^1_{i_1},\overline{v}_r)$. Firstly, we assign pair a probability, if $ \Sca{a}{1}{k} \neq 0 $,
   \[
-    p(e) = \mid\Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
+    p(i_1,r) = \mid\Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
   \]
   Where
   \[
     \norm{\M{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
   \]
-
+  Then we pick the pair according the probability $p(i_1,r)$.
 \end{itemize}
 
 \subsection{Scoring samples}
 
-We walk $S$ times, and each time we will get an coordinate $\V{i} = (i_1,i_2,\ldots,\i_N) $. If this coordinate has not been sampled previous, let the score
-$ \M{X}_{\V{i},\ell} $ in the $\ell $-th turn be
-$ sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
-\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'} $,
-and assign $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$. Otherwise, assign $\widehat{x}_{\V{i}}$ by $\M{X}_{\V{i},\ell}$.
+We do $s$ time samples, and for each sample we will get an coordinate $\V{i} = (i_1,i_2,\ldots,\i_N) $. If this coordinate has not been sampled previously, let the score in the $\ell $-th turn be
+$ \M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'}) \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}$,
+and create a variable $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$. Otherwise, increase $\widehat{x}_{\V{i}}$ by $\M{X}_{\V{i},\ell}$. For $\V{i}$ that not be sampled in $\ell$-th turn, let $\M{X}_{\V{i},\ell}=0$. So
+\[
+\widehat{x}_{\V{i}} = \sum_{\ell} \M{X}_{\V{i},\ell}
+\]
+
+Next, we will show that $\widehat{x}_{\V{i}}$ will be a good estimation of $x_{\V{i}}$ in scale.
 
 \subsection{Correctness and error bounds}
-We define the walk to be event $\varepsilon_{\V{i},r',r}$, that is pick a pair $(v^1_{i_1},\overline{v}_r)$ then pick pathes from $V^1_{i_1}$ in $V_1$ to $\overline{V}$ and  an addition path from $\overline{v}_r$ in $\overline{V}$ to $V_1$.
+
+As we defined previously, the event $\varepsilon_{\V{i},r',r}$ is picking a pair $(v^1_{i_1},\overline{v}_r)$ then pick paths from $V^1_{i_1}$ in $V_1$ to $\overline{V}$ and an addition path from $\overline{v}_r$ in $\overline{V}$ to $V_1$. And we think $\M{X}_{\V{i},\ell},\ell\in\{1,2\ldots,s\}$ are independent. Under this assumption, we give two lemmas.
 
 \begin{lemma}\label{lemma:Expectation}
 The expectation of $\widehat{x}_{\V{i}}$ equals to $s\cdot x_{\V{i}}/\norm{\M{W}}{1}$.
 \end{lemma}
 \begin{proof}[Proof:]
-Suppose each walk is independent. And the final score $\widehat{x}_{\V{i}} = \sum_{\ell=1}\M{X}_{\V{i},\ell}$. So that
+The final score $\widehat{x}_{\V{i}} = \sum_{\ell=1}\M{X}_{\V{i},\ell}$. So that
 \begin{equation}\label{eq:Expectation}
 \mathbb{E}[\widehat{x}_{\V{i}}] = \mathbb{E}[\sum_{\ell=1}\M{X}_{\V{i},\ell}]=s\mathbb{E}[\M{X}_{\V{i},1}]
 \end{equation}
@@ -209,7 +223,7 @@ Pr[|{\widehat{x}_{\V{i}}}\norm{\M{W}}{1}/s-{x_{\V{i}}}^2| \geq \varepsilon{x_{\V
 \]
 \end{lemma}
 \begin{theorem}
-Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^N\norm{\M{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indices $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
+Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^N\norm{\M{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indexes $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
 \end{theorem}
 
 \subsection{Finding top-t largest value}
@@ -223,15 +237,15 @@ At this situation, we use on row of matrix $\M{A}^{(1)}$ each time called $\V{u}
 \sum_{r=1}^{R} u_r \cdot \VnC{A}{2}{r}\circ \cdots \circ \VnC{A}{N}{r}
 \end{equation}
 
-And find the k most revelent vector sets, each vector set consist N-1 vectors and the
+And find the k most relevant vector sets, each vector set consist N-1 vectors and the
 
-The biggest difference between different queries in sampling processing is the probability for picking vertice in partition $\overline{V}$, or the frequency sequence $(c_1,c_2,\ldots,c_R)$ of $\overline{v}_r$ to be sampled. Notice that, $\sum_{r=1}^{R}c_r = s$.
+The biggest difference between different queries in sampling processing is the probability for picking vertexes in partition $\overline{V}$, or the frequency sequence $(c_1,c_2,\ldots,c_R)$ of $\overline{v}_r$ to be sampled. Notice that, $\sum_{r=1}^{R}c_r = s$.
 
-For effectively implementation, we use the lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to record the sub-path(walk from vertice $\overline{v}_r$ in $\overline{V}$ to $V_i,i\in\{2,\ldots,N\}$ .
+For effectively implementation, we use the lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to record the sub-path(walk from a vertex $\overline{v}_r$ in $\overline{V}$ to $V_i,i\in\{2,\ldots,N\}$ .
 
 
 \subsubsection{Weight assigning and frequency generating}
-For each $1 \leq r \leq R$, let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$. 
+For each $1 \leq r \leq R$, let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$.
 Instead of sampling $r$ directly $s$ times, choosing the $c_r$ randomly such that $c_r$ has the expected value $su'_r/\norm{u'}{1}$ will still works.
 
  \begin{equation*}c_r=
@@ -244,17 +258,17 @@ Instead of sampling $r$ directly $s$ times, choosing the $c_r$ randomly such tha
       \end{array}
     \right.
     \end{equation*}
-    
+
 \subsubsection{Sub-walks}
-When given some $r$, sampling method need to pick the left indices $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$, which has been stored in the previous query, it saves a lot of computation.
+When given some $r$, sampling method need to pick the left indexes $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$, which has been stored in the previous query, it saves a lot of computation.
 \begin{itemize}
   \item for $r = 1,2,\ldots,R$:
-  
-        sample $r'$ $c_r$ times with the probability $|u_r|/\norm{u}{1}$.
-        
+
+        repeat $c_r$ times: sample $r'$ times with the probability $|u_r|/\norm{u}{1}$. If the size of $\V{g}_r$ is larger then $c_r$, use the sub-walk in $\V{g}_r$ as the remaining result. Otherwise, sample the remaining.
+
   \item for $r = 1,2,\ldots,R$:
-  
-  \item 
+
+  \item
 \end{itemize}
 \section{Two Approaches}
 In this section, we introduce wedge sampling and the advanced edition diamond sampling.
