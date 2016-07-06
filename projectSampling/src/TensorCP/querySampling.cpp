@@ -55,6 +55,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// sampling time for each query
 	plhs[1] = mxCreateDoubleMatrix(NumQueries, 1, mxREAL);	
 	double *SamplingTime = mxGetPr(plhs[1]);
+	memset(SamplingTime, 0, NumQueries*sizeof(double));
 	mexPrintf("Initialization Complete!\n");
 
 	//-------------------------------------
@@ -86,7 +87,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 		}
 		finish = clock();
-		SamplingTime[i] = (double)(finish-start);
+		SamplingTime[i] += (double)(finish-start);
 	}
 	mexPrintf("Computing weight complete!\n");
 	//-------------------------------
@@ -172,8 +173,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				++offset;
 			}
 		}
-		finish = clock();
-		SamplingTime[i] = (double)(finish-start)/CLOCKS_PER_SEC;
+
 		// compute the score for each query
 		std::vector<indValue> sortVec;
 		std::map<point3D, double>::iterator mapItr;
@@ -185,7 +185,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			//sortVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 		}
 		sort(sortVec.begin(),sortVec.end(),cmp);
-		if(sortVec.size() < knn){
+		if(sortVec.size() <= knn){
 			printf("Warning:The size of sampled %s result is less then K!\n",sortVec.size());
 			for(int s = 0; s < sortVec.size();++s){
 				knnValue[i*knn + s] = sortVec[s].second;
@@ -195,6 +195,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				knnValue[i*knn + k] = sortVec[k].second;
 			}
 		}
+		finish = clock();
+		SamplingTime[i] += (double)(finish-start);
+		SamplingTime[i] /= CLOCKS_PER_SEC;
 	}
 	//---------------
 	// free
