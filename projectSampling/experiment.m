@@ -76,15 +76,16 @@ saveas(recallSample,'sample-recall.png');
 KNN = 100;
 numQueries = 1000;
 recall = zeros(numQueries,2);
+nonZero = sum(abs(A(:,1:numQueries)))~=0;
 % diamond sampling for query
 for i = 1:size(samples,2)
     [sValue,sTime] = querySampling(A(:,1:numQueries),B,C,samples(i),samples(i),KNN);
-    idx = (sTime~=0);
-    for j = 1: numQueries
-        if(idx(j) ~= 1)
+    parfor j = 1: numQueries
+        if(nonZero(j) == 1)
             [~,dValue] = diamondTensor(A(:,j),B,C,samples(i),samples(i));
-            recall(j,1) = sum(sValue(1:KNN,j)>= valueQuery(KNN,j))/KNN;
-            recall(j,2) = sum(dValue(1:KNN)>= valueQuery(KNN,j))/KNN;
+            recall(j,:) = ...
+                [sum(sValue(1:KNN,j) >= valueQuery(KNN,j))/KNN,...
+                 sum(dValue(1:KNN)>= valueQuery(KNN,j))/KNN];
         end
     end
 end
