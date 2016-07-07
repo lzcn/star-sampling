@@ -54,7 +54,7 @@ plot(log10(samples),log10(exactTime),'b','LineWidth',2);
 plot(log10(samples),log10(diamondTimes),'r','LineWidth',2); 
 plot(log10(samples),log10(wedgeTimes),'--g','LineWidth',2);
 legend('exhaustive','diamond','wedge');
-saveas(timeSample,'sample-time.png'); 
+% saveas(timeSample,'sample-time.png'); 
 % draw recall - sample
 recallSample = figure; hold on; title('Recall'); 
 xlabel('log_{10}Samples'); 
@@ -69,7 +69,7 @@ legend('diamond:t=1','wedge:t=1',...
        'diamond:t=10','wedge:t=10',...
        'diamond:t=100','wedge:t=100',...
        'diamond:t=1000','wedge:t=1000');  
-saveas(recallSample,'sample-recall.png'); 
+% saveas(recallSample,'sample-recall.png'); 
 
 
 % query sampling
@@ -77,16 +77,34 @@ KNN = 100;
 numQueries = 1000;
 recall = zeros(numQueries,2);
 nonZero = sum(abs(A(:,1:numQueries)))~=0;
+timeQuery = timeQuery/1000;
 % diamond sampling for query
 for i = 1:size(samples,2)
     [sValue,sTime] = querySampling(A(:,1:numQueries),B,C,samples(i),samples(i),KNN);
-    parfor j = 1: numQueries
+    for j = 1: numQueries
         if(nonZero(j) == 1)
             [~,dValue] = diamondTensor(A(:,j),B,C,samples(i),samples(i));
-            recall(j,:) = ...
-                [sum(sValue(1:KNN,j) >= valueQuery(KNN,j))/KNN,...
-                 sum(dValue(1:KNN)>= valueQuery(KNN,j))/KNN];
+            recall(j,1) = sum(sValue(1:KNN,j) >= valueQuery(KNN,j))/KNN;
+            recall(j,2) = sum(dValue(1:KNN)>= valueQuery(KNN,j))/KNN;
         end
     end
+    recalla = recall(nonZero,1);
+    recallb = recall(nonZero,2);
+    filename = ['Recall-Equeries with 10^',num2str(log10(samples(i))),' samples'];
+    h = figure;hold on; title(filename);
+    xlabel('qeuaries'); 
+    ylabel('recall');
+    axis([1 1000 0 1]);
+    plot(1:10:size(recalla,1),recalla(1:10:size(recalla,1)),'--r');
+    plot(1:10:size(recalla,1),recallb(1:10:size(recallb,1)),'b');
+    legend('query','General');
+    saveas(h,[filename,'.png']); 
+    t = sTime(nonZero);
+    filename = ['Time-Equeries with 10^',num2str(log10(samples(i))),' samples'];
+    h = figure;hold on; title(filename);
+    xlabel('qeuaries'); 
+    ylabel('time');
+    plot(1:10:size(t,1),t(1:10:size(recalla,1)),'r');
+    saveas(h,[filename,'.png']); 
 end
 
