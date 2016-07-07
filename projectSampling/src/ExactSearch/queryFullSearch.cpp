@@ -3,7 +3,6 @@
 #include "mex.h"
 #include "../../include/matrix.h"
 
-
 /*
     the matrix must has the same row dimension
 */
