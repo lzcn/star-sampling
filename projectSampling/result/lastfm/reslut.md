@@ -1,8 +1,14 @@
-### result of query sampling
-
+### Data 
 The user matrix's size 1000x200
 
 The other two matrices' size: 18744x200 , 12647x200
+### diamond sampling
+
+samples __[10^3,...,10^7]__
+![](sample-recall.png)![](sample-time.png)
+### result of query sampling
+
+
 
 #### Find the top 100 largest value of each query
 
