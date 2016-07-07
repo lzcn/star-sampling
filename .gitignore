@@ -3,10 +3,10 @@
 ##---------------------
 
 # Papers file
-papers/
+/papers/
 
 # Doc Directory
-doc/
+/doc/
 
 # Thired party code
 src/MSongsDB/

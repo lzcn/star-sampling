@@ -1,0 +1,434 @@
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage[text={148mm,220mm},left=21mm,top=25.5mm]{geometry}
+\usepackage{amsthm,amsmath,amsfonts,amssymb}
+\usepackage{bm}
+\usepackage[mathscr]{eucal}
+\usepackage{stmaryrd}
+\usepackage{paralist}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[colorlinks,urlcolor=blue,citecolor=blue,linkcolor=blue]{hyperref}
+
+\newcommand{\Sca}[3]{{#1}^{(#2)}_{i_#2#3}}%Scalar with superscript and subscript
+\newcommand{\Scah}[3]{h^{(#1,#2)}_{#3}(\V{x}_{i_#1})}
+\newcommand{\T}[1]{\boldsymbol{\mathscr{\MakeUppercase{#1}}}}%Tensor
+\newcommand{\V}[1]{{\bm{{\MakeLowercase{#1}}}}}%Vector
+\newcommand{\VnC}[3]{\V{#1}^{(#2)}_{#3}}%Vector with superscript and subscript
+\newcommand{\Varow}[1]{\V{a}^{(#1)}_{i_#1*}}
+\newcommand{\Vacol}[1]{\V{a}^{(#1)}_{*r}}
+\newcommand{\Vh}[2]{\V{h}^{(#1,#2)}{(\V{x}_{i_#1}})}
+\newcommand{\M}[1]{{\bm{\mathbf{\MakeUppercase{#1}}}}}%Matrix
+\newcommand{\Mn}[2]{\M{#1}^{(#2)}}%Matrix with superscript
+
+
+\newcommand{\norm}[2]{\parallel#1\parallel_{#2}}
+
+\newcommand{\Def}[1]{\hyperref[def:#1]{Definition~\ref*{def:#1}}}
+\newcommand{\Eqn}[1]{\hyperref[eq:#1]{{Equation~\ref*{eq:#1}}}}
+\newcommand{\Fig}[1]{\hyperref[fig:#1]{Figure~\ref*{fig:#1}}} %
+\newcommand{\Lem}[1]{\hyperref[lem:#1]{Lemma~\ref*{lem:#1}}} %
+\newcommand{\Theo}[1]{\hyperref[lem:#1]{Lemma~\ref*{theo:#1}}} %
+\newcommand{\Prop}[1]{\hyperref[prop:#1]{Property~\ref*{prop:#1}}} %
+\newcommand{\Alg}[1]{\hyperref[alg:#1]{Algorithm~\ref*{alg:#1}}}
+\newcommand{\AlgLine}[2]{\hyperref[alg:#1]{line~\ref*{line:#2} of Algorithm~\ref*{alg:#1}}}
+\newcommand{\AlgLines}[3]{\hyperref[alg:#1]{lines~\ref*{line:#2}--\ref*{line:#3} of Algorithm~\ref*{alg:#1}}}
+\newcommand{\KT}[1]{\left\llbracket #1 \right\rrbracket}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}[section]
+\def\VX{\V{X}_{i_1}}
+\def\VY{\V{Y}_{i_2}}
+\def\VZ{\V{Z}_{i_3}}
+
+\begin{document}
+\title{Sampling}
+\date{}
+\author{}
+\maketitle
+
+
+
+\section{Introducing}
+Consider a $N$-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition of this tensor is
+
+\begin{equation}\label{eq:CPDecomposition}
+\T{X}= \KT{ \Mn{A}{1},\dots,\Mn{A}{N}} =
+\sum_{r=1}^{R}\VnC{A}{1}{r} \circ \cdots \circ \VnC{A}{N}{r}
+\end{equation}
+
+where
+
+\begin{gather*}\label{eq:ColumnVectorsForm}
+\M{A}^{(1)} =
+\begin{bmatrix}\VnC{a}{1}{1},\VnC{a}{1}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_1\times R}\\
+\M{A}^{(2)} =
+\begin{bmatrix}\VnC{a}{2}{1},\VnC{a}{2}{2},\cdots,\VnC{a}{2}{r}\end{bmatrix}\in R^{L_2\times R}\\
+\vdots\\
+\M{A}^{(N)} =
+\begin{bmatrix}\VnC{a}{N}{1},\VnC{a}{N}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_N\times R}\\
+\end{gather*}
+
+In equation \ref{eq:CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix, and the column size $R$ represents the rank of this tenors, which means that $\T{X}$ can be represented by a sum of these $R$ rank one tensors. The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
+In general, let $\Vacol{n}$ be the $k$-th column of $\M{A}^{(n)}$, $\Varow{n}$ be the $i_n$-th row vector of $\M{A}^{(n)}$, and $\Sca{a}{n}{k}$ be the element of $\M{A}^{(n)}$.
+
+The element in $\T{X}$ satisfies the following equation:
+
+\begin{equation}\label{eq:ValueInTensor}
+x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}
+\end{equation}
+
+The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. We propose two methods, which are wedge sampling and diamond sampling, for
+estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}{n}, n = 1,2,\ldots,N$ are given. The wedge sampling is so much like the diamond sampling, and the diamond sampling ia an improvement of wedge sampling.
+
+\begin{table}
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    Notation & Explanation \\
+    \hline
+    $\T{A}$ & tensor \\
+    $\M{A}$ & matrix \\
+    $\Mn{A}{n}$ & $n$-th factor matrix of tensor\\
+    $\V{A}_{*r},\V{A}_r$ & $k$-th column of matrix \\
+    $\V{A}_{i*}$ & $i$-th row of matrix \\
+    $\V{A}$ & vector \\
+    $a_{ir}$ & element of matrix\\
+    \hline
+  \end{tabular}
+  \caption{Notation}\label{table:Notation}
+\end{table}
+
+\section{Diamond Sampling}
+The diamond sampling is a way to sample the multi-index $\V{i}:(i_1,i_2,\ldots,\i_N)$  that is proportional to $x_{\V{i}}^2$.
+We consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_{A}$. Meanwhile, in the adjacent matrix of the graph we use $0$(instead of $\infty$) to represent the two vertices are not adjacent. And the adjacent matrix of $G_{A}$ is:
+\[
+\left(
+  \begin{array}{cc}
+    \V{0}_{m\times m} & A \\
+    A^T & \V{0}_{n\times n} \\
+  \end{array}
+\right)
+\]
+
+\subsection{Graph representation}
+In equation \ref{eq:CPDecomposition}, we have $N$ factor matrices $\Mn{A}{1},\dots,\Mn{A}{N}$.
+Those $N$ factor matrices will be represented by a weighted $(N+1)$-partite graph $G_{T}$. And we call those $N+1$ partitions as partition $\overline{V},V_{1},V_{2},\ldots,V_{N}$, in which partition $V_{n}$ has $L_n$ vertexes and partition $\overline{V}$ has $R$ vertexes. We call $v^n_{i_n}$ the $i_n$-th vertex in partition $V_{n}$, and $\overline{v}_{r}$ the $r$-th vertex in partition $\overline{V}$. Every two vertexes from different partition classes $V_i,V_j,i,j\in {1,2,\ldots,N}$ are not adjacent. A vertex $\overline{v}_r$ in $\overline{V}$ is only adjacent to vertexes $v^n_i$ in $V_n$ when $\Sca{a}{n}{r}$ is non-zero with the edge weight $\Sca{a}{n}{r}$. And the adjacent matrix of $G_{T}$ is :
+\[
+\left(
+  \begin{array}{cccc}
+    \M{0}_{R\times R}   & {\Mn{A}{1}}^T         & \ldots & {\Mn{A}{N}}^T \\
+    \Mn{A}{1}           & \M{0}_{L_1\times L_1} & \ldots & \M{0}_{L_1\times L_N} \\
+    \vdots              & \vdots                & \ddots & \vdots \\
+    \Mn{A}{N}           & \M{0}_{L_N\times L_1} & \ldots & \M{0}_{L_1\times L_N} \\
+  \end{array}
+\right)
+\]
+
+Under the graph presentation, we define an event $\varepsilon_{\V{i},r',r}$  consisting of three phases:
+\begin{itemize}
+  \item phase 1. Pick an edge $e=(v^1_{i_1},\overline{v}_r)$;
+  \item phase 2. Walk $N-1$ times from the $\overline{v}_r$ to other partitions $V_2,\ldots,V_N$, arrive at $v^2_{i_2},v^3_{i_3},\ldots,v^N_{i_N}$;
+  \item phase 3. Walk from $v^1_{i_1}$ to $\overline{V}$ and end in $\overline{v}_r'$.
+\end{itemize}
+
+When the event $\varepsilon_{\V{i},r',r}$ happened, we give a score according to indexes $\V{i}:(i_1,i_2,\ldots,i_N)$. We will assign each phase probabilities so that the final score of $\V{i}:(i_1,i_2,\ldots,i_N)$ will be a good estimation of $x_{\V{i}}$.
+
+The sampling algorithm is shown in ~\Alg{DiamondSampling}.
+
+\begin{algorithm}[t]
+    \caption{Diamond Sampling with factor matrixes}
+    \label{alg:DiamondSampling}
+    Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.\\
+    Let $s$ be the number of samples.
+    \begin{algorithmic}[1]
+    \For{all $\Sca{a}{1}{r} \neq 0$}
+    \State $w_{i_1r} \leftarrow \mid \Sca{a}{1}{r}\mid
+    \norm{\Varow{1}}{1}\norm{\Vacol{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1} $
+    \EndFor
+    \State $\T{X} \leftarrow$ all-zeros tensor of size
+    $L_1\times L_2\ldots\times L_N$
+    \For{$ \ell = 1,\ldots,s$}
+    \State Sample $(i_1,r)$ with probability $w_{i_1r}/\norm{\M{W}}{1}$        \label{line:phase1}
+    \For {$n=2,...,N$}
+    \State Sample $i_n$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
+    \label{line:phase2}
+    \EndFor
+    \State Sample $r'$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$
+    \label{line:phase3}
+    \State $x_{i_1,i_2,\cdots,i_N}\leftarrow x_{i_1,i_2,\cdots,i_N} +
+    sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
+    \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}$
+    \label{line:scoring}
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Probability of picking edge and walking to other partitions}
+
+In this part, we introduce the probabilities in each phase.
+
+\begin{itemize}
+  \item Walking with probability  (~\AlgLines{DiamondSampling}{phase2}{phase3})
+
+  In phase 2 we start from a vertex in $\overline{V}$ to $V_i$, and phase 3 from a vertex in $V_1$ to $\overline{V}$. We choose the path(edge) that we walk through according to its weight. That is picking $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, picking $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
+
+  \item Picking an edge (~\AlgLine{DiamondSampling}{phase1})
+
+  When we pick an edge $e=(v^1_{i_1},\overline{v}_r)$ in phase 1, we are picking the vertexes pair $(v^1_{i_1},\overline{v}_r)$. Beforehand, we assign each pair a probability while $ \Sca{a}{1}{k} \neq 0 $:
+  \[
+    p(i_1,r) = \mid\Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
+  \]
+  Where
+  \[
+    \norm{\M{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
+  \]
+  Then we pick the pair $(v^1_{i_1},\overline{v}_r)$ according the probability $p(i_1,r)$.
+\end{itemize}
+
+\subsection{Scoring samples}
+
+Totally, we do $s$ times sampling, and each sample we will get an coordinate $\V{i} = (i_1,i_2,\ldots,\i_N) $. If this coordinate has not been sampled previously, let the score of this coordiante in the $\ell $-th turn be
+\[
+\M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'}) \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'},
+\]
+and add $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$ into a set where we save the scores. Otherwise, increase $\widehat{x}_{\V{i}}$ in the set by $\M{X}_{\V{i},\ell}$. It is shown in ~\AlgLine{DiamondSampling}{scoring}. For $\V{i}$ that not be sampled in $\ell$-th turn, we can assume that $\M{X}_{\V{i},\ell}=0$. So
+\[
+\widehat{x}_{\V{i}} = \sum_{\ell} \M{X}_{\V{i},\ell}
+\]
+
+In the next part, we will show that $\widehat{x}_{\V{i}}$ is a good estimation of $x_{\V{i}}$ in scale.
+
+\subsection{Correctness and error bounds}
+
+As we defined previously, the event $\varepsilon_{\V{i},r',r}$ is picking a pair $(v^1_{i_1},\overline{v}_r)$ then pick paths from $V_1$ to $\overline{V}$ and some addition pathes from $\overline{V}$ to $V_i,i\in{2,\ldots,N}$. And we assume that $\M{X}_{\V{i},\ell},\ell\in\{1,2\ldots,s\}$ are independent. Under these assumptions, we give two lemmas.
+
+\begin{lemma}\label{lemma:Expectation}
+The expectation of $\widehat{x}_{\V{i}}$ equals to $s\cdot x^2_{\V{i}}/\norm{\M{W}}{1}$.
+\end{lemma}
+\begin{proof}[Proof:]
+The final score $\widehat{x}_{\V{i}} = \sum_{\ell=1}\M{X}_{\V{i},\ell}$. And
+\begin{equation}\label{eq:Expectation}
+\mathbb{E}[\widehat{x}_{\V{i}}] = \mathbb{E}[\sum_{\ell=1}\M{X}_{\V{i},\ell}]=s\mathbb{E}[\M{X}_{\V{i},1}]
+\end{equation}
+
+The probability of $\varepsilon_{\V{i},r',r}$ is
+\begin{align*}
+Pr(\varepsilon_{\V{i},r',r})
+& = Pr( {\rm pick\ } (v^1_{i_1},\overline{v}_r))\cdot
+Pr( {\rm walk\ to\ } \overline{v}_r' | {\rm given\ }v^1_{i_1} )\cdot
+Pr( {\rm walk\ to\ } v^2_{i_2} | {\rm given\ }\overline{v}_r) \cdots Pr( {\rm walk\ to\ } v^N_{i_N} | {\rm given\ }\overline{v}_r ) \\
+&=\frac{w_{i_1r}}{\norm{\M{W}}{1}}\cdot
+  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
+  \frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\cdots
+  \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
+&=\frac{    |\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\norm{{\VnC{a}{1}{*r}}}{1}\cdots\norm{{\VnC{a}{N}{*r}}}{1}   }{  \norm{\M{W}}{1}  }\cdot
+  \frac{|\Sca{a}{2}{r'}|}{\norm{{\VnC{a}{2}{i_2*}}}{1}}\cdot
+\frac{|\Sca{a}{1}{r}|}{\norm{{\VnC{a}{1}{*r}}}{1}}\cdots
+  \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
+&=\frac{    |\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|    }{\norm{\M{W}}{1}}
+\end{align*}
+We get the probability of one walk:
+\begin{equation}\label{eq:ProbabilityOneWalk}
+Pr(\varepsilon_{\V{i},r',r})=\frac{|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\M{W}}{1}}
+\end{equation}
+
+Using \Eqn{Expectation} and \Eqn{ProbabilityOneWalk}. The expectation
+\begin{align*}
+\mathbb{E}[x_{\V{i}}/s]
+&= \mathbb{E}[\M{X}_{\V{i},1}]\\
+&=\sum_{r}\sum_{r'}Pr(\varepsilon_{\V{i},r',r})\cdot sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
+\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}\\
+&=\frac{\sum_{r}\sum_{r'}|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
+\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\M{W}}{1}}\\
+&=\frac{\sum_{r}\sum_{r'} \Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'} \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\M{W}}{1}} \\
+&=\frac{\{\sum_{r}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\}^2}{\norm{\M{W}}{1}}\\
+&=\frac{x_{\V{i}}^2}{\norm{\M{W}}{1}}
+\end{align*}
+\end{proof}
+
+
+
+\begin{lemma}\label{lem:Bound}
+Fix $\varepsilon > 0$ and error probability $\sigma \in (0,1)$. Assuming all entries in factor matrices are nonnegative and at most $K$. If the number of samples
+\[
+s \leq 3K^{N-1}\norm{\M{W}}{1}\log{(2/\sigma)}/(\varepsilon ^2{x_{\V{i}}}^2),
+\]
+then
+\[
+Pr[|{\widehat{x}_{\V{i}}}\norm{\M{W}}{1}/s-{x_{\V{i}}}^2| \geq \varepsilon{x_{\V{i}}}^2] \leq \sigma
+\]
+\end{lemma}
+
+\begin{proof}[Proof:]
+Let
+\[
+    y_{\V{i}} = \sum_{\ell}\M{Y}_{\V{i},\ell} = \sum_{\ell}\M{X}_{\V{i},\ell}/K^{N-1}
+\]
+Where $\M{Y}_{\V{i},\ell}$ is in $[0,1]$ for $\M{X}_{\V{i},\ell}$ is in $[0,K^{N-1}]$ and $y_{\V{i}}$ is a sum of random variables in $[0,1]$.
+Applying the Chernoff bound,
+\[
+Pr[y_{\V{i}} \geq \mathbb{E}[y_{\V{i}}]] < \exp{(-\epsilon^2\mathbb{E}[y_{\V{i}}]/3)}
+\]
+By~\Lem{Expectation}
+\[
+\mathbb{E}[y_{\V{i}}] = \frac{sx^2_{\V{i}}}{K^{N-1}\norm{\M{W}}{1}}
+\]
+By the choice of $s$ we have $\mathbb{E}[y_{\V{i}}]=(sx^2_{\V{i}})/(K^{N-1}\norm{\M{W}}{1}) \leq 3\log{(2/\sigma)}$. Then
+\[
+Pr[y_{\V{i}} \geq \mathbb{E}[y_{\V{i}}]] < \sigma/2
+\]
+By the substitution of $y_{\V{i}}=\sum_{\ell}\M{X}_{\V{i},\ell}/K^{N-1}=\widehat{x}_{\V{i}}/K^{N-1}$
+\[
+Pr[\widehat{x}_{\V{i}}\cdot\norm{\M{W}}{1} \geq s\cdot x_{\V{i}}] < \sigma/2
+\]
+
+Using the Chernoff lower tail bound and identical reasoning. We get
+\[
+Pr[\widehat{x}_{\V{i}}\cdot\norm{\M{W}}{1}/s \leq (1-\epsilon)x_{\V{i}}] \leq \sigma/2
+\]
+\end{proof}
+
+\begin{theorem}\label{theo:Order}
+Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^{N-1}\norm{\M{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indexes $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
+\end{theorem}
+
+\begin{proof}[proof:]
+
+\end{proof}
+\subsection{Finding top-$t$ largest value}
+
+We use the sampling score $\widehat{x}_{\V{i}}$ and coordinate set $\V{i}$ to find the top-t largest value in $\T{X}$ when given $N$ factor matrices. Let $\Omega_s = \{\V{i}_j|j = 1,2,\ldots,s\}$ be the coordinates have been sampled.
+
+To reduce the computing, a pre-sort is carried out. It sort the scores $\widehat{x}_{\V{i}}$ and reserve the top-$t'$ elements. Obviously, $t'$,which called budget, is always much larger than $t$.
+
+Then we compute the actual value $x_{\V{i}}$ of the coordinates in the less small set $\Omega_{t'} = \{\V{i}|\widehat{x}_{\V{i}}\geq \widehat{x}_{\V{i'}},\forall i'\in \Omega_{s} \backslash \Omega_{t'}\}$. And the top-$t$ largest value's coordinates will be $\Omega_{t}=\{\V{i}|x_{\V{i}}\geq x_{\V{i'}},\forall i' \in \Omega_{t'} \backslash \Omega_{t} \}$.
+
+The reason to do so is that although the score $\widehat{x}$ is a good estimation, the variance is much higher in practical. And the budget $t'$ is a tradeoff between accuracy and computation. The algorithm for finding the top-$t$ largest value is shown in ~\Alg{Topt}.
+\begin{algorithm}[t]
+    \caption{Finding top-$t$ largest value}
+    \label{alg:Topt}
+    Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.\\
+    Let $s$ be the number of samples, $t'$ be the budget.
+    \begin{algorithmic}[1]
+    \State Sample the score $\widehat{x}_\V{i}$ using ~\Alg{DiamondSampling} and record the coordinates set $\Omega_s$ have been sampled.
+    \State Sort the score to extract
+    \[
+        \Omega_{t'} = \{\V{i}|\widehat{x}_{\V{i}}\geq \widehat{x}_{\V{i'}},\forall i'\in \Omega_{s} \backslash \Omega_{t'}\}
+    \]
+    \State Compute the actual value $x_{\V{i}}$ of each coordinate in $\Omega_{t'}$
+    \State Sort the actual value to extract
+    \[
+        \Omega_{t}=\{\V{i}|x_{\V{i}}\geq x_{\V{i'}},\forall i' \in \Omega_{t'} \backslash \Omega_{t} \}
+    \]
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Finding k-NN for query}
+
+In recommendation system, it is demanded to find the most $k$ relevant items for a user. On this occasion, there will be a matrix for all users, for consistency, say $\M{A}^{(1)}$ and $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ for items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the tenor with $N-1$ order consisting a user $\V{u}$ and items matrices is called a ranking tensor(matrix).
+
+\begin{equation}\label{eq:RankTensorCP}
+\T{X}_{\V{u}}= \KT{ \V{u},\Mn{A}{2}\dots,\Mn{A}{N}} =
+\sum_{r=1}^{R} u_r \cdot \VnC{A}{2}{r}\circ \cdots \circ \VnC{A}{N}{r}
+\end{equation}
+
+It is a exception to reduce one factor matrix into a vector in previous algorithm. However, when we have so many queries, it is time consuming to do sampling one query by one. Obviously, the difference between different queries in sampling processing is the probability for picking vertexes in partition $\overline{V}$, in other word, or the frequency number $(c_1,c_2,\ldots,c_R)$ of each $\overline{v}_r$ that is expected to be sampled.
+
+In the phase 2(walk from a vertex $\overline{v}_r$ in $\overline{V}$ to $V_i,i\in\{2,\ldots,N\}$) of the event $\varepsilon_{\V{i},r',r}$, we call the coordinate $\{i_2,\ldots,i_N\}$ a sub-path. For effectively implementation, we use these lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to save the sub-paths of sampled query.
+
+
+\subsubsection{Weight assigning and frequency generating}
+Instead of pick a random pair $(\V{u},\overline{v}_{\V{i}})$, we use the frequency number sequence $(c_1,c_2,\ldots,c_R)$ for phase 1. For each $1 \leq r \leq R$, let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$ the same in phase 1.
+And then choose $c_r$ to have the expected value of $su'_r/\norm{u'}{1}$.
+
+ \begin{equation*}c_r=
+    \left\{
+      \begin{array}{ll}
+        \lfloor su'_r/\norm{u'}{1} \rfloor,
+        & \hbox{with probability $\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\\\
+        \lceil su'_r/\norm{u'}{1} \rceil,
+        & \hbox{with probability $\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
+      \end{array}
+    \right.
+    \end{equation*}
+
+\subsubsection{Sub-paths}
+After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the the rest indexes $(i_1,i_2,\ldots,i_N)$ by randomly walking from the $\overline{v}_r$ to other partitions $V_2,\ldots,V_N$ that is of the same probability between different queries. So the sub-path $(i_1,i_2,\ldots,i_N)$ is used for the next query to save computation. We give the algorithm in ~\Alg{QuerySampling}.
+
+
+\begin{algorithm}[t]
+    \caption{Finding k-NN for a query}
+    \label{alg:QuerySampling}
+        Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.$\M{A}^{(1)}$ is the query matrix.\\
+        Let $s$ be the number of samples, $t'$ be the budget.
+    \begin{algorithmic}[1]
+    \State Initialize $R$ empty sub-paths lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ for each $\overline{v}_r$.
+    \For {$i_1 =1,2,\ldots,L_1$}
+    \State Let query $\V{u}=\VnC{a}{1}{i_1*}$
+    \For {$r=1,\ldots,R$}
+    \State Let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$
+    \EndFor
+    \For{$r=1,\ldots,R$ determine $c_r$}
+    \State
+    \begin{equation*}c_r=
+        \left\{
+          \begin{array}{ll}
+            \lfloor su'_r/\norm{u'}{1} \rfloor,
+            & \hbox{with probability $\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\\\
+            \lceil su'_r/\norm{u'}{1} \rceil,
+            & \hbox{with probability $\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
+          \end{array}
+        \right.
+    \end{equation*}
+    \EndFor
+    \For {$r= 1,\ldots,R$}
+    \If {$c_r\leq |\V{g}_r|$ }
+    \State Use $c_r$ sub-paths in $\V{g}_r$ as the sampled coordinates.
+    \Else
+    \State Sample $n = c_r - |\V{g}_r|$ sub-paths and append it into $\V{g}_r$.
+    \EndIf
+    \State Use the method in ~\Alg{Topt} to find the top-$k$ largest value for query $\V{u}$.
+    \EndFor
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+
+\section{Implementing details}
+In section, we introduce some details get the improvement.
+\subsection{Data Structure}
+We arrange the factor matrices in specific storage format. we arrange $\Mn{A}{1}$ to be saved in row major order, and the rest factor matrices in column major order. Also, the sum of each row in $\Mn{A}{1}$ and the sum of each column in $\Mn{A}{n},n=2,\ldots,N$ will be computed previously.
+
+\subsection{Picking the edge}
+We pick the $s$ edge with probability  $w_{i_1r}/\norm{\M{W}}{1}$. The weight matrix $\M{W}$ is saved in row major order also and suppose $\V{\rho}$ is the vectorization of $\V{W}$. Since $s$ is much larger than the length of $\V{\rho}$, we use the binary search on the cumulative of $\V{p}$ via ~\Alg{Pickedge}. We use $\V{e}=(e_1,\ldots,e_s)$ to record the sampled indexes, and the vertexes pair is $(e_{\ell}\%L_1,e_{\ell}\setminus L_1)$. So the sample result is sorted according ro $r$.
+
+
+\begin{algorithm}[t]
+    \caption{Picking Edge}
+    \label{alg:Pickedge}
+    Given probability $\M{W}\in R^{L_1\times R}$,$\V{\rho}\in[0,1]^p$ is the vectorization, and number of samples $s$.
+    The result saved in $\V{e}$
+    \begin{algorithmic}[1]
+    \State Sample $\mu_{\ell} \thicksim U(0,1)$ for $\ell \in \{1,\ldots,s\}$
+    \State Sort $\V{\mu}$ so that $\mu_1 \leq \cdots\leq\mu_s$
+    \State $k \leftarrow 1,\overline{\mu} \leftarrow \mu_k$,$\V{\gamma}\in R^R\leftarrow$ all-zero vector.
+    \For {$\ell = 1,\ldots,s$}
+    \While {$\mu_{\ell} > \overline{\mu}$}
+    \State $k \leftarrow k+1,\overline{\mu} \leftarrow \mu_k$
+    \EndWhile
+    \State $r = k \setminus L_1$
+    \State $e_{\ell}\leftarrow k$,$\gamma_{r}\leftarrow \gamma_{r} + 1$
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+\subsection{Random walking}
+
+In phase 2, when we walk from $\overline{v}_r$ to other partitions $V_n$. We use the previous result $\gamma_{r}$, which means we need walk totally $\gamma_{r}$ times from $\overline{v}_r$ to each  partition. Let $\V{\rho} = (|{a}^{(n)}_{1}{r}|/\norm{\Vacol{n}}{1},\ldots,|{a}^{(n)}_{L_n}{r}|/\norm{\Vacol{n}}{1})$, then sample $\gamma_{r}$ times using vose alias's method.
+
+\end{document}
+

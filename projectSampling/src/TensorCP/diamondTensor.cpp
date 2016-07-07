@@ -68,6 +68,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			SumofW += tempW;
 		}
 	}
+	printf("%f\n", SumofW);
 	for (size_t k = 0; k < MatA.row; ++k){
 		for(size_t i = 0; i < MatA.col; ++i){
 			weight[k*MatA.col + i] /= SumofW;
