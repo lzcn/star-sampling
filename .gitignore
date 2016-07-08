@@ -7,15 +7,15 @@
 
 # Doc Directory
 /doc/
+/projectSampling/_drafts
 
 # Thired party code
-src/MSongsDB/
-include/mksqlite/
+/projectSampling/src/MSongsDB/
+/projectSampling/include/mksqlite/
 
 # Data directory
 projectSampling/data
 projectSampling/others
-
 #ignore data
 *.dat
 
