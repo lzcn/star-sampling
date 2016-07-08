@@ -1,20 +1,14 @@
 #include <list>
 #include <vector>
 #include <algorithm>
+#include <ctime>
 
 #include "mex.h"
 #include "../../include/matrix.h"
 
-/*coordinate to save the result*/
-
-void disp_coord(const size_t* cur_ind,int nrhs){
-    for(int i = 0; i < nrhs; ++i){
-        printf("%d, ", cur_ind[i]);
-    }
-    printf("\n");
-
-}
-
+/*
+    Compute the value in coordinate
+*/
 double getValue(const size_t *curIdx, \
                 std::vector<double*> &vecMat, \
                 size_t rank, int num ){
@@ -43,12 +37,15 @@ double getValue(const size_t *curIdx, \
 /*
     matrices has the same row size
     find the top_t elements in tensor
+    [value,time] = exact_search(A1,A1,...,AN,top_t)
 */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
+    clock_t start, finish;
     //---------------------
     // initialization
     //---------------------
+    double duration;
     const int rank = mxGetM(prhs[0]);
     const int top_t = (int)mxGetPr(prhs[nrhs-1])[0];
     std::vector<double*> vecMat;
@@ -78,6 +75,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     listTop.reverse();
     // do exhaustive search
     subIndex.reset();
+    start = clock();
     while(!subIndex.isDone()){
         tempValue = getValue(subIndex.getIdx(),vecMat,rank,nrhs-1);
         if(tempValue > listTop.back()){
@@ -85,10 +83,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         ++subIndex;
     }
+    finish = clock();
+    duration = (double)(finish - start)/CLOCKS_PER_SEC;
     //-----------------------------
     // convert the result to Matlab
     //-----------------------------
     plhs[0] = mxCreateDoubleMatrix(listTop.size(), 1, mxREAL);
+    plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
+    mxGetPr(plhs[1])[0] = duration;
     double *topValue = mxGetPr(plhs[0]);
     std::list<double>::iterator itr = listTop.begin();
     for(int i = 0; i < listTop.size(); ++i){

@@ -1,14 +1,19 @@
 #include <list>
+#include <ctime>
+
 #include "mex.h"
 #include "../../include/matrix.h"
 
 
 /*
-    the matrix must has the same row dimension
+    all matrices must has the same row dimension
+    [value, time] = exactSearchThreeOrderTrensor(A,B,C,top_t)
 */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
 
+    clock_t start, finish;
+    double duration;
     const int rank_size = mxGetM(prhs[0]);
 
     Matrix A(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
@@ -17,7 +22,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     std::list<double> listTop;
 
-    const int top_t = 1000;
+    const int top_t = mxGetPr(prhs[3])[0];
     double temp = 0.0;
     bool initTop = true;
     int count  = 0;
@@ -35,6 +40,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
     }
     listTop.sort(); listTop.reverse();
+    start = clock();
     for(int i = 0; i < A.col; ++i){
         for(int j = 0; j < B.col; ++j){
             for(int k = 0; k < C.col; ++k){
@@ -45,7 +51,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             }
         }
     }
+    finish = clock();
+    duration = (double)(finish - start)/CLOCKS_PER_SEC;
     plhs[0] = mxCreateDoubleMatrix(listTop.size(),1,mxREAL);
+    plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
+    mxGetPr(plhs[1])[0] = duration;
     double *topValue = mxGetPr(plhs[0]);
     std::list<double>::iterator itr = listTop.begin();
     for(int i = 0; i < listTop.size(); ++i){

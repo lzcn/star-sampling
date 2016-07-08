@@ -4,7 +4,8 @@
 #include "../../include/matrix.h"
 
 /*
-    the matrix must has the same row dimension
+    all matrices must has the same row dimension
+    [value,time] = queryFullSearch(A,B,C,kNN);
 */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
@@ -62,5 +63,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
     }
     finish = clock();
-    duration[0] = (double)(finish-start)/CLOCKS_PER_SEC;
+    duration[0] = (double)(finish-start)/(NumQueries*CLOCKS_PER_SEC);
 }

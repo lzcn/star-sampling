@@ -21,7 +21,12 @@ typedef std::pair<point2D,double> indValue;
 int cmp(const indValue &x,const indValue&y){
 	return x.second > y.second;
 }
-
+/*
+	diamond sampling for matrix
+	A's size: Rank x M
+	B's size: N x Rank
+	[value, time] = diamondMatrix(A,B,top_t);
+*/
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 
@@ -34,10 +39,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
+	plhs[1] = mxCreateNumericMatrix(1, 1, mxREAL);
 	const int budget = (int)mxGetPr(prhs[2])[0];
 	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	mxGetPr(plhs[1])[0] = duration;
 	printf("%f seconds during initialization\n",duration);
 
 	//-------------------------------------
@@ -65,6 +72,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	mxGetPr(plhs[1])[0] += duration;
 	printf("%f seconds during computing weight\n",duration);
 
 	//-------------------------
@@ -125,6 +133,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	mxGetPr(plhs[1])[0] = duration;
 	printf("%f seconds during sampling\n",duration);
 
 	//-----------------------------------
@@ -145,7 +154,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	printf("%f seconds during computer and sorting tensor \n",duration);
+	mxGetPr(plhs[1])[0] += duration;
+	printf("%f seconds during computing and sorting tensor \n",duration);
  
 	//--------------------------------
 	// Converting to Matlab
