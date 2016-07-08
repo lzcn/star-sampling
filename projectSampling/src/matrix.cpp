@@ -193,6 +193,29 @@ double vectors_mul(const point3D &coord, \
     }
     return ans;
 }
+
+double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
+    int MatNum = p.num;
+    int rankSize = vMat[0]->row;
+    double ans = 0;
+    double *temp = (double*)malloc(rankSize*sizeof(double));
+    memset(temp, 1, rankSize*sizeof(double));
+    for (size_t i = 0; i < rankSize; ++i){
+        temp[i] = vMat[0]->GetElement(i,p.coord[0]);
+    }
+    for (size_t i = 1; i < MatNum; ++i){
+        for(size_t j = 0; j < rankSize; ++j){
+            temp[j] *= vMat[i]->GetElement(p.coord[i],j);
+        }
+    }
+    for (size_t i = 0; i < rankSize; ++i){
+        ans += temp[i];
+    }
+    free(temp);
+    return ans;
+}
+
+
 void doInsert(double p, std::list<double> &listTop){
     std::list<double>::iterator itr = listTop.begin();
     if(p > listTop.front()){

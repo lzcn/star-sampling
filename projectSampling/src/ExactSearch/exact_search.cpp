@@ -42,7 +42,6 @@ double getValue(const size_t *curIdx, \
 
 /*
     matrices has the same row size
-    usage: [index, result] = exactSearch(A,B[,C,...], top_t)
     find the top_t elements in tensor
 */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -50,7 +49,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //---------------------
     // initialization
     //---------------------
-
     const int rank = mxGetM(prhs[0]);
     const int top_t = (int)mxGetPr(prhs[nrhs-1])[0];
     std::vector<double*> vecMat;

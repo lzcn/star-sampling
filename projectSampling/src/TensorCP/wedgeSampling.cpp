@@ -21,6 +21,9 @@ int cmp(const PAIR &x,const PAIR&y){
 }
 
 
+int sgn_foo(double x){
+	return x<0? -1:1;
+}
 /*
 	give an coord(i_0,i_1,i_2,...,i_(N-1))
 	conpute the value of U_{(i_0,i_1,i_2,...,i_(N-1))}

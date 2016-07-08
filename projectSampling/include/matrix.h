@@ -102,7 +102,7 @@ double vectors_mul(const point3D &coord, \
 				   Matrix &A, \
 				   Matrix &B, \
 				   Matrix &C);
-double vector_mul(const pointND &coord, Matrix *Mat);
+double vectors_mul(const pointND &p, std::vector<Matrix*> &vMat);
 /*
 	list is sorted in ascending order;
 	insert p to the list;
