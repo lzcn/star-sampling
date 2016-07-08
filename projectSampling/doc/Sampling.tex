@@ -148,7 +148,7 @@ The sampling algorithm is shown in ~\Alg{DiamondSampling}.
     \begin{algorithmic}[1]
     \For{all $\Sca{a}{1}{r} \neq 0$}
     \State $w_{i_1r} \leftarrow \mid \Sca{a}{1}{r}\mid
-    \norm{\Varow{1}}{1}\norm{\Vacol{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1} $
+    \norm{\Varow{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1} $
     \EndFor
     \State $\T{X} \leftarrow$ all-zeros tensor of size
     $L_1\times L_2\ldots\times L_N$
@@ -181,11 +181,11 @@ In this part, we introduce the probabilities in each phase.
 
   When we pick an edge $e=(v^1_{i_1},\overline{v}_r)$ in phase 1, we are picking the vertexes pair $(v^1_{i_1},\overline{v}_r)$. Beforehand, we assign each pair a probability while $ \Sca{a}{1}{k} \neq 0 $:
   \[
-    p(i_1,r) = \mid\Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
+    p(i_1,r) = \mid\Sca{a}{1}{r}\mid \norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
   \]
   Where
   \[
-    \norm{\M{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
+    \norm{\M{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
   \]
   Then we pick the pair $(v^1_{i_1},\overline{v}_r)$ according the probability $p(i_1,r)$.
 \end{itemize}
@@ -226,9 +226,9 @@ Pr( {\rm walk\ to\ } v^2_{i_2} | {\rm given\ }\overline{v}_r) \cdots Pr( {\rm wa
   \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
   \frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\cdots
   \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
-&=\frac{    |\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\norm{{\VnC{a}{1}{*r}}}{1}\cdots\norm{{\VnC{a}{N}{*r}}}{1}   }{  \norm{\M{W}}{1}  }\cdot
-  \frac{|\Sca{a}{2}{r'}|}{\norm{{\VnC{a}{2}{i_2*}}}{1}}\cdot
-\frac{|\Sca{a}{1}{r}|}{\norm{{\VnC{a}{1}{*r}}}{1}}\cdots
+&=\frac{    |\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\norm{{\VnC{a}{2}{*r}}}{1}\cdots\norm{{\VnC{a}{N}{*r}}}{1}   }{  \norm{\M{W}}{1}  }\cdot
+  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
+\frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\cdots
   \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
 &=\frac{    |\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|    }{\norm{\M{W}}{1}}
 \end{align*}
