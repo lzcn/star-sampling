@@ -38,10 +38,22 @@ public:
 	size_t y;
 	size_t z;
 };
+
 /*
-	type for n-dimension coordinate
+	class for pointND
 */
-typedef	std::vector<size_t> pointnD;
+
+class pointND
+{
+public:
+	pointND(size_t *p, int n);
+	~pointND(){};
+	bool operator < (const pointND &toCmp)const;
+	int num;
+	size_t *coord;
+};
+
+
 
 /*
 	class for Matrix: column major order
@@ -90,7 +102,7 @@ double vectors_mul(const point3D &coord, \
 				   Matrix &A, \
 				   Matrix &B, \
 				   Matrix &C);
-
+double vector_mul(const pointND &coord, Matrix *Mat);
 /*
 	list is sorted in ascending order;
 	insert p to the list;

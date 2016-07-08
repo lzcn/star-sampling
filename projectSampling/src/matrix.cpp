@@ -75,7 +75,22 @@ bool point3D::operator > (const point3D &toCmp)const{
 	}
 	return false;	
 }
-
+/*
+	class for pointND
+*/
+pointND::pointND(size_t *p, int n){
+	coord = p;
+	num = n;
+}
+bool pointND::operator < (const pointND &toCmp)const{
+	for(int i = 0; i < num; ++i){
+		if(coord[i] < toCmp.coord[i]){
+			return true;
+		}else if(coord[i] > toCmp.coord[i]){
+			return false;
+		}
+	}
+}
 /*
 	class for matrix
 */
