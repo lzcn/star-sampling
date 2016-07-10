@@ -39,7 +39,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
-	plhs[1] = mxCreateNumericMatrix(1, 1, mxREAL);
+	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
 	const int budget = (int)mxGetPr(prhs[2])[0];
 	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
 	finish = clock();

@@ -1,3 +1,13 @@
+/*
+    exhaustive search for three order tensor given factor matrices
+    factor matrices has the same row dimension, which is the 
+    dimension of feature vector.
+    [value, time] = exact_search(A1,A1,A3,top_t)
+    it will return the top_t value in the tensor,
+    and the time during computing
+    Author : Zhi Lu
+*/
+
 #include <list>
 #include <ctime>
 
@@ -9,6 +19,7 @@
     all matrices must has the same row dimension
     [value, time] = exactSearchThreeOrderTrensor(A,B,C,top_t)
 */
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
 

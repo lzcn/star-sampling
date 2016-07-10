@@ -2,6 +2,7 @@
 	Diamond Sampling with N factor matrices
 	It will return a sparse tensor stored 
 	the sampled result
+	Author : Zhi Lu
 */
 
 #include <vector>
