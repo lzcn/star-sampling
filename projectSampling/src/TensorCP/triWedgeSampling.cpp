@@ -1,7 +1,20 @@
 /*
-	Diamond Sampling with N factor matrices
-	It will return a sparse tensor stored 
-	the sampled result
+	Diamond Sampling with Three factor matrices 
+	usage:
+	[value, time, indexes] =  triWedgeSampling(A, B, C, budget, samples, top_t);
+
+	* Variables input:
+		A, B, C: are factor matrices, suppose R is the rank of tensor
+				A has R rows, B, C have R columns
+		budget: use top-t' scores to sort
+		samples: numbers of samples
+		top_t : find the top_t value in tensor
+
+	* Variables output:
+		value: the top_t value
+		time: time consuming during the sampling
+		indexes: the indexes of the corresponding value
+		Author : Zhi Lu
 */
 
 #include <vector>
@@ -20,12 +33,6 @@ int cmp(const indValue &x,const indValue&y){
 	return (x.second > y.second);
 }
 
-/*
-	suppose the dimension of feature is d;
-	The first matrix has d rows;
-	The left matrices have d columns;
-
-*/
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -39,10 +46,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
 	Matrix MatC(mxGetM(prhs[2]),mxGetN(prhs[2]),mxGetPr(prhs[2]));
-	const int top_t = (int)mxGetPr(prhs[3])[0];
+	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
 	const size_t NumSample = (size_t)mxGetPr(prhs[4])[0];
+	const size_t top_t = (size_t)mxGetPr(prhs[5])[0];
+	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
+	double *tsec = mxGetPr(plhs[1]);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec = duration;
 	printf("%f seconds during initialization\n",duration);
 
 	//-------------------------------------
@@ -69,22 +80,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			SumofW += tempW;
 		}
 	}
-	printf("%f\n", SumofW);
 	for (size_t k = 0; k < MatA.row; ++k){
 		for(size_t i = 0; i < MatA.col; ++i){
 			weight[k*MatA.col + i] /= SumofW;
 		}
 	}
-	SumofW = 1.0;
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec += duration;
 	printf("%f seconds during computing weight\n",duration);
 
 	//-------------------------
 	// Do Sampling
 	//-------------------------
 
-	start = clock();
 	// sampled index  for weight
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
 	memset(WeightInd, 0, NumSample*sizeof(size_t));
@@ -105,6 +114,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t *freq_k = (size_t*)malloc(MatA.row*sizeof(size_t));
 	memset(freq_k, 0, MatA.row*sizeof(size_t));
 
+	start = clock();
 	// Do sample S pairs (k, i) ,
 	sample_index(NumSample, WeightInd, \
 				 IndforM, IndforK, \
@@ -156,27 +166,39 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec += duration;
 	printf("%f seconds during sampling\n",duration);
 
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
 
-	start = clock();
+	std::vector<indValue> tempSortedVec;
 	std::vector<indValue> sortVec;
 	std::map<point3D, double>::iterator mapItr;
-	double true_value = 0;
 
+	start = clock();
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
-		true_value = vectors_mul(mapItr->first, MatA, MatB, MatC);
-		sortVec.push_back(std::make_pair(mapItr->first,true_value));
-		//sortVec.push_back(std::make_pair(mapItr->first,mapItr->second));
+		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
-	sort(sortVec.begin(),sortVec.end(),cmp);
+	sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
+	finish = clock();
+	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec += duration;
+	mexPrintf("%f seconds during pre-sorting\n",duration);
+
+	start = clock();
+	double true_value = 0;
+	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
+		true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB, MatC);
+		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
+	}
+	sort(sortVec.begin(), sortVec.end(), cmp);
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	printf("%f seconds during computer and sorting tensor \n",duration);
+	*tsec += duration;
+	mexPrintf("%f seconds during computing and sorting\n",duration);
  
 	//--------------------------------
 	// Converting to Matlab
@@ -187,9 +209,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[0] = mxCreateNumericMatrix(phls_row, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[0]);
 	// value
-	plhs[1] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
-	double *plhs_result = mxGetPr(plhs[1]);
-	for(size_t m = 0; m < sortVec.size(); ++m){
+	plhs[2] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
+	double *plhs_result = mxGetPr(plhs[2]);
+	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
 		//m
@@ -202,7 +224,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	printf("%f seconds during converting \n",duration);
+	mexPrintf("%f seconds during converting \n",duration);
 	//---------------
 	// free
 	//---------------
