@@ -123,7 +123,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				 weight, SumofW);
 	// sample k';
 	for (int s = 0; s < NumSample; ++s){
-		IndforKp[s] = MatA.randRow(IndforM[s]);
+	IndforKp[s] = MatA.randRow(IndforM[s]);
 		IndforKpp[s] = MatA.randRow(IndforM[s]);
 	}
 	// sample n;
@@ -205,12 +205,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------------------
 	start = clock();
 	size_t phls_row = sortVec.size();
-	// pair
-	plhs[0] = mxCreateNumericMatrix(phls_row, 3, mxUINT64_CLASS, mxREAL);
-	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[0]);
 	// value
-	plhs[2] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
-	double *plhs_result = mxGetPr(plhs[2]);
+	plhs[0] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
+	double *plhs_result = mxGetPr(plhs[0]);	
+	// pair
+	plhs[2] = mxCreateNumericMatrix(phls_row, 3, mxUINT64_CLASS, mxREAL);
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
+
 	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;

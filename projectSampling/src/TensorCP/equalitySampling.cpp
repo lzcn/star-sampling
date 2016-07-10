@@ -33,7 +33,18 @@ int cmp(const indValue &x,const indValue&y){
 	return (x.second > y.second);
 }
 
-
+double getValue(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C){
+	double ans = 0;
+    for (size_t k = 0; k < A.col; ++k){
+        ans += A.GetElement(coord.x,k) * \
+        	   B.GetElement(coord.y,k) * \
+        	   C.GetElement(coord.z,k);
+    }
+    return ans;
+}
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -134,7 +145,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			idxi = IdxI[offset];
 			idxj = IdxJ[offset];
 			idxk = IdxK[offset];
-			IrJc[point3D(idxi, idxj, idxk)] += 1;
+			IrJc[point3D(idxi, idxj, idxk)] += 1.0;
 			++offset;
 		}
 	}
@@ -164,7 +175,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	double true_value = 0;
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB, MatC);
+		true_value = getValue(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
 	sort(sortVec.begin(), sortVec.end(), cmp);
@@ -180,11 +191,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	size_t phls_row = sortVec.size();
 	// pair
-	plhs[0] = mxCreateNumericMatrix(phls_row, 3, mxUINT64_CLASS, mxREAL);
-	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[0]);
+	plhs[0] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
+	double *plhs_result = mxGetPr(plhs[0]);
+	plhs[2] = mxCreateNumericMatrix(phls_row, 3, mxUINT64_CLASS, mxREAL);
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	// value
-	plhs[2] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
-	double *plhs_result = mxGetPr(plhs[2]);
 	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
