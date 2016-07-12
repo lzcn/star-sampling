@@ -145,7 +145,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			idxi = IdxI[offset];
 			idxj = IdxJ[offset];
 			idxk = IdxK[offset];
-			IrJc[point3D(idxi, idxj, idxk)] += 1.0;
+			valueSampled = 1.0;
+			valueSampled *= MatA.GetElement(idxi,r);
+			valueSampled *= MatB.GetElement(idxj,r);
+			valueSampled *= MatC.GetElement(idxk,r);
+			//IrJc[point3D(idxi, idxj, idxk)] += 1.0;
+			IrJc[point3D(idxi, idxj, idxk)] += 1;
 			++offset;
 		}
 	}
