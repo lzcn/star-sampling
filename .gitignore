@@ -8,6 +8,7 @@
 # Doc Directory
 /doc/
 /projectSampling/_drafts
+*.pdf
 
 # Thired party code
 /projectSampling/src/MSongsDB/
