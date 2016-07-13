@@ -121,9 +121,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				 freq_k, \
 				 MatA.row, MatA.col, \
 				 weight, SumofW);
-	// sample k';
+	// sample k' and k";
 	for (int s = 0; s < NumSample; ++s){
-	IndforKp[s] = MatA.randRow(IndforM[s]);
+		IndforKp[s] = MatA.randRow(IndforM[s]);
 		IndforKpp[s] = MatA.randRow(IndforM[s]);
 	}
 	// sample n;
