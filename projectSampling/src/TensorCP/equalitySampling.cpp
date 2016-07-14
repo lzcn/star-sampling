@@ -55,15 +55,25 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Initialization
 	//--------------------
 	start = clock();
+	size_t rankSize = mxGetN(prhs[0]);
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
 	Matrix MatC(mxGetM(prhs[2]),mxGetN(prhs[2]),mxGetPr(prhs[2]));
+	// the budget
 	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
+	// number of samples
 	const size_t NumSample = (size_t)mxGetPr(prhs[4])[0];
+	// find the top-t largest value
 	const size_t top_t = (size_t)mxGetPr(prhs[5])[0];
-	size_t rankSize = mxGetN(prhs[0]);
+	// result of sampling
+	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
+	double *plhs_result = mxGetPr(plhs[0]);
+	// time duration sampling
 	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
 	double *tsec = mxGetPr(plhs[1]);
+	// indexes of values
+	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);	
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec = duration;
@@ -150,7 +160,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			valueSampled *= MatB.GetElement(idxj,r);
 			valueSampled *= MatC.GetElement(idxk,r);
 			//IrJc[point3D(idxi, idxj, idxk)] += 1.0;
-			IrJc[point3D(idxi, idxj, idxk)] += 1;
+			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
 			++offset;
 		}
 	}
@@ -163,14 +173,16 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//sort the values have been sampled
 	//-----------------------------------
 
+	// for pre sort
 	std::vector<indValue> tempSortedVec;
+	// sort by actual value
 	std::vector<indValue> sortVec;
+	// push the value into a vector for sorting
 	std::map<point3D, double>::iterator mapItr;
-
-	start = clock();
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
+	start = clock();
 	sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
@@ -179,12 +191,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	start = clock();
 	double true_value = 0;
+	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
 		true_value = getValue(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
+	// sort the vector according to the actual value
 	sort(sortVec.begin(), sortVec.end(), cmp);
-
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
@@ -194,27 +207,21 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Converting to Matlab
 	//--------------------------------
 	start = clock();
-	size_t phls_row = sortVec.size();
-	// pair
-	plhs[0] = mxCreateDoubleMatrix(phls_row, 1, mxREAL);
-	double *plhs_result = mxGetPr(plhs[0]);
-	plhs[2] = mxCreateNumericMatrix(phls_row, 3, mxUINT64_CLASS, mxREAL);
-	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	// value
 	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
-		//m
+		//i
 		plhs_pr[m] = (sortVec[m].first.x + 1);
-		//n
-		plhs_pr[m + phls_row] = (sortVec[m].first.y + 1);
-		//p
-		plhs_pr[m + phls_row + phls_row] = (sortVec[m].first.z + 1);
+		//j
+		plhs_pr[m + top_t] = (sortVec[m].first.y + 1);
+		//k
+		plhs_pr[m + top_t + top_t] = (sortVec[m].first.z + 1);
 	}
-
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	mexPrintf("%f seconds during converting \n",duration);
+	
 	//---------------
 	// free
 	//---------------
@@ -223,5 +230,4 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	free(IdxK);
 	free(IdxR);
 	free(freq_r);
-
 }
