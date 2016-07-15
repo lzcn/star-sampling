@@ -1,5 +1,10 @@
-cd src\TensorCP\; make;
-cd ..\MatrixMul ; make;
-cd ..\ExactSearch ; make;
-cd ..\..\;
-addpath('bin');
+path = pwd;
+ipath = fullfile(path,'include');
+src_path = fullfile(path,'src/');
+bin_path = fullfile(path,'bin');
+addpath(bin_path);
+cd ./src; make;
+cd ./TensorCP; make;
+cd ../MatrixMul ; make;
+cd ../ExactSearch ; make;
+cd ../../;
