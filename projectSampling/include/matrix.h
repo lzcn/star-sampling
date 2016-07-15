@@ -109,6 +109,7 @@ double vectors_mul(const pointND &p, std::vector<Matrix*> &vMat);
 	length: size of list;
 */
 void doInsert(double p, std::list<double> &listTop);
+void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<point3D> &listIdx);
 
 /* 
 	Vose's alias method for sample;

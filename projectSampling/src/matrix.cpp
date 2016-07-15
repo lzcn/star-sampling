@@ -232,7 +232,28 @@ void doInsert(double p, std::list<double> &listTop){
         }
     }
 }
-
+void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<point3D> &listIdx){
+    auto itr = listTop.begin();
+    auto itr2 = listIdx.begin();
+    if(p > listTop.front()){
+        listTop.push_front(p);
+        listTop.pop_back();
+        listIdx.push_front(point3D(coord.x,coord.y,coord.z));
+        listIdx.pop_back();
+        return;
+    }
+    itr++;
+    itr2++;
+    for(;itr != listTop.end(); ++itr,++itr2){
+        if(p > (*itr)){
+            listTop.insert(itr,p);
+            listTop.pop_back();
+            listIdx.insert(itr2,point3D(coord.x,coord.y,coord.z));
+            listIdx.pop_back();
+            return;
+        }
+    }	
+}
 int vose_alias(size_t s, size_t *dst, \
 			   size_t n, double *pdf,double sum_pdf){
 	double *scaled_prob = new double[n];
