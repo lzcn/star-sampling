@@ -50,7 +50,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		// only when <user-movie> has occurred in map UserMovieRating
 		auto itr = UserMovieRating.find(point2D(userIDb[i],movieIDb[i]));
 		if(itr != UserMovieRating.end()){
-			UserMovieTag[point3D(userIDb[i],movieIDb[i],tagID[i])] = itr->second;\
+			UserMovieTag[point3D(userIDb[i],movieIDb[i],tagID[i])] = itr->second;
 			// count user, movie, tag
 			UserCount[userIDb[i]] += 1;
 			MovieCount[movieIDb[i]] += 1;
@@ -62,6 +62,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		std::map<point3D,double> temp;
 		// copy the UserMovieTag to a temp map
 		temp = UserMovieTag;
+		printf("The length of tuple:%d\n",temp.size());
 		bool changed = false;
 		// looping through each of the elements
 		for(auto itr = temp.begin(); itr != temp.end(); ++itr){
