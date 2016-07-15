@@ -33,23 +33,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     double temp = 0.0;
     for (int i = 0; i < A.col; ++i){
         std::list<double> listTop;
-        int count  = 0;
-        int k = 0;
         mexPrintf("Dealing with the %d-th query...\n",i);
-        while(count < knn &&  k < C.col){
-            int j = 0;
-            while(count < knn && j < B.col){
-                temp = MatrixColMul(A,B,C,i,j,k);
-                listTop.push_back(temp);
+        size_t  sk, sj;
+        bool initTop = true;
+        for(size_t k = 0, count = 0; initTop &&  k < C.col; ++k){
+            for(size_t j = 0; initTop && j < B.col; ++j){
+                if(count < knn){
+                    temp = MatrixColMul(A,B,C,i,j,k);
+                    listTop.push_back(temp);
+                }
+                else{
+                    initTop = false;
+                    sj = j;
+                    sk = k;
+                }
                 count++;
-                ++j;    
             }
-            ++k;
         }
         listTop.sort(); 
         listTop.reverse();
-        for(int j = 0; j < B.col; ++j){
-            for(int k = 0; k < C.col; ++k){
+        for(int j = sj; j < B.col; ++j){
+            for(int k = sk; k < C.col; ++k){
                 temp = MatrixColMul(A,B,C,i,j,k);
                 if(temp > listTop.back()){
                     doInsert(temp, listTop);
