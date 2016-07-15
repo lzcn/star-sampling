@@ -21,18 +21,20 @@
 */
 double getValue(const size_t *curIdx, \
                 const std::vector<double*> &vecMat, \
-                size_t rank, int num ){
+                size_t rank, size_t numMat ){
     // temp value
     double *temp = (double*)malloc(rank*sizeof(double));
-    memset(temp, 1, rank*sizeof(double));
+    for (int i = 0; i < rank; ++i){
+        temp[i] = 1.0;
+    }
     // the feature vector 
     double *feature;
-    for (int i = 0; i < num; ++i){
+    for (int i = 0; i < numMat; ++i){
         // element-wise multiplication
         // the address of curIdx[i]-th feature of i-th matrix
-        feature = (vecMat[i] + curIdx[i]*rank);
+        feature = &vecMat[i][curIdx[i]*rank];
         for(size_t j = 0; j < rank; ++j){
-            temp[j] *= *(feature+j);
+            temp[j] *= vecMat[i][curIdx[i]*rank+j];
         }
     }
     double result = 0;
@@ -56,13 +58,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // initialization
     //---------------------
     double duration;
-    const int rank = mxGetM(prhs[0]);
+    const size_t rank = mxGetM(prhs[0]);
+    const size_t numMat = nrhs - 1;
     const int top_t = (int)mxGetPr(prhs[nrhs-1])[0];
-    std::vector<double*> vecMat;
-    size_t *max = (size_t *)malloc((nrhs - 1)*sizeof(size_t));
-    memset(max, 0, (nrhs - 1)*sizeof(size_t));
+    size_t *max = (size_t *)malloc(numMat*sizeof(size_t));
+    memset(max, 0, numMat*sizeof(size_t));
     // matrices
-    for(int i = 0; i < nrhs - 1; ++i){
+    std::vector<double*> vecMat;
+    for(int i = 0; i < numMat; ++i){
         vecMat.push_back(mxGetPr(prhs[i]));
         max[i] = mxGetN(prhs[i]);
     }
@@ -71,27 +74,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //------------------------
     std::list<double> listTop;
     // subIndex for loop
-    SubIndex subIndex(nrhs - 1, max);
+    SubIndex index(numMat, max);
     int count  = 0;
     double tempValue = 0.0;
     // compute top_t values as the initial list
-    while(!subIndex.isDone() && count < top_t){
-        tempValue = getValue(subIndex.getIdx(), \
-                             vecMat, rank, nrhs-1);
+    while(!index.isDone() && count < top_t){
+        tempValue = getValue(index.getIdx(),vecMat,rank,numMat);
+        
         listTop.push_back(tempValue);
+        ++index;
+        ++count;
     }
     // sort the list in descending order
     listTop.sort();
     listTop.reverse();
     // do exhaustive search
-    subIndex.reset();
     start = clock();
-    while(!subIndex.isDone()){
-        tempValue = getValue(subIndex.getIdx(),vecMat,rank,nrhs-1);
+    while(!index.isDone()){
+        tempValue = getValue(index.getIdx(),vecMat,rank,nrhs-1);
         if(tempValue > listTop.back()){
             doInsert(tempValue, listTop);
         }
-        ++subIndex;
+        ++index;
     }
     finish = clock();
     duration = (double)(finish - start)/CLOCKS_PER_SEC;
