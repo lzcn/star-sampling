@@ -79,7 +79,27 @@ function ex001(data_path, out_dir, samples, budget)
                     varSize, samples, budget, top_t, ...
                     User, Url, Tag,...
                     fullTime,topValue,topIndexes);
-
+    %% random data
+    dataName = 'random';
+    A = random(10000,200);B = random(10000,200);C = random(10000,200);
+    A(1:10,:) = 2;B(1:10,:) = 2;C(1:10,:) = 2;
+    topValue = 1600;
+    topIndexes = ones(1000,3);
+    count = 1;
+    for i = 1:10
+        for j = 1:10
+            for k = 1:10
+                topIndexes(count,1) = i;
+                topIndexes(count,2) = j;
+                topIndexes(count,3) = k;
+            end
+        end
+    end
+    fullTime = 1e4;
+    oneDataSet(dataName, out_dir, ...
+                    varSize, samples, budget, top_t, ...
+                    User, Url, Tag,...
+                    fullTime,topValue,topIndexes);    
 end
 
 function [ diamondRecall, diamondTimes, ...
@@ -136,7 +156,7 @@ function drawTimeFig(titlename, out_dir, samples, fullTime, diamondTimes, equali
     plot(log10(samples),log10(fullTime*ones(size(samples))),'b','LineWidth',2);
     plot(log10(samples),log10(diamondTimes),'r','LineWidth',2); 
     plot(log10(samples),log10(equalityTimes),'--g','LineWidth',2);
-    legend('exhaustive','diamond','equality');
+    legend('exhaustive','diamond','equality',4);
     saveas(h,fullfile(out_dir,[titlename,'.png']));
 end
 
@@ -172,7 +192,7 @@ function oneDataSet(dataName, out_dir, ...
     drawRecallFig(titlename, out_dir, samples, top_t, diamondRecall, equalityRecall);
     [p1,p2] = getProbability(A,B,C,topIndexes,topValue);
     titlename = ['probability-instances-',dataName];
-    h = figure; hold on; title(titlename);plot(p1,'r');plot(p2,'b');legend('diamond','equality');
+    h = figure; hold on; title(titlename);plot(p1,'b');plot(p2,'r');legend('diamond','equality');
     saveas(h,fullfile(out_dir,[titlename,'.png']));
 end
 
