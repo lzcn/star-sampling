@@ -38,10 +38,22 @@ public:
 	size_t y;
 	size_t z;
 };
+
 /*
-	type for n-dimension coordinate
+	class for pointND
 */
-typedef	std::vector<size_t> pointnD;
+
+class pointND
+{
+public:
+	pointND(size_t *p, int n);
+	~pointND(){};
+	bool operator < (const pointND &toCmp)const;
+	int num;
+	size_t *coord;
+};
+
+
 
 /*
 	class for Matrix: column major order
@@ -90,13 +102,14 @@ double vectors_mul(const point3D &coord, \
 				   Matrix &A, \
 				   Matrix &B, \
 				   Matrix &C);
-
+double vectors_mul(const pointND &p, std::vector<Matrix*> &vMat);
 /*
 	list is sorted in ascending order;
 	insert p to the list;
 	length: size of list;
 */
 void doInsert(double p, std::list<double> &listTop);
+void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<point3D> &listIdx);
 
 /* 
 	Vose's alias method for sample;

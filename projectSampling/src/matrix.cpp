@@ -75,7 +75,22 @@ bool point3D::operator > (const point3D &toCmp)const{
 	}
 	return false;	
 }
-
+/*
+	class for pointND
+*/
+pointND::pointND(size_t *p, int n){
+	coord = p;
+	num = n;
+}
+bool pointND::operator < (const pointND &toCmp)const{
+	for(int i = 0; i < num; ++i){
+		if(coord[i] < toCmp.coord[i]){
+			return true;
+		}else if(coord[i] > toCmp.coord[i]){
+			return false;
+		}
+	}
+}
 /*
 	class for matrix
 */
@@ -178,6 +193,29 @@ double vectors_mul(const point3D &coord, \
     }
     return ans;
 }
+
+double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
+    int MatNum = p.num;
+    int rankSize = vMat[0]->row;
+    double ans = 0;
+    double *temp = (double*)malloc(rankSize*sizeof(double));
+    memset(temp, 1, rankSize*sizeof(double));
+    for (size_t i = 0; i < rankSize; ++i){
+        temp[i] = vMat[0]->GetElement(i,p.coord[0]);
+    }
+    for (size_t i = 1; i < MatNum; ++i){
+        for(size_t j = 0; j < rankSize; ++j){
+            temp[j] *= vMat[i]->GetElement(p.coord[i],j);
+        }
+    }
+    for (size_t i = 0; i < rankSize; ++i){
+        ans += temp[i];
+    }
+    free(temp);
+    return ans;
+}
+
+
 void doInsert(double p, std::list<double> &listTop){
     std::list<double>::iterator itr = listTop.begin();
     if(p > listTop.front()){
@@ -194,7 +232,28 @@ void doInsert(double p, std::list<double> &listTop){
         }
     }
 }
-
+void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<point3D> &listIdx){
+    auto itr = listTop.begin();
+    auto itr2 = listIdx.begin();
+    if(p > listTop.front()){
+        listTop.push_front(p);
+        listTop.pop_back();
+        listIdx.push_front(point3D(coord.x,coord.y,coord.z));
+        listIdx.pop_back();
+        return;
+    }
+    itr++;
+    itr2++;
+    for(;itr != listTop.end(); ++itr,++itr2){
+        if(p > (*itr)){
+            listTop.insert(itr,p);
+            listTop.pop_back();
+            listIdx.insert(itr2,point3D(coord.x,coord.y,coord.z));
+            listIdx.pop_back();
+            return;
+        }
+    }	
+}
 int vose_alias(size_t s, size_t *dst, \
 			   size_t n, double *pdf,double sum_pdf){
 	double *scaled_prob = new double[n];

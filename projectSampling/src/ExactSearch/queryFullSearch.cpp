@@ -3,9 +3,9 @@
 #include "mex.h"
 #include "../../include/matrix.h"
 
-
 /*
-    the matrix must has the same row dimension
+    all matrices must has the same row dimension
+    [value,time] = queryFullSearch(A,B,C,kNN);
 */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
@@ -22,7 +22,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     plhs[0] = mxCreateDoubleMatrix(knn, NumQueries, mxREAL);
     double *knnValue = mxGetPr(plhs[0]);
     // sampling time for each query
-    plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);  
+    plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
     double *duration = mxGetPr(plhs[1]);
     mexPrintf("Initialization Complete!\n");
     //---------------------
@@ -31,31 +31,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mexPrintf("Start full search!\n");
     start = clock();
     double temp = 0.0;
+    size_t *max = (size_t*)malloc(2*sizeof(size_t));
+    max[0] = mxGetN(prhs[1]);
+    max[1] = mxGetN(prhs[2]);
+    SubIndex index(2,max);
     for (int i = 0; i < A.col; ++i){
         std::list<double> listTop;
-        int count  = 0;
-        int k = 0;
         mexPrintf("Dealing with the %d-th query...\n",i);
-        while(count < knn &&  k < C.col){
-            int j = 0;
-            while(count < knn && j < B.col){
-                temp = MatrixColMul(A,B,C,i,j,k);
-                listTop.push_back(temp);
-                count++;
-                ++j;    
-            }
-            ++k;
+        index.reset();
+        for(size_t count = 0; count < knn && !index.isDone(); ++index){
+            temp = MatrixColMul(A,B,C,i,index.getIdx()[0],index.getIdx()[1]);
+            listTop.push_back(temp);
+            ++count;
         }
-        listTop.sort(); 
+        listTop.sort();
         listTop.reverse();
-        for(int j = 0; j < B.col; ++j){
-            for(int k = 0; k < C.col; ++k){
-                temp = MatrixColMul(A,B,C,i,j,k);
-                if(temp > listTop.back()){
-                    doInsert(temp, listTop);
-                }
+        while(!index.isDone()){
+            temp = MatrixColMul(A,B,C,i,index.getIdx()[0],index.getIdx()[1]);
+            if(temp > listTop.back()){
+                doInsert(temp, listTop);
             }
-        }
+            ++index;
+        } 
         std::list<double>::iterator itr = listTop.begin();
         for(int p = 0; p < knn && p < listTop.size(); ++p){
             knnValue[i*knn + p] = (*itr);
@@ -63,5 +60,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
     }
     finish = clock();
-    duration[0] = (double)(finish-start)/CLOCKS_PER_SEC;
+    duration[0] = (double)(finish-start)/(NumQueries*CLOCKS_PER_SEC);
+    free(max);
 }
