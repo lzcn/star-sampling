@@ -399,7 +399,14 @@ After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the 
 \end{algorithm}
 
 \section{Equality Sampling Method}
-In this section, we propose a new sampling method, called equality sampling. It samples the vertexes begin with partition $\overline{V}$
+
+There are two primary factors that affect the recall of sampling. The first one is the probability of indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, which means we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final recall. So, when we use the maximum budget $s$, the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will sampled, and thus the higher the recall will be. The other factor is the score that we assigned to the index $\widehat{x}_{\V{i}}$. Since we will compute the top-$t'$ elements' actual value, the order of score is most considered, even the value is far away of the actual value.
+
+Consider the two factors, we propose a new sampling method, called equality sampling. It samples the vertexes begin with partition $\overline{V}$. First, we assign a weight to each vertex in partition $\overline{V}$.
+\[
+    w_r = \norm{\Varow{1}}{1}\ldots\norm{\Varow{N}}{1}
+\]
+Then sample each vertex in other partition with probability $|\Sca{a}{n}{r}|/\norm{\Varow{n}}{1}$.
 \section{Implementing details}
 In section, we introduce some details get the improvement.
 \subsection{Data Structure}
