@@ -41,3 +41,15 @@
 
 - Aspects to be assessed
     +  Demand number of samples for each data set and each top-t
+
+#### Experiments #004
+- Content: __Evaluate the ability to keep ordering__
+- DataSet:
+    + _MovieLens:ml-10m_
+    + _MovieLens:ml-20m_
+    + _hetrec2011-delicious-2k_
+    + _hetrec2011-lastfm-2k_
+    + _hetrec2011-movielens-2k-v2_
+- Aspects to be assessed
+    + Equality Sampling
+    + Diamond Sampling
