@@ -10,6 +10,7 @@
 /projectSampling/_drafts
 /projectSampling/doc/*.pdf
 
+
 # Thired party code
 /projectSampling/src/MSongsDB/
 /projectSampling/include/mksqlite/
@@ -17,6 +18,7 @@
 # Data directory
 projectSampling/data
 projectSampling/others
+projectSampling/experiments
 #ignore data
 *.dat
 
