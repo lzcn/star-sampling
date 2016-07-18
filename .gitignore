@@ -18,7 +18,7 @@
 # Data directory
 projectSampling/data
 projectSampling/others
-projectSampling/experiments
+projectSampling/test
 #ignore data
 *.dat
 
