@@ -1,4 +1,4 @@
-function ex001(data_path, out_dir, samples, budget)
+function ex001(data_path, out_dir, samples, budget,turn)
 
     ml_10m_path = fullfile(data_path,'MovieLens','ml-10m');
     ml_20m_path = fullfile(data_path,'MovieLens','ml-20m');
@@ -21,7 +21,7 @@ function ex001(data_path, out_dir, samples, budget)
     oneDataSet(dataName, out_dir, ...
                     varSize, samples, budget, top_t, ...
                     User, Movie, Tag,...
-                    fullTime,topValue,topIndexes);
+                    fullTime,topValue,topIndexes,turn);
     %%
     dataName = 'ml-20m';
 
@@ -35,7 +35,7 @@ function ex001(data_path, out_dir, samples, budget)
     oneDataSet(dataName, out_dir, ...
                     varSize, samples, budget, top_t, ...
                     User, Movie, Tag,...
-                    fullTime,topValue,topIndexes);
+                    fullTime,topValue,topIndexes,turn);
     %%
     dataName = 'ml-2k';
 
@@ -49,7 +49,7 @@ function ex001(data_path, out_dir, samples, budget)
     oneDataSet(dataName, out_dir, ...
                     varSize, samples, budget, top_t, ...
                     User, Movie, Tag,...
-                    fullTime,topValue,topIndexes);    
+                    fullTime,topValue,topIndexes,turn);    
     %%
 
     dataName = 'lastfm';
@@ -64,7 +64,7 @@ function ex001(data_path, out_dir, samples, budget)
     oneDataSet(dataName, out_dir, ...
                     varSize, samples, budget, top_t, ...
                     User, Artist, Tag,...
-                    fullTime,topValue,topIndexes);      
+                    fullTime,topValue,topIndexes,turn);      
     %%
     dataName = 'delicious';
 
@@ -78,28 +78,28 @@ function ex001(data_path, out_dir, samples, budget)
     oneDataSet(dataName, out_dir, ...
                     varSize, samples, budget, top_t, ...
                     User, Url, Tag,...
-                    fullTime,topValue,topIndexes);
-    %% random data
-    dataName = 'random';
-    A = random(10000,200);B = random(10000,200);C = random(10000,200);
-    A(1:10,:) = 2;B(1:10,:) = 2;C(1:10,:) = 2;
-    topValue = 1600;
-    topIndexes = ones(1000,3);
-    count = 1;
-    for i = 1:10
-        for j = 1:10
-            for k = 1:10
-                topIndexes(count,1) = i;
-                topIndexes(count,2) = j;
-                topIndexes(count,3) = k;
-            end
-        end
-    end
-    fullTime = 1e4;
-    oneDataSet(dataName, out_dir, ...
-                    varSize, samples, budget, top_t, ...
-                    User, Url, Tag,...
-                    fullTime,topValue,topIndexes);    
+                    fullTime,topValue,topIndexes,turn);
+%    %% random data
+%    dataName = 'random';
+%    A = random(10000,200);B = random(10000,200);C = random(10000,200);
+%    A(1:10,:) = 2;B(1:10,:) = 2;C(1:10,:) = 2;
+%    topValue = 1600;
+%    topIndexes = ones(1000,3);
+%    count = 1;
+%    for i = 1:10
+%        for j = 1:10
+%            for k = 1:10
+%                topIndexes(count,1) = i;
+%                topIndexes(count,2) = j;
+%                topIndexes(count,3) = k;
+%            end
+%        end
+%    end
+%    fullTime = 1e4;
+%    oneDataSet(dataName, out_dir, ...
+%                    varSize, samples, budget, top_t, ...
+%                    User, Url, Tag,...
+%                    fullTime,topValue,topIndexes,turn);    
 end
 
 function [ diamondRecall, diamondTimes, ...
@@ -116,10 +116,9 @@ end
 function [ diamondRecall, diamondTimes, ...
            equalityRecall, equalityTimes ] = oneSampling(varSize, samples, budget, top_t, ...
                                                             A, B, C,...
-                                                            topValue)
+                                                            topValue,turn)
     [ diamondRecall, diamondTimes, ...
            equalityRecall, equalityTimes ] = initVar(varSize, samples);
-    turn = 2;
     for s = 1:turn
         diamondRecalltemp = zeros(size(diamondRecall));
         diamondTimestemp = zeros(size(diamondTimes));
@@ -181,11 +180,11 @@ end
 function oneDataSet(dataName, out_dir, ...
                     varSize, samples, budget, top_t, ...
                     A, B, C,...
-                    fullTime,topValue,topIndexes)
+                    fullTime,topValue,topIndexes,turn)
     [ diamondRecall, diamondTimes, ...
            equalityRecall, equalityTimes ] = oneSampling(varSize, samples, budget, top_t, ...
                                                             A, B, C,...
-                                                            topValue);
+                                                            topValue,turn);
     titlename = ['time-samples-',dataName];
     drawTimeFig(titlename, out_dir, samples, fullTime, diamondTimes, equalityTimes);
     titlename = ['recall-samples-',dataName];

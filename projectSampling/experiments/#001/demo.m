@@ -1,6 +1,15 @@
 out_dir = './maximumbudget';
 samples = power(10,3:7);
 budget = power(10,3:7);
-tic
-ex001(data_path,out_dir,samples,budget);
-toc
+ex001(data_path,out_dir,samples,budget,1);
+close all;
+out_dir = './budget_1k';
+samples = power(10,3:7);
+budget = 1e3*ones(size(samples));
+ex001(data_path,out_dir,samples,budget,30);
+close all;
+out_dir = './budget_10k';
+samples = power(10,4:7);
+budget = 1e4*ones(size(samples));
+ex001(data_path,out_dir,samples,budget,30);
+close all;
