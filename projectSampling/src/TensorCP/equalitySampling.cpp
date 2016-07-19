@@ -77,7 +77,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec = duration;
-	printf("%f seconds during initialization\n",duration);
+	mexPrintf("%f seconds during initialization\n",duration);
 
 	//-------------------------------------
 	// Compute weight
@@ -97,7 +97,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	printf("%f seconds during computing weight\n",duration);
+	mexPrintf("%f seconds during computing weight\n",duration);
 
 	//-------------------------
 	// Do Sampling
@@ -167,7 +167,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	printf("%f seconds during sampling\n",duration);
+	mexPrintf("%f seconds during sampling\n",duration);
 
 	//-----------------------------------
 	//sort the values have been sampled
