@@ -124,6 +124,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(IdxK, 0, (NumSample + rankSize)*sizeof(size_t));
 	size_t *IdxR = (size_t*)malloc((NumSample + rankSize)*sizeof(size_t));
 	memset(IdxR, 0, (NumSample + rankSize)*sizeof(size_t));
+	size_t *IdxRp = (size_t*)malloc((NumSample + rankSize)*sizeof(size_t));
+	memset(IdxRp, 0, (NumSample + rankSize)*sizeof(size_t));
+	vose_alias( NumSample + rankSize, IdxRp, rankSize, weight, SumofW);
 	// sample indexes
 	size_t offset = 0;
 	for (int r = 0; r < rankSize; ++r){
@@ -145,22 +148,29 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		offset += freq_r[r];
 	}
 	// compute update value and saved in map<pair, value>
-	double valueSampled = 1.0;
-	size_t idxi, idxj, idxk;
+	size_t idxi, idxj, idxk, idxrp;
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
+	double valueSampled = 1.0;
 	offset = 0;
 	for(int r = 0; r < rankSize; ++r){
 		for(int s = 0; s < freq_r[r]; ++s){
 			idxi = IdxI[offset];
 			idxj = IdxJ[offset];
 			idxk = IdxK[offset];
-			//valueSampled = 1.0;
-			//valueSampled *= MatA.GetElement(idxi,r);
-			//valueSampled *= MatB.GetElement(idxj,r);
-			//valueSampled *= MatC.GetElement(idxk,r);
-			IrJc[point3D(idxi, idxj, idxk)] += 1.0;
-			//IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
+			idxrp = IdxRp[offset];
+			valueSampled = 1.0;
+			valueSampled *= sgn_foo(MatA.GetElement(idxi,r));
+			valueSampled *= sgn_foo(MatB.GetElement(idxj,r));
+			valueSampled *= sgn_foo(MatC.GetElement(idxk,r));			
+			valueSampled *= MatA.GetElement(idxi,r);
+			valueSampled *= MatB.GetElement(idxj,r);
+			valueSampled *= MatC.GetElement(idxk,r);
+			valueSampled *= MatA.GetElement(idxi,idxrp)/MatA.SumofCol[idxrp];
+			valueSampled *= MatB.GetElement(idxj,idxrp)/MatB.SumofCol[idxrp];
+			valueSampled *= MatC.GetElement(idxk,idxrp)/MatC.SumofCol[idxrp];			
+			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
+			//IrJc[point3D(idxi, idxj, idxk)] += 1.0;
 			++offset;
 		}
 	}
