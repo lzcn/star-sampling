@@ -9,77 +9,77 @@ function ex001(data_path, out_dir, samples, budget,turn)
     top_t = power(10,0:3); 
     varSize = [size(samples,2),size(top_t,2)];
     %% ml-10m
-%     dataName = 'ml-10m';
-% 
-%     load(fullfile(ml_10m_path,'User.Mat'));
-%     load(fullfile(ml_10m_path,'Movie.Mat'));
-%     load(fullfile(ml_10m_path,'Tag.Mat'));
-%     load(fullfile(ml_10m_path,'topValue.Mat'));
-%     load(fullfile(ml_10m_path,'fullTime.Mat'));
-%     load(fullfile(ml_10m_path,'topIndexes.Mat'));
-% 
-%     oneDataSet(dataName, out_dir, ...
-%                     varSize, samples, budget, top_t, ...
-%                     User, Movie, Tag,...
-%                     fullTime,topValue,topIndexes,turn);
-%     %%
-%     dataName = 'ml-20m';
-% 
-%     load(fullfile(ml_20m_path,'User.Mat'));
-%     load(fullfile(ml_20m_path,'Movie.Mat'));
-%     load(fullfile(ml_20m_path,'Tag.Mat'));
-%     load(fullfile(ml_20m_path,'topValue.Mat'));
-%     load(fullfile(ml_20m_path,'fullTime.Mat'));
-%     load(fullfile(ml_20m_path,'topIndexes.Mat'));
-% 
-%     oneDataSet(dataName, out_dir, ...
-%                     varSize, samples, budget, top_t, ...
-%                     User, Movie, Tag,...
-%                     fullTime,topValue,topIndexes,turn);
-%     %%
-%     dataName = 'ml-2k';
-% 
-%     load(fullfile(ml_2k_path,'User.Mat'));
-%     load(fullfile(ml_2k_path,'Movie.Mat'));
-%     load(fullfile(ml_2k_path,'Tag.Mat'));
-%     load(fullfile(ml_2k_path,'topValue.Mat'));
-%     load(fullfile(ml_2k_path,'fullTime.Mat'));
-%     load(fullfile(ml_2k_path,'topIndexes.Mat'));
-% 
-%     oneDataSet(dataName, out_dir, ...
-%                     varSize, samples, budget, top_t, ...
-%                     User, Movie, Tag,...
-%                     fullTime,topValue,topIndexes,turn);    
-%     %%
-% 
-%     dataName = 'lastfm';
-% 
-%     load(fullfile(lastfm_path,'User.Mat'));
-%     load(fullfile(lastfm_path,'Artist.Mat'));
-%     load(fullfile(lastfm_path,'Tag.Mat'));
-%     load(fullfile(lastfm_path,'topValue.Mat'));
-%     load(fullfile(lastfm_path,'fullTime.Mat'));
-%     load(fullfile(lastfm_path,'topIndexes.Mat'));
-% 
-%     oneDataSet(dataName, out_dir, ...
-%                     varSize, samples, budget, top_t, ...
-%                     User, Artist, Tag,...
-%                     fullTime,topValue,topIndexes,turn);      
-%     %%
-%     dataName = 'delicious';
-% 
-%     load(fullfile(delicious_path,'User.Mat'));
-%     load(fullfile(delicious_path,'Url.Mat'));
-%     load(fullfile(delicious_path,'Tag.Mat'));
-%     load(fullfile(delicious_path,'topValue.Mat'));
-%     load(fullfile(delicious_path,'fullTime.Mat'));
-%     load(fullfile(delicious_path,'topIndexes.Mat'));
-% 
-%     oneDataSet(dataName, out_dir, ...
-%                     varSize, samples, budget, top_t, ...
-%                     User, Url, Tag,...
-%                     fullTime,topValue,topIndexes,turn);
-%    %% random data
+     dataName = 'ml-10m';
+ 
+     load(fullfile(ml_10m_path,'User.Mat'));
+     load(fullfile(ml_10m_path,'Movie.Mat'));
+     load(fullfile(ml_10m_path,'Tag.Mat'));
+     load(fullfile(ml_10m_path,'topValue.Mat'));
+     load(fullfile(ml_10m_path,'fullTime.Mat'));
+     load(fullfile(ml_10m_path,'topIndexes.Mat'));
+ 
+     oneDataSet(dataName, out_dir, ...
+                     varSize, samples, budget, top_t, ...
+                     User, Movie, Tag,...
+                     fullTime,topValue,topIndexes,turn);
+     %%
+     dataName = 'ml-20m';
+ 
+     load(fullfile(ml_20m_path,'User.Mat'));
+     load(fullfile(ml_20m_path,'Movie.Mat'));
+     load(fullfile(ml_20m_path,'Tag.Mat'));
+     load(fullfile(ml_20m_path,'topValue.Mat'));
+     load(fullfile(ml_20m_path,'fullTime.Mat'));
+     load(fullfile(ml_20m_path,'topIndexes.Mat'));
+ 
+     oneDataSet(dataName, out_dir, ...
+                     varSize, samples, budget, top_t, ...
+                     User, Movie, Tag,...
+                     fullTime,topValue,topIndexes,turn);
+     %%
+     dataName = 'ml-2k';
+ 
+     load(fullfile(ml_2k_path,'User.Mat'));
+     load(fullfile(ml_2k_path,'Movie.Mat'));
+     load(fullfile(ml_2k_path,'Tag.Mat'));
+     load(fullfile(ml_2k_path,'topValue.Mat'));
+     load(fullfile(ml_2k_path,'fullTime.Mat'));
+     load(fullfile(ml_2k_path,'topIndexes.Mat'));
+ 
+     oneDataSet(dataName, out_dir, ...
+                     varSize, samples, budget, top_t, ...
+                     User, Movie, Tag,...
+                     fullTime,topValue,topIndexes,turn);    
+     %%
+ 
+     dataName = 'lastfm';
+ 
+     load(fullfile(lastfm_path,'User.Mat'));
+     load(fullfile(lastfm_path,'Artist.Mat'));
+     load(fullfile(lastfm_path,'Tag.Mat'));
+     load(fullfile(lastfm_path,'topValue.Mat'));
+     load(fullfile(lastfm_path,'fullTime.Mat'));
+     load(fullfile(lastfm_path,'topIndexes.Mat'));
+ 
+     oneDataSet(dataName, out_dir, ...
+                     varSize, samples, budget, top_t, ...
+                     User, Artist, Tag,...
+                     fullTime,topValue,topIndexes,turn);      
+     %%
+     dataName = 'delicious';
+ 
+     load(fullfile(delicious_path,'User.Mat'));
+     load(fullfile(delicious_path,'Url.Mat'));
+     load(fullfile(delicious_path,'Tag.Mat'));
+     load(fullfile(delicious_path,'topValue.Mat'));
+     load(fullfile(delicious_path,'fullTime.Mat'));
+     load(fullfile(delicious_path,'topIndexes.Mat'));
+ 
+     oneDataSet(dataName, out_dir, ...
+                     varSize, samples, budget, top_t, ...
+                     User, Url, Tag,...
+                     fullTime,topValue,topIndexes,turn);
+    %% random data
    dataName = 'random';
    load('A.Mat');
    load('B.Mat');

@@ -402,11 +402,17 @@ After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the 
 
 There are two primary factors that affect the recall of sampling. The first one is the probability of indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, which means we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final recall. So, when we use the maximum budget $s$, the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will sampled, and thus the higher the recall will be. The other factor is the score that we assigned to the index $\widehat{x}_{\V{i}}$. Since we will compute the top-$t'$ elements' actual value, the order of score is most considered, even the value is far away of the actual value.
 
+We summarize these two factors as occurrence probability of indexes and isotonicity of score. The occurrence probability of indexes determine the chance of one index to get a score, the isotonicity of score determine the likelihood of one index to be computed in final stage. The higher the likelihood of large element is the border the largest elements will be sampled. And the better the the isotonicity is the higher the likelihood of identification of high value.
+\subsection{The probability of indexes}
 Consider the two factors, we propose a new sampling method, called equality sampling. It samples the vertexes begin with partition $\overline{V}$. First, we assign a weight to each vertex in partition $\overline{V}$.
 \[
     w_r = \norm{\Varow{1}}{1}\ldots\norm{\Varow{N}}{1}
 \]
-Then sample each vertex in other partition with probability $|\Sca{a}{n}{r}|/\norm{\Varow{n}}{1}$.
+Then sample each vertex in other partition with probability $|\Sca{a}{n}{r}|/\norm{\Varow{n}}{1}$. The probability of each index is 
+
+\subsection{Order preservation}
+
+
 \section{Implementing details}
 In section, we introduce some details get the improvement.
 \subsection{Data Structure}
