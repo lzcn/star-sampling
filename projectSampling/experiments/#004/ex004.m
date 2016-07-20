@@ -118,24 +118,27 @@ function [ Recall_v, Recall ] = oneSampling(samples, budget, A, B, C, topValue, 
     Recall = Recall/turn;
 end
 
-function drawRecallFig(titlename, out_dir, budget, Recall_v, Recall)
+function drawRecallFig(titlename, out_dir, budget, Recall1,Recall2,Recall3,Recall4)
     h = figure; hold on; title(titlename); 
     xlabel('log_{10}Budget'); 
     ylabel('recall');
     axis([log10(budget(1)) log10(budget(end)) 0 1.1]);
-    plot(log10(budget),Recall_v,'r','LineWidth',2);
-    plot(log10(budget),Recall,'--b','LineWidth',2); 
-    legend('diamond','equality',4);  
+    plot(log10(budget),Recall1,'r','LineWidth',2);
+    plot(log10(budget),Recall2,'k','LineWidth',2);
+    plot(log10(budget),Recall3,'g','LineWidth',2);
+    plot(log10(budget),Recall4,'b','LineWidth',2); 
+    legend('v1','v2','v3','v4',4);  
     saveas(h,fullfile(out_dir,[titlename,'.png'])); 
 
 end
 
 function oneDataSet(dataName, out_dir, samples, budget, A, B, C, topValue,top_t,turn)
-    [Recall_v] = diamond_exp(A',B,C,budget,samples,top_t,topValue(top_t));
-    [Recall] = equality_exp(A,B,C,budget,samples,top_t,topValue(top_t));
-    Recall_v
+    [Recall4] = diamond_exp(A',B,C,budget,samples,top_t,topValue(top_t));
+    %[Recall_v] = equality_v2_exp(A,B,C,budget,samples,top_t,topValue(top_t));
+    %[Recall] = equality_exp(A,B,C,budget,samples,top_t,topValue(top_t));
     %[ Recall_v, Recall ] = oneSampling(samples, budget, A, B, C, topValue, top_t, turn);
+    [Recall1,Recall2,Recall3,~] = equality_v2_exp(A,B,C,budget,samples,top_t,topValue(top_t));
     titlename = ['recall-budget-',dataName];
-    drawRecallFig(titlename, out_dir, budget, Recall_v, Recall);
-
+    drawRecallFig(titlename, out_dir, budget, Recall1,Recall2,Recall3,Recall4);
+	Recall1
 end
