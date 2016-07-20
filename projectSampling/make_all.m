@@ -1,8 +1,4 @@
-path = pwd;
-ipath = fullfile(path,'include');
-src_path = fullfile(path,'src/');
-bin_path = fullfile(path,'bin');
-addpath(bin_path);
+genLocalPath;
 cd ./src; make;
 cd ./TensorCP; make;
 cd ../MatrixMul ; make;
