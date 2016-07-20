@@ -15,6 +15,11 @@
 /projectSampling/src/MSongsDB/
 /projectSampling/include/mksqlite/
 
+# Experiments files
+projectSampling/expriments/*.png;
+projectSampling/expriments/*.jpg;
+projectSampling/expriments/*.mat;
+
 # Data directory
 projectSampling/data
 projectSampling/others
