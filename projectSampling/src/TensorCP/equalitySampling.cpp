@@ -168,7 +168,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			valueSampled *= MatC.GetElement(idxk,r);
 			valueSampled *= MatA.GetElement(idxi,idxrp)/MatA.SumofCol[idxrp];
 			valueSampled *= MatB.GetElement(idxj,idxrp)/MatB.SumofCol[idxrp];
-			valueSampled *= MatC.GetElement(idxk,idxrp)/MatC.SumofCol[idxrp];			
+			valueSampled *= MatC.GetElement(idxk,idxrp)/MatC.SumofCol[idxrp];
+			valueSampled *= SumofW;
 			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
 			//IrJc[point3D(idxi, idxj, idxk)] += 1.0;
 			++offset;
