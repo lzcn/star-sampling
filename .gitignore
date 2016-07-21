@@ -16,7 +16,7 @@
 /projectSampling/include/mksqlite/
 
 # Experiments files
-projectSampling/expriments/
+projectSampling/experiments
 
 # Data directory
 projectSampling/data
