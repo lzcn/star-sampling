@@ -183,10 +183,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
 				double valueSampled = 1.0;
-				valueSampled *= sgn_foo(MatA.GetElement(r,i));
+				valueSampled *= sgn_foo(MatA.GetElement(i,r));
 				valueSampled *= sgn_foo(MatB.GetElement(idxJ,r));
 				valueSampled *= sgn_foo(MatC.GetElement(idxK,r));
-				valueSampled *= sgn_foo(MatA.GetElement(idxrp,i));
+				valueSampled *= sgn_foo(MatA.GetElement(i,idxrp));
 				valueSampled *= MatB.GetElement(idxJ,idxrp)/MatB.SumofCol[idxrp];
 				valueSampled *= MatC.GetElement(idxK,idxrp)/MatC.SumofCol[idxrp];
 				valueSampled *= SumofW[i];
@@ -202,9 +202,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
 		
 		std::vector<indValue> sortVec;
-		double true_value = 0;
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
-			true_value = getValue(tempSortedVec[t].first, MatA, MatB, MatC);
+			double true_value = getValue(tempSortedVec[t].first, MatA, MatB, MatC);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
 		}
 		sort(sortVec.begin(),sortVec.end(),cmp);
