@@ -10,7 +10,7 @@
 #include <cmath>
 #include <ctime>
 #include "mex.h"
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 typedef std::pair<pointND,double> indValue;
 

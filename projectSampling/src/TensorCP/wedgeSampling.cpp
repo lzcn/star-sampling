@@ -11,7 +11,7 @@
 #include <cmath>
 #include <ctime>
 #include "mex.h"
-#include "../../include/tensor.hpp"
+#include "tensor.hpp"
 
 typedef std::vector<size_t> coordinate;
 typedef std::pair<coordinate,double> PAIR;

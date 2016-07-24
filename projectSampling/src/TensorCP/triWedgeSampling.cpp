@@ -25,7 +25,7 @@
 #include <ctime>
 
 #include "mex.h"
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 typedef std::pair<point3D,double> indValue;
 
