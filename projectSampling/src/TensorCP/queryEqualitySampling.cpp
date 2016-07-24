@@ -20,6 +20,19 @@ int cmp(const indValue &x,const indValue&y){
 	return (x.second > y.second);
 }
 
+double getValue(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C){
+	double ans = 0;
+    for (size_t k = 0; k < A.col; ++k){
+        ans += A.GetElement(coord.x,k) * \
+        	   B.GetElement(coord.y,k) * \
+        	   C.GetElement(coord.z,k);
+    }
+    return ans;
+}
+
 /*
 	suppose the dimension of feature is d;
 	The first matrix has d rows;
@@ -117,9 +130,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			// NumSample*q'_r*/|q'|_1
 			double c = (double)NumSample*weight[i*rankSize + r]/SumofW[i];
 			if(u < (c - floor(c)))
-				freq_r[i*rankSize + r] = ceil(c);
+				freq_r[i*rankSize + r] = (size_t)ceil(c);
 			else
-				freq_r[i*rankSize + r] = floor(c);
+				freq_r[i*rankSize + r] = (size_t)floor(c);
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
@@ -138,14 +151,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		start = clock();
 		// sample r' for this query
 		memset(idxRp, 0, (NumSample + rankSize)*sizeof(size_t));
-		vose_alias((NumSample + rankSize), idxRp, rankSize, weight+i*rankSize, SumofW[i]);
+		vose_alias((NumSample + rankSize), idxRp, rankSize, (weight + i*rankSize), SumofW[i]);
 		// use map IrJc to save the sampled values
 		std::map<point3D, double> IrJc;
 		size_t offset = 0;
 		for(size_t r = 0; r < rankSize; ++r){
 			// Check the list length for each query
 			if(freq_r[i*rankSize + r] > subWalk[r].size()){
-				int remain = freq_r[i*rankSize + r] - subWalk[r].size();
+				size_t remain = freq_r[i*rankSize + r] - subWalk[r].size();
 				size_t *IdxJ = (size_t*)malloc(remain*sizeof(size_t));
 				size_t *IdxK = (size_t*)malloc(remain*sizeof(size_t));
 				memset(IdxJ, 0, remain*sizeof(size_t));
@@ -164,46 +177,41 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				free(IdxJ);
 				free(IdxK);
 			}
-			for(int m = 0; m < freq_r[i*rankSize + r]; ++m){
+			for(size_t m = 0; m < freq_r[i*rankSize + r]; ++m){
 				// repeat c_r times to sample indexes j, k
-				size_t rp = idxRp[offset];
+				size_t idxrp = idxRp[offset];
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
 				double valueSampled = 1.0;
 				valueSampled *= sgn_foo(MatA.GetElement(r,i));
 				valueSampled *= sgn_foo(MatB.GetElement(idxJ,r));
 				valueSampled *= sgn_foo(MatC.GetElement(idxK,r));
-				valueSampled *= sgn_foo(MatA.GetElement(rp,i));
-				valueSampled *= MatB.GetElement(idxj,idxrp)/MatB.SumofCol[idxrp];
-				valueSampled *= MatC.GetElement(idxk,idxrp)/MatC.SumofCol[idxrp];
+				valueSampled *= sgn_foo(MatA.GetElement(idxrp,i));
+				valueSampled *= MatB.GetElement(idxJ,idxrp)/MatB.SumofCol[idxrp];
+				valueSampled *= MatC.GetElement(idxK,idxrp)/MatC.SumofCol[idxrp];
 				valueSampled *= SumofW[i];
 				IrJc[point3D(i,idxJ,idxK)] += valueSampled;
 				++offset;
 			}
 		}
-
 		// compute the score for each query
 		std::vector<indValue> tempSortedVec;
-		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); mapItr++) {
-			tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
+		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr) {
+			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
-		sort(tempSortedVec.begin(),tempSortedVec.end(),cmp);
+		sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
 		
 		std::vector<indValue> sortVec;
-		std::map<point3D, double>::iterator mapItr;
-		
 		double true_value = 0;
-		for(size_t i = 0; i < tempSortedVec.size() && i < budget; ++i){
-			true_value = vectors_mul(tempSortedVec[i].first, MatA, MatB, MatC);
-			sortVec.push_back(std::make_pair(tempSortedVec[i].first,true_value));
+		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
+			true_value = getValue(tempSortedVec[t].first, MatA, MatB, MatC);
+			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
 		}
 		sort(sortVec.begin(),sortVec.end(),cmp);
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
-		SamplingTime[i] /= CLOCKS_PER_SEC;		
-		if(sortVec.size() <= knn)
-			printf("Warning:The size of sampled %s result is less then K!\n", sortVec.size());
-		for(int s = 0; s < sortVec.size() && s < knn;++s){
+		SamplingTime[i] /= CLOCKS_PER_SEC;
+		for(size_t s = 0; s < sortVec.size() && s < knn; ++s){
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
