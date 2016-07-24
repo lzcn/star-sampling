@@ -156,7 +156,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute the actual of top-t'(budget)
 	double true_value = 0;
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB, MatC);
+		true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
 	sort(sortVec.begin(), sortVec.end(), cmp);
