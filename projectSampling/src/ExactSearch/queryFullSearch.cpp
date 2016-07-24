@@ -37,7 +37,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     SubIndex index(2,max);
     for (int i = 0; i < A.col; ++i){
         std::list<double> listTop;
-        mexPrintf("Dealing with the %d-th query...\n",i);
+        mexPrintf(">> Dealing with the %d-th query...\n",i);
         index.reset();
         for(size_t count = 0; count < knn && !index.isDone(); ++index){
             temp = MatrixColMul(A,B,C,i,index.getIdx()[0],index.getIdx()[1]);
