@@ -119,12 +119,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------
 	// list for sub walk
 	mexPrintf("Start Sampling!\n");
-	std::vector<std::vector<point2D>> subWalk(MatA.row);
+	std::vector<std::vector<point2D> > subWalk(MatA.row);
 	size_t *idxRp = (size_t*)malloc((NumSample + MatA.row)*sizeof(size_t));
 	for(int i = 0; i < NumQueries; ++i){
 		if(isZero[i] == 1){
 			continue;
 		}
+		printf(">> Dealing with %d-th equary\n", i);
 		start = clock();
 		// sample r' for this query
 		memset(idxRp, 0, (NumSample + MatA.row)*sizeof(size_t));
@@ -135,6 +136,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		// use map IrJc to save the sampled values
 		std::map<point3D, double> IrJc;
 		size_t offset = 0;
+		// save the sampled values
 		for(size_t r = 0; r < MatA.row; ++r){
 			// Check the list length for each query
 			if(freq_r[i*MatA.row + r] > subWalk[r].size()){
@@ -157,8 +159,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				free(IdxJ);
 				free(IdxK);
 			}
+			// use the pool of indexes to compute the sampled value
 			for(int m = 0; m < freq_r[i*MatA.row + r]; ++m){
-				// repeat c_r times to sample indexes j, k
 				size_t rp = idxRp[offset];
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
@@ -173,29 +175,25 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				++offset;
 			}
 		}
-
-		// compute the score for each query
+		// pre-sorting the scores
 		std::vector<indValue> tempSortedVec;
-		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); mapItr++) {
-			tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
+		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); mapItr++){
+			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
 		sort(tempSortedVec.begin(),tempSortedVec.end(),cmp);
 		
 		std::vector<indValue> sortVec;
-		std::map<point3D, double>::iterator mapItr;
 		
-		double true_value = 0;
-		for(size_t i = 0; i < tempSortedVec.size() && i < budget; ++i){
-			true_value = vectors_mul(tempSortedVec[i].first, MatA, MatB, MatC);
-			sortVec.push_back(std::make_pair(tempSortedVec[i].first,true_value));
+		// compute the actual value for top-t' indexes
+		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
+			double true_value = vectors_mul(tempSortedVec[t].first, MatA, MatB, MatC);
+			sortVec.push_back(std::make_pair(tempSortedVec[t].first, true_value));
 		}
 		sort(sortVec.begin(),sortVec.end(),cmp);
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
-		SamplingTime[i] /= CLOCKS_PER_SEC;		
-		if(sortVec.size() <= knn)
-			printf("Warning:The size of sampled %s result is less then K!\n", sortVec.size());
-		for(int s = 0; s < sortVec.size() && s < knn;++s){
+		SamplingTime[i] /= CLOCKS_PER_SEC;
+		for(size_t s = 0; s < sortVec.size() && s < knn; ++s){
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
