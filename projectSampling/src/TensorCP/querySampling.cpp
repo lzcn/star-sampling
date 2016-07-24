@@ -175,29 +175,29 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}
 
 		// compute the score for each query
+		std::vector<indValue> tempSortedVec;
+		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); mapItr++) {
+			tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
+		}
+		sort(tempSortedVec.begin(),tempSortedVec.end(),cmp);
+		
 		std::vector<indValue> sortVec;
 		std::map<point3D, double>::iterator mapItr;
-		double true_value = 0;
 		
-		for(mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
-			true_value = vectors_mul(mapItr->first, MatA, MatB, MatC);
-			sortVec.push_back(std::make_pair(mapItr->first,true_value));
-			//sortVec.push_back(std::make_pair(mapItr->first,mapItr->second));
+		double true_value = 0;
+		for(size_t i = 0; i < tempSortedVec.size() && i < budget; ++i){
+			true_value = vectors_mul(tempSortedVec[i].first, MatA, MatB, MatC);
+			sortVec.push_back(std::make_pair(tempSortedVec[i].first,true_value));
 		}
 		sort(sortVec.begin(),sortVec.end(),cmp);
-		if(sortVec.size() <= knn){
-			printf("Warning:The size of sampled %s result is less then K!\n",sortVec.size());
-			for(int s = 0; s < sortVec.size();++s){
-				knnValue[i*knn + s] = sortVec[s].second;
-			}
-		}else{
-			for(int k = 0; k < knn; ++k){
-				knnValue[i*knn + k] = sortVec[k].second;
-			}
-		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
-		SamplingTime[i] /= CLOCKS_PER_SEC;
+		SamplingTime[i] /= CLOCKS_PER_SEC;		
+		if(sortVec.size() <= knn)
+			printf("Warning:The size of sampled %s result is less then K!\n", sortVec.size());
+		for(int s = 0; s < sortVec.size() && s < knn;++s){
+			knnValue[i*knn + s] = sortVec[s].second;
+		}
 	}
 	//---------------
 	// free
