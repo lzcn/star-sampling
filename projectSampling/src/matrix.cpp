@@ -363,7 +363,8 @@ SubIndex::~SubIndex(){
 }
 
 bool SubIndex::reset(){
-	memset(curIdx, 0, idxSize*sizeof(size_t));
+	doneFlag = false;
+	memset(curIdx, 0, (idxSize + 1)*sizeof(size_t));
 	return true;
 }
 SubIndex& SubIndex::operator+(const size_t step){
