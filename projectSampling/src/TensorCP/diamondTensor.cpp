@@ -108,7 +108,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// sampled index  for weight
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
 	memset(WeightInd, 0, NumSample*sizeof(size_t));
-	// sampled r, m, n, p, r'
+	// sampled r, i, j, k, r'
 	size_t *IdxI = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IdxI, 0, NumSample*sizeof(size_t));
 	size_t *IdxJ = (size_t*)malloc(NumSample*sizeof(size_t));
