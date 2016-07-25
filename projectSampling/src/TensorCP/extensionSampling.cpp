@@ -68,20 +68,23 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
 	double *Cex = (double*)malloc(mxGetM(prhs[2])*rankSizeExt*sizeof(double));
+	memset(Aex, 0, mxGetM(prhs[0])*rankSizeExt*sizeof(double));
+	memset(Bex, 0, mxGetM(prhs[1])*rankSizeExt*sizeof(double));
+	memset(Cex, 0, mxGetM(prhs[2])*rankSizeExt*sizeof(double));
 
 	for (size_t m = 0; m < rankSize; ++m){
 		for (size_t n = 0; n < rankSize; ++n){
 			// extension for matrix A
 			for(size_t i = 0; i < mxGetM(prhs[0]); ++i){
-				Aex[i*rankSizeExt + m*rankSize + n] = A[i*rankSize + m] * A[i*rankSize + n];
+				Aex[(m*rankSize + n) * MatA.row + i] = A[m * MatA.row + i] * A[n * MatA.row + i];
 			}
 			// extension for matrix B
 			for(size_t j = 0; j < mxGetM(prhs[1]); ++j){
-				Bex[j*rankSizeExt + m*rankSize + n] = B[j*rankSize + m] * B[j*rankSize + n];
+				Bex[(m*rankSize + n) * MatB.row + j] = B[m * MatB.row + j] * B[n * MatB.row + j];
 			}
 			// extension for matrix C
 			for(size_t k = 0; k < mxGetM(prhs[2]); ++k){
-				Cex[k*rankSizeExt + m*rankSize + n] = C[k*rankSize + m] * C[k*rankSize + n];
+				Cex[(m*rankSize + n) * MatC.row + k] = C[m * MatC.row + k] * C[n * MatC.row + k];
 			}
 		}
 	}
