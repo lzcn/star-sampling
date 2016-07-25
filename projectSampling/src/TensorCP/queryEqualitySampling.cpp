@@ -49,6 +49,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Initialization
 	//--------------------
 	mexPrintf("Initialization >>>>\n");
+	start = clock();
 	// number of queries
 	const size_t NumQueries = mxGetM(prhs[0]);
 	// rank size
@@ -75,6 +76,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[1] = mxCreateDoubleMatrix(NumQueries, 1, mxREAL);	
 	double *SamplingTime = mxGetPr(plhs[1]);
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
+	finish = clock();
+	for (size_t i = 0; i < NumQueries; ++i) {
+		SamplingTime[i] = (double)(finish-start)/NumQueries;
+	}
 	mexPrintf("Initialization Complete!\n");
 
 	//-------------------------------------
