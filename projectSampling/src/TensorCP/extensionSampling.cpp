@@ -259,9 +259,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//---------------
 	// free
 	//---------------
+	free(weight);
 	free(IdxI);
 	free(IdxJ);
 	free(IdxK);
 	free(IdxR);
 	free(freq_r);
+	free(Aex);
+	free(Bex);
+	free(Cex);
 }
