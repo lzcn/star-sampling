@@ -46,7 +46,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);	
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tesc = duration;
+	*tsec = duration;
 	printf("%f seconds during initialization\n",duration);
 
 	//-------------------------------------
@@ -64,7 +64,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 		for(size_t i = 0; i < MatA.col; ++i){
 			//w_{ri} = |a_{ri}|*||a_{*i}||_1*||b_{*r}||_1
 			tempW = 1;
-			tempW *= abs(MatA.GetElemenr(r,i));
+			tempW *= abs(MatA.GetElement(r,i));
 			tempW *= MatB.SumofCol[r];
 			tempW *= MatC.SumofCol[r];
 			weight[r*MatA.col + i] = tempW;
@@ -78,7 +78,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tesc += duration;
+	*tsec += duration;
 	printf("%f seconds during computing weight\n",duration);
 
 	//-------------------------
@@ -90,7 +90,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	memset(WeightInd, 0, NumSample*sizeof(size_t));
 	// sampled r, i, j, k
 	size_t *IndforI = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IndforI 0, NumSample*sizeof(size_t));
+	memset(IndforI, 0, NumSample*sizeof(size_t));
 	size_t *IndforJ = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IndforJ, 0, NumSample*sizeof(size_t));
 	size_t *IndforK = (size_t*)malloc(NumSample*sizeof(size_t));
@@ -134,7 +134,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 		valueSampled *= sgn_foo(MatA.GetElement(r,i));
 		valueSampled *= sgn_foo(MatB.GetElement(j,r));
 		valueSampled *= sgn_foo(MatC.GetElement(k,r));
-		IrJc[point3D(idxi,idxj,idxk)] += valueSampled;
+		IrJc[point3D(i,j,k)] += valueSampled;
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
