@@ -125,8 +125,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double tempW = 0;
 	for (int r = 0; r < rankSizeExt; ++r){
 		weight[r] = MatAex.SumofCol[r];
-		weight[r] *= MatAex.SumofCol[r];
-		weight[r] *= MatAex.SumofCol[r];
+		weight[r] *= MatBex.SumofCol[r];
+		weight[r] *= MatCex.SumofCol[r];
 		SumofW += weight[r]; 
 	}
 	finish = clock();
