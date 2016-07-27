@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
+#include <ctime>
 
 #include "mex.h"
 #include "matrix.h"
@@ -28,8 +29,6 @@ double getValue(const point3D &coord, \
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-	clock_t start,finish;
-	double duration;
 	srand(unsigned(time(NULL)));
 	//--------------------
 	// Initialization
@@ -105,8 +104,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------
 	// Do Sampling
 	//-------------------------
-
-	start = clock();
 	size_t *freq_r = (size_t *)malloc(rankSizeExt*sizeof(size_t));
 	memset( freq_r, 0, rankSizeExt*sizeof(size_t));
 	double u = 0.0;
