@@ -4,17 +4,18 @@
 	[value, time, indexes] =  extensionSampling(A, B, C, budget, samples, top_t);
 
 	* Variables input:
-		A, B, C: are factor matrices, suppose R is the rank of tensor
-				they have the same columns size
-		budget: use top-t' scores to sort
+		A:	size: (L1, R)
+		B:  size: (L2, R)
+		C:  size: (L3, R)
 		samples: numbers of samples
 		top_t : find the top_t value in tensor
 
-	* Variables output:
-		value: the top_t value size :(top_1, 1)
-		time: time consuming during the sampling
-		indexes: the indexes of the corresponding value
-		 				 size: (top_t, 3)
+		* Variables output:
+			value: size: (top_t, 1)
+						 the top_t value 
+			time: time consuming during the sampling
+			indexes: size (top_t, 3)
+							 the indexes of the corresponding value	
 		Author : Zhi Lu
 */
 
