@@ -4,16 +4,19 @@
 	[value, time, indexes] =  diamondTensor(A, B, C, budget, samples, top_t);
 
 	* Variables input:
-		A, B, C: are factor matrices, suppose R is the rank of tensor
-				A has R rows, B, C have R columns
-		budget: use top-t' scores to sort
+		A:	size: (R, L1)
+		B:  size: (L2, R)
+		C:  size: (L3, R)
+		budget: use top-t' scores to do pre-sorting
 		samples: numbers of samples
 		top_t : find the top_t value in tensor
 
-	* Variables output:
-		value: the top_t value
-		time: time consuming during the sampling
-		indexes: the indexes of the corresponding value
+		* Variables output:
+			value: size: (top_t, 1)
+						 the top_t value 
+			time: time consuming during the sampling
+			indexes: size (top_t, 3)
+							 the indexes of the corresponding value	
 		Author : Zhi Lu
 */
 
@@ -25,7 +28,7 @@
 #include <ctime>
 
 #include "mex.h"
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 typedef std::pair<point3D,double> indValue;
 
@@ -108,7 +111,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// sampled index  for weight
 	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
 	memset(WeightInd, 0, NumSample*sizeof(size_t));
-	// sampled r, m, n, p, r'
+	// sampled r, i, j, k, r'
 	size_t *IdxI = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IdxI, 0, NumSample*sizeof(size_t));
 	size_t *IdxJ = (size_t*)malloc(NumSample*sizeof(size_t));

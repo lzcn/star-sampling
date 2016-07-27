@@ -4,16 +4,19 @@
 	[value, time, indexes] =  equalitySampling(A, B, C, budget, samples, top_t);
 
 	* Variables input:
-		A, B, C: are factor matrices, suppose R is the rank of tensor
-				they have the same columns size
-		budget: use top-t' scores to sort
+		A:	size: (L1, R)
+		B:  size: (L2, R)
+		C:  size: (L3, R)
+		budget: use top-t' scores to do pre-sorting
 		samples: numbers of samples
 		top_t : find the top_t value in tensor
 
 	* Variables output:
-		value: the top_t value
+		value: size: (top_t, 1)
+					 the top_t value 
 		time: time consuming during the sampling
-		indexes: the indexes of the corresponding value
+		indexes: size (top_t, 3)
+						 the indexes of the corresponding value	
 		Author : Zhi Lu
 */
 
@@ -25,7 +28,7 @@
 #include <ctime>
 
 #include "mex.h"
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 typedef std::pair<point3D,double> indValue;
 
@@ -90,8 +93,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double tempW = 0;
 	for (int r = 0; r < rankSize; ++r){
 		weight[r] = MatA.SumofCol[r];
-		weight[r] *= MatA.SumofCol[r];
-		weight[r] *= MatA.SumofCol[r];
+		weight[r] *= MatB.SumofCol[r];
+		weight[r] *= MatC.SumofCol[r];
 		SumofW += weight[r]; 
 	}
 	finish = clock();
@@ -124,9 +127,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(IdxK, 0, (NumSample + rankSize)*sizeof(size_t));
 	size_t *IdxR = (size_t*)malloc((NumSample + rankSize)*sizeof(size_t));
 	memset(IdxR, 0, (NumSample + rankSize)*sizeof(size_t));
-	size_t *IdxRp = (size_t*)malloc((NumSample + rankSize)*sizeof(size_t));
-	memset(IdxRp, 0, (NumSample + rankSize)*sizeof(size_t));
-	vose_alias( NumSample + rankSize, IdxRp, rankSize, weight, SumofW);
 	// sample indexes
 	size_t offset = 0;
 	for (int r = 0; r < rankSize; ++r){
@@ -148,7 +148,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		offset += freq_r[r];
 	}
 	// compute update value and saved in map<pair, value>
-	size_t idxi, idxj, idxk, idxrp;
+	size_t idxi, idxj, idxk;
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
 	double valueSampled = 1.0;
@@ -158,20 +158,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			idxi = IdxI[offset];
 			idxj = IdxJ[offset];
 			idxk = IdxK[offset];
-			idxrp = IdxRp[offset];
 			valueSampled = 1.0;
 			valueSampled *= sgn_foo(MatA.GetElement(idxi,r));
 			valueSampled *= sgn_foo(MatB.GetElement(idxj,r));
-			valueSampled *= sgn_foo(MatC.GetElement(idxk,r));			
-			valueSampled *= MatA.GetElement(idxi,r);
-			valueSampled *= MatB.GetElement(idxj,r);
-			valueSampled *= MatC.GetElement(idxk,r);
-			valueSampled *= MatA.GetElement(idxi,idxrp)/MatA.SumofCol[idxrp];
-			valueSampled *= MatB.GetElement(idxj,idxrp)/MatB.SumofCol[idxrp];
-			valueSampled *= MatC.GetElement(idxk,idxrp)/MatC.SumofCol[idxrp];
-			valueSampled *= SumofW;
+			valueSampled *= sgn_foo(MatC.GetElement(idxk,r));
 			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
-			//IrJc[point3D(idxi, idxj, idxk)] += 1.0;
 			++offset;
 		}
 	}

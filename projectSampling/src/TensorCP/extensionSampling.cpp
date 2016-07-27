@@ -4,16 +4,18 @@
 	[value, time, indexes] =  extensionSampling(A, B, C, budget, samples, top_t);
 
 	* Variables input:
-		A, B, C: are factor matrices, suppose R is the rank of tensor
-				they have the same columns size
-		budget: use top-t' scores to sort
+		A:	size: (L1, R)
+		B:  size: (L2, R)
+		C:  size: (L3, R)
 		samples: numbers of samples
 		top_t : find the top_t value in tensor
 
-	* Variables output:
-		value: the top_t value
-		time: time consuming during the sampling
-		indexes: the indexes of the corresponding value
+		* Variables output:
+			value: size: (top_t, 1)
+						 the top_t value 
+			time: time consuming during the sampling
+			indexes: size (top_t, 3)
+							 the indexes of the corresponding value	
 		Author : Zhi Lu
 */
 
@@ -25,7 +27,7 @@
 #include <ctime>
 
 #include "mex.h"
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 typedef std::pair<point3D,double> indValue;
 
@@ -68,20 +70,23 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
 	double *Cex = (double*)malloc(mxGetM(prhs[2])*rankSizeExt*sizeof(double));
+	memset(Aex, 0, mxGetM(prhs[0])*rankSizeExt*sizeof(double));
+	memset(Bex, 0, mxGetM(prhs[1])*rankSizeExt*sizeof(double));
+	memset(Cex, 0, mxGetM(prhs[2])*rankSizeExt*sizeof(double));
 
 	for (size_t m = 0; m < rankSize; ++m){
 		for (size_t n = 0; n < rankSize; ++n){
 			// extension for matrix A
 			for(size_t i = 0; i < mxGetM(prhs[0]); ++i){
-				Aex[i*rankSizeExt + m*rankSize + n] = A[i*rankSize + m] * A[i*rankSize + n];
+				Aex[(m*rankSize + n) * MatA.row + i] = A[m * MatA.row + i] * A[n * MatA.row + i];
 			}
 			// extension for matrix B
 			for(size_t j = 0; j < mxGetM(prhs[1]); ++j){
-				Bex[j*rankSizeExt + m*rankSize + n] = B[j*rankSize + m] * B[j*rankSize + n];
+				Bex[(m*rankSize + n) * MatB.row + j] = B[m * MatB.row + j] * B[n * MatB.row + j];
 			}
 			// extension for matrix C
 			for(size_t k = 0; k < mxGetM(prhs[2]); ++k){
-				Cex[k*rankSizeExt + m*rankSize + n] = C[k*rankSize + m] * C[k*rankSize + n];
+				Cex[(m*rankSize + n) * MatC.row + k] = C[m * MatC.row + k] * C[n * MatC.row + k];
 			}
 		}
 	}
@@ -107,7 +112,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec = duration;
-	printf("%f seconds during initialization\n",duration);
+	mexPrintf("%f seconds during initialization\n",duration);
 
 	//-------------------------------------
 	// Compute weight
@@ -127,7 +132,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	printf("%f seconds during computing weight\n",duration);
+	mexPrintf("%f seconds during computing weight\n",duration);
 
 	//-------------------------
 	// Do Sampling
@@ -198,7 +203,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	printf("%f seconds during sampling\n",duration);
+	mexPrintf("%f seconds during sampling\n",duration);
 
 	//-----------------------------------
 	//sort the values have been sampled
@@ -256,9 +261,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//---------------
 	// free
 	//---------------
+	free(weight);
 	free(IdxI);
 	free(IdxJ);
 	free(IdxK);
 	free(IdxR);
 	free(freq_r);
+	free(Aex);
+	free(Bex);
+	free(Cex);
 }
