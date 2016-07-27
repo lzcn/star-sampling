@@ -15,8 +15,6 @@
 /projectSampling/src/MSongsDB/
 /projectSampling/include/mksqlite/
 
-# Experiments files
-projectSampling/experiments
 
 # Data directory
 projectSampling/data
