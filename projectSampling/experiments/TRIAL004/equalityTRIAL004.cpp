@@ -198,7 +198,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	sort(tempSortedVec_v_4.begin(), tempSortedVec_v_4.end(), cmp);
 	// diffrernt budget
 	for (size_t s = 0; s < leNbuget; ++s){
-		printf("start with %d\n", budget[s]);
 		std::vector<indValue> sortVec_v_1;
 		std::vector<indValue> sortVec_v_2;
 		std::vector<indValue> sortVec_v_3;
