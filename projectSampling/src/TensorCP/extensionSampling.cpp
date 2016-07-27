@@ -192,9 +192,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			idxk = IdxK[offset];
 			size_t idxr = r / rankSize;
 			valueSampled = 1.0;
-			valueSampled *= sgn(MatA.GetElement(idxi,idxr));
-			valueSampled *= sgn(MatB.GetElement(idxj,idxr));
-			valueSampled *= sgn(MatC.GetElement(idxk,idxr));
+			valueSampled *= sgn_foo(MatA.GetElement(idxi,idxr));
+			valueSampled *= sgn_foo(MatB.GetElement(idxj,idxr));
+			valueSampled *= sgn_foo(MatC.GetElement(idxk,idxr));
 			//IrJc[point3D(idxi, idxj, idxk)] += 1.0;
 			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
 			++offset;
