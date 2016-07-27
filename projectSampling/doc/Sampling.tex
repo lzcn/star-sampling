@@ -406,12 +406,48 @@ We summarize these two factors as occurrence probability of indexes and isotonic
 \subsection{The probability of indexes}
 Consider the two factors, we propose a new sampling method, called equality sampling. It samples the vertexes begin with partition $\overline{V}$. First, we assign a weight to each vertex in partition $\overline{V}$.
 \[
-    w_r = \norm{\Varow{1}}{1}\ldots\norm{\Varow{N}}{1}
+    w_r = \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}
 \]
-Then sample each vertex in other partition with probability $|\Sca{a}{n}{r}|/\norm{\Varow{n}}{1}$. The probability of each index is 
+Then sample each vertex in other partition with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$. The probability of each coordinate $\V{i}$ that will be sampled is
+\begin{align*}
+Pr(\epsilon_{\V{i}}) &= \sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\\
+&= \sum_{r=1}^{R} Pr({\rm pick\ }r)Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
+&= \sum_{r=1}^{R} \frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\times \frac{|\Sca{a}{1}{r}|}{\norm{\Vacol{1}}{1}} \times\ldots\times \frac{|\Sca{a}{N}{r}|}{\norm{\Vacol{N}}{1}} \\
+& = \sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
+\end{align*}
+
+If all factor matrices are nonnegative, then the probability of coordinate $\V{i}$ to be sampled is $x_{\V{i}}/\norm{\V{w}}{1}$. To deal with the negative condition, we use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})$ to update the score in one sample instance $\widehat{x}_{\V{i}}$.
 
 \subsection{Order preservation}
 
+Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order, the less the budget we need. With the growth of budget $t'$, the recall with approach the recall with maximum budget, which is to compute all actual value of sampled coordinates. So the first factor, occurrence of indexes, determine the upper bound of recall. And the score we assigned to a sampled coordinate decide the ability to approach the bound with less budget. In our method, we can adjustment the score to make it be an estimation of $n$-th power of the actual value. However, the demand number of samples will increase exponentially. In practice, we use the first order or quadratic score to reach a good performance.
+
+\section{Extension of Equality Sampling Method}
+
+Since we find the occurrence of indexes will determine the upper bound of the final recall. We introduce an extension method of equality sampling to reach a higher bound. We first sampled a pair of indexes $(r',r)$ in partition of $\overline{V}$. Then we sampled other indexes according to the sampled pair. The designed weight is followed. We first get the extension matrix of each factor matrix. That is we expand the factor matrix with size $(L_n \times R)$ to $(L_n \times R^2)$. The rule is 
+\[
+MatrixExpand(i,j) = Matrix(i,j \setminus R)\times Matrix(i,j\%R)
+\]
+
+After the expansion we get $N$ expanded factor matrices. Then use equality sampling method to process these expanded factor matrices will make the occurrence of indexes proportioning to the 
+quadratic of the value.
+
+\begin{align*}
+Pr(\epsilon_{\V{i}}) &= \sum_{r,r'} Pr(\epsilon_{\V{i},r,r'})\\
+&= \sum_{r,r'} Pr({\rm pick\ pair\ }(r,r'))Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
+&= \sum_{r,r'} \frac{\sum_{i_1}{\Sca{a}{1}{r}\Sca{a}{1}{r'}}\ldots\sum_{i_N}{\Sca{a}{N}{r}\Sca{a}{N}{r'}}}{\V{w}}\times 
+\frac{|\Sca{a}{1}{r}\Sca{a}{1}{r'}|}{\sum_{i_1}{\Sca{a}{1}{r}\Sca{a}{1}{r'}}} \times\ldots\times 
+\frac{|\Sca{a}{N}{r}\Sca{a}{N}{r'}|}{\sum_{i_N}{\Sca{a}{N}{r}\Sca{a}{N}{r'}}} \\
+& = \sum_{r,r'} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}{\norm{\V{W}}{1}}\\
+& = \frac{{(\sum_{r=1}^{R} |\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)}^2}{\norm{\V{W}}{1}}
+\end{align*}
+
+If all factor matrices are nonnegative, then the probability of coordinate $\V{i}$ to be sampled is $x_{\V{i}}^2/\norm{\V{w}}{1}$. 
+To deal with the negative condition, we use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})$ 
+to update the score in one sample instance $\widehat{x}_{\V{i}}$.
+
+We can make the occurrence of coordinate to be $n$-the power the its value. However, the cost the computing the extension of factor matrix and the storage will increase exponentially. In 
+some application with appropriate dimension of feature vector, this method will show a better performance.
 
 \section{Implementing details}
 In section, we introduce some details get the improvement.
