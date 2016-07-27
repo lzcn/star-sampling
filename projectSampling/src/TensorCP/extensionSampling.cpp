@@ -11,9 +11,10 @@
 		top_t : find the top_t value in tensor
 
 	* Variables output:
-		value: the top_t value
+		value: the top_t value size :(top_1, 1)
 		time: time consuming during the sampling
 		indexes: the indexes of the corresponding value
+		 				 size: (top_t, 3)
 		Author : Zhi Lu
 */
 
