@@ -138,6 +138,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	std::map<point3D, double> IrJc_v_3;
 	std::map<point3D, double> IrJc_v_4;
 	offset = 0;
+	double valueSampled = 1.0;
+	double sign = 1.0;
 	for(int r = 0; r < rankSize; ++r){
 		for(int s = 0; s < freq_r[r]; ++s){
 			idxi = IdxI[offset];
@@ -146,12 +148,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			idxrp = IdxRp[offset];
 			idxrpp = IdxRpp[offset];
 			idxrppp = IdxRppp[offset];
-			double valueSampled = 1.0;
-			valueSampled *= sgn_foo(MatA.GetElement(idxi,r));
-			valueSampled *= sgn_foo(MatB.GetElement(idxj,r));
-			valueSampled *= sgn_foo(MatC.GetElement(idxk,r));
+			sign = 1.0;
+			valueSampled = 1.0;
+			sign *= sgn_foo(MatA.GetElement(idxi,r));
+			sign *= sgn_foo(MatB.GetElement(idxj,r));
+			sign *= sgn_foo(MatC.GetElement(idxk,r));
 
-			IrJc_v_1[point3D(idxi, idxj, idxk)] += valueSampled;
+			IrJc_v_1[point3D(idxi, idxj, idxk)] += sign;
 
 			valueSampled *= MatA.GetElement(idxi,idxrp)/MatA.SumofCol[idxrp];
 			valueSampled *= MatB.GetElement(idxj,idxrp)/MatB.SumofCol[idxrp];
@@ -198,6 +201,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	sort(tempSortedVec_v_4.begin(), tempSortedVec_v_4.end(), cmp);
 	// diffrernt budget
 	for (size_t s = 0; s < leNbuget; ++s){
+		printf("start with %d\n", budget[s]);
 		std::vector<indValue> sortVec_v_1;
 		std::vector<indValue> sortVec_v_2;
 		std::vector<indValue> sortVec_v_3;
