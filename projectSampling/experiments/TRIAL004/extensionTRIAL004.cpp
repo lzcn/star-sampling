@@ -94,10 +94,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *weight = (double*)malloc(rankSizeExt*sizeof(double));
 	memset(weight, 0, rankSizeExt*sizeof(double));
 	double tempW = 0;
-	for (int r = 0; r < rankSizeExt; ++r){
+	for (size_t r = 0; r < rankSizeExt; ++r){
 		weight[r] = MatAex.SumofCol[r];
-		weight[r] *= MatAex.SumofCol[r];
-		weight[r] *= MatAex.SumofCol[r];
+		weight[r] *= MatBex.SumofCol[r];
+		weight[r] *= MatCex.SumofCol[r];
 		SumofW += weight[r]; 
 	}
 
