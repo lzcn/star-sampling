@@ -10,6 +10,7 @@
 \usepackage{paralist}
 \usepackage{indentfirst}
 \usepackage{graphicx}
+\usepackage{subfigure}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage[colorlinks,urlcolor=blue,citecolor=blue,linkcolor=blue]{hyperref}
@@ -414,7 +415,7 @@ After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the 
 
 There are two primary factors that affect the recall of sampling. The first one is the probability of indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final recall. So, when we use the maximum budget large as $s$, the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will sampled, and thus the higher the recall will be. The other factor is the score that we assigned to the index $\widehat{x}_{\V{i}}$. Since we will compute the top-$t'$ elements' actual value, the order of score is most essential. The probability of coordinate $\V{i}$ demarcate the upper bound of final recall. The better of score we assign to coordinate $\V{i}$ will keep the order of actual value do, the closer recall to the upper bound when we consider the budget $t'$.
 
-We summarize these two factors as occurrence probability of indexes and isotonicity of score. The occurrence probability of indexes determine the chance of one index to get a score, the isotonicity of score determine the likelihood of one index to be computed in final stage. 
+We summarize these two factors as occurrence probability of indexes and isotonicity of score. The occurrence probability of indexes determine the chance of one index to get a score, the isotonicity of score determine the likelihood of one index to be computed in final stage.
 
 In the following sections, we introduce a new method that sample the coordinate proportional to the actual value, and score the coordinate to estimate any order of actual value.
 
@@ -485,12 +486,44 @@ We can make the occurrence of coordinate to be $n$-the power the its value. Howe
 some application with appropriate dimension of feature vector, this method will show a better performance.
 
 \subsection{Correctness and error bounds}
-
+For the sake of comparison, we give the error bounds that similar to diamond sampling.
 \section{Experiments Result}
 We will analysis the recall and time consuming  between different method. Then we evaluate the ability to keep order of different method.
 \subsection{Recall and time consuming}
 The following result show the recall of different method. We both use first order score in quality and extension method.
+When we use the maximum budget witch is using actual values of all sampled coordinates, the recall of each data set is show in ~
 
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[draft]{recall-maximum-budget.pdf}\\
+  \caption{Accuracy for different methods in different data sets in witch we use a maximum budget, and the number of samples varies from $10^3$ to $10^7$.}
+  \label{Fig:RecallMaxBudget}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[draft]{recall-1k-budget.pdf}\\
+  \caption{Accuracy for different methods in different data sets in witch we use a const budget of $10^3$, and the number of samples varies from $10^3$ to $10^7$.}
+  \label{Fig:Recall1kBudget}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[draft]{recall-10k-budget.pdf}\\
+  \caption{Accuracy for different methods in different data sets in witch we use a const budget of $10^4$, and the number of samples varies from $10^4$ to $10^7$.}
+  \label{Fig:Recall10kBudget}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[draft]{time-consuming.pdf}\\
+  \caption{Time for different sampling approaches in different data sets. All methods use the maximum budget that equals to the number of samples}
+  \label{Fig:Recall10kBudget}
+\end{figure}
 \subsection{Isotonicity of score}
 Given the number of samples, we use different budget to see each method's ability to keep the order.
 
