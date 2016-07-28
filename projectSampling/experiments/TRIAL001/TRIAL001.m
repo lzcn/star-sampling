@@ -223,7 +223,7 @@ function drawRecallFig(Variables, diamond, equality, extension)
         desc{ 2*i } = ['equality:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['diamond-equality-',titlename,'.png']));
+    saveas(h,fullfile(out_dir,['diamond-equality-',titlename,'.pdf']));
     close(h);
     % draw recall-samples diamond vs extension
     h = figure; hold on; title([titlename,'-diamond-extension']);
@@ -240,7 +240,7 @@ function drawRecallFig(Variables, diamond, equality, extension)
         desc{ 2*i } = ['extension:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['diamond-extension-',titlename,'.png']));
+    saveas(h,fullfile(out_dir,['diamond-extension-',titlename,'.pdf']));
     close(h);
     % draw recall-samples extension vs equality
     h = figure; hold on; title([titlename,'-extension-equality']);
