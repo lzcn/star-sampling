@@ -1,27 +1,33 @@
 function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
-
+    
+     Variables.samples = samples;
+     Variables.budget = budget;
+     Variables.turn = turn;
+     Variables.knn = knn;
+     % set data path
      ml_10m_path = fullfile(data_path,'MovieLens','ml-10m');
      ml_20m_path = fullfile(data_path,'MovieLens','ml-20m');
      ml_2k_path = fullfile(data_path, 'hetrec2011-movielens-2k-v2');
      lastfm_path = fullfile(data_path, 'hetrec2011-lastfm-2k');
      delicious_path = fullfile(data_path, 'hetrec2011-delicious-2k');
-
+     
      %% ml-10m
-     dataName = 'ml-10m';
-
+     Variables.dataName = 'ml-10m';
+     
      load(fullfile(ml_10m_path,'User.Mat'));
      load(fullfile(ml_10m_path,'Movie.Mat'));
      load(fullfile(ml_10m_path,'Tag.Mat'));
      load(fullfile(ml_10m_path,'valueQuery.Mat'));
      load(fullfile(ml_10m_path,'timeQuery.Mat'));
-
-     oneDataSet(dataName, out_dir, ...
-                samples, budget, knn, ...
-                User, Movie, Tag,...
-                timeQuery,valueQuery,...
-                turn);
+     Variables.MatA = User;
+     Variables.MatB = Movie;
+     Variables.MatC = Tag;
+     Variables.valueQuery = valueQuery;
+     Variables.timeQuery = timeQuery;
+     oneDataSet(Variables);
+     
      %% ml-20m
-     dataName = 'ml-20m';
+     Variables.dataName = 'ml-20m';
  
      load(fullfile(ml_20m_path,'User.Mat'));
      load(fullfile(ml_20m_path,'Movie.Mat'));
@@ -29,13 +35,15 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      load(fullfile(ml_20m_path,'valueQuery.Mat'));
      load(fullfile(ml_20m_path,'timeQuery.Mat'));
  
-     oneDataSet(dataName, out_dir, ...
-                samples, budget, knn, ...
-                User, Movie, Tag,...
-                timeQuery,valueQuery,...
-                turn);
+     Variables.MatA = User;
+     Variables.MatB = Movie;
+     Variables.MatC = Tag;
+     Variables.valueQuery = valueQuery;
+     Variables.timeQuery = timeQuery;
+     oneDataSet(Variables);
+     
      %% ml-2k
-     dataName = 'ml-2k';
+     Variables.dataName = 'ml-2k';
  
      load(fullfile(ml_2k_path,'User.Mat'));
      load(fullfile(ml_2k_path,'Movie.Mat'));
@@ -43,14 +51,16 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      load(fullfile(ml_2k_path,'valueQuery.Mat'));
      load(fullfile(ml_2k_path,'timeQuery.Mat'));
  
-     oneDataSet(dataName, out_dir, ...
-                samples, budget, knn, ...
-                User, Movie, Tag,...
-                timeQuery,valueQuery,...
-                turn);   
+     Variables.MatA = User;
+     Variables.MatB = Movie;
+     Variables.MatC = Tag;
+     Variables.valueQuery = valueQuery;
+     Variables.timeQuery = timeQuery;
+     oneDataSet(Variables);
+     
      %% lastfm
  
-     dataName = 'lastfm';
+     Variables.dataName = 'lastfm';
  
      load(fullfile(lastfm_path,'User.Mat'));
      load(fullfile(lastfm_path,'Artist.Mat'));
@@ -58,14 +68,16 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      load(fullfile(lastfm_path,'valueQuery.Mat'));
      load(fullfile(lastfm_path,'timeQuery.Mat'));
 
-     oneDataSet(dataName, out_dir, ...
-                samples, budget, knn, ...
-                User, Artist, Tag,...
-                timeQuery,valueQuery,...
-                turn);     
+     Variables.MatA = User;
+     Variables.MatB = Artist;
+     Variables.MatC = Tag;
+     Variables.valueQuery = valueQuery;
+     Variables.timeQuery = timeQuery;
+     oneDataSet(Variables);
+     
       
      %% delicious
-     dataName = 'delicious';
+     Variables.dataName = 'delicious';
  
      load(fullfile(delicious_path,'User.Mat'));
      load(fullfile(delicious_path,'Url.Mat'));
@@ -73,29 +85,24 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      load(fullfile(delicious_path,'valueQuery.Mat'));
      load(fullfile(delicious_path,'timeQuery.Mat'));
      
-     oneDataSet(dataName, out_dir, ...
-                samples, budget, knn, ...
-                User, Url, Tag,...
-                timeQuery,valueQuery,...
-                turn);
+     Variables.MatA = User;
+     Variables.MatB = Url;
+     Variables.MatC = Tag;
+     Variables.valueQuery = valueQuery;
+     Variables.timeQuery = timeQuery;
+     oneDataSet(Variables);
+     
 end
 
 %% Initialize Variables
 function [ diamond, equality, extension ] = initVar(Variables)
-    varSize = [length(Variables.samples), Variables.NumQueries];
+    varSize = [Variables.NumQueries, length(Variables.samples)];
     diaond.recall = zeros(varSize);
     diaond.time = zeros(varSize);
     equality.recall = zeros(varSize);
     equality.time = zeros(varSize);
     extension.recall = zeros(varSize);
     extension.time = zeros(varSize);
-end
-function [ diamondRecall, diamondTimes, equalityRecall, equalityTimes ] = initVar(varSize)
-    % recall(i,j) is the recall of j-th query under sampling number i 
-    diamondRecall = zeros(varSize);
-    equalityRecall = zeros(varSize);
-    diamondTimes = zeros(varSize);
-    equalityTimes = zeros(varSize);
 end
 
 % Do one sampling for one data set
@@ -107,27 +114,24 @@ function [ diamond, euqality, extension] = oneSampling(Variables)
     MatC = Variables.MatC;
     valueQuery = Variables.valueQuery;
     knn = Variables.knn;
-    % initialize the variables
-    [ diamondRecall, diamondTimes, equalityRecall, equalityTimes ] = initVar(varSize);
     % use the average result
     for s = 1:turn
         % temp variables
         [ diamondTemp, equalityTemp, extensionTemp ] = initVar(Variables);
-        [ diamondRecalltemp, diamondTimestemp, equalityRecalltemp, equalityTimestemp ] = initVar(varSize);
         for i = 1:length(Variables.samples)
             sample = Variables.samples(i);
             budget = Variables.budget(i);
             [diamondValues, time] = querySampling(MatA', MatB, MatC, budget, sample, knn);
-            diamond.time(1,:) = time;
+            diamond.time(:, i) = time;
             [equalityValues, time] = queryEqualitySampling(MatA, MatB, MatC, budget, sample, knn);
-            equality.time(1,:) = time;
+            equality.time(:, i) = time;
             [extensionValues, time] = queryExtensionSampling(MatA, MatB, MatC, budget, sample, knn);
-            extension.time(1,:) = time;
+            extension.time(:,i) = time;
             for n = 1:Variables.NumQueries
                 % for each query compute the recall
-                diamondTemp.recall(i,n) = sum(diamondValues(1:knn,n) >= valueQuery(knn,n))/knn;
-                equalityTemp.recall(i,n) = sum(euqalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
-                extensionTemp.recall(i,n) = sum(euqalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
+                diamondTemp.recall(n,i) = sum(diamondValues(1:knn,n) >= valueQuery(knn,n))/knn;
+                equalityTemp.recall(n,i) = sum(euqalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
+                extensionTemp.recall(n,i) = sum(euqalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
             end
         end
         diamond.recall = diamond.recall + diamondTemp.recall;
@@ -151,71 +155,50 @@ end
 
 %% draw the time figure
 function drawTimeFig(titlename, Variables, diamond, equality, extension)
+    NumQueries = Variables.NumQueries;
     fullTime = Variables.fullTime;
     out_dir = Variables.out_dir;
-    h = figure; hold on;title(titlename); 
-    xlabel('Queries');
-    ylabel('log_{10}T(sec)');
-    % average time for each query in exhaustive search
-    plot(1:NumQueries,log10(fullTime*ones(NumQueries,1)),'-k');
-    c = ['g','k','b','r','c'];
-    tesc = cell(4,1);
-    tesc{1} = 'exhaustive';
     % queries-recall under each samples
-    c = ['g','k','b','r','c'];
     for i = 1: length(Variabes.samples)
       sample = Variabes.samples(i);
-      h = figure; hold on;title([titlename,'-',num2str(sample)]); 
-      xlabel('Queries');
-      ylabel('log_{10}T(sec)');
+      h = figure; hold on;
+      title([titlename,'-',num2str(sample)]); 
+      xlabel('queries');
+      ylabel('log_{10} t(s)');
       % average time for each query in exhaustive search
-      plot(1:NumQueries,log10(fullTime*ones(NumQueries,1)),'-c');
-      tesc = cell(length(samples)*2 + 1,1);
-      plot(1:Variables.NumQueries, diamondTimes(i,:),c(1)); 
-      plot(1:Variables.NumQueries, equalityTimes(i,:),c(2));
-      plot(1:Variables.NumQueries, extensionTimes(i,:),c(3));
-      tesc{2} = ['diamond,s=',num2str(sample)]; 
-      tesc{3} = ['equality,s=',num2str(sample)]; 
-      tesc{4} = ['extension,s=',num2str(sample)]; 
-      legend(tesc,4);
-      saveas(h,fullfile(out_dir,[titlename,'-',num2str(sample),'.png']));
+      plot(1:NumQueries,log10(fullTime*ones(NumQueries,1)),'c');
+      plot(1:Variables.NumQueries, diamond.times(:,i),'--b'); 
+      plot(1:Variables.NumQueries, equality.times(:,i),'--r');
+      plot(1:Variables.NumQueries, extension.times(:,i),'--g');
+      legend('exhaustive','diamond','equality','extension',4);
+      saveas(h,fullfile(out_dir,[titlename,'-',num2str(sample),'.pdf']));
     end
 end
 
 %% recall-queries figure
-function drawRecallFig(titlename, out_dir, NumQueries, samples, diamondRecall, equalityRecall)
-    h = figure; hold on; title(titlename);
-    xlabel('Queries'); 
-    ylabel('recall');
+function drawRecallFig(titlename, Variables, diamond, equality, extension)
+    out_dir = Variables.out_dir;
+    NumQueries = Variables.NumQueries;
     c = ['r','b','k','g', 'c'];
-    axis([1 NumQueries 0 1.1]);
-    desc = cell(size(samples,2)*2, 1);
     for i= 1:length(samples)
-        plot(1:NumQueries,diamondRecall(i,:),c(i),'LineWidth',2);
-        plot(log10(samples),equalityRecall(i,:),['--',c(i)],'LineWidth',2); 
-        desc{2*i-1} = ['diamond:t=',num2str(samples(i))];
-        desc{2*i} = ['equality:t=',num2str(samples(i))];
+        h = figure; hold on;
+        sample = Variables.samples(i);
+        title([titlename,'-',num2str(sample)]);
+        xlabel('queries'); 
+        ylabel('recall');
+        axis([1 NumQueries 0 1.1]);
+        plot(1:NumQueries, diamond.recall(:,i),'--b');
+        plot(1:NumQueries, equality.recall(:,i),'--r'); 
+        plot(1:NumQueries, extension.recall(:,i),'--g'); 
+        legend('diamond','equality','extension',4);
+        saveas(h,fullfile(out_dir,[titlename,'-',num2str(sample),'.pdf'])); 
     end
-    legend(desc,4);  
-    saveas(h,fullfile(out_dir,[titlename,'.png'])); 
-
 end
 
-function oneDataSet(dataName, out_dir, ...
-                    samples, budget, knn, ...
-                    A, B, C,...
-                    timeQuery,valueQuery,...
-                    turn)
-    NumQueries = size(A,1);
-    varSize = [length(samples),NumQueries];
-    [ diamondRecall, diamondTimes, ...
-      equalityRecall, equalityTimes ] = oneSampling(varSize, NumQueries, ...
-                                                    samples, budget, knn, ...
-                                                    A, B, C, ...
-                                                    valueQuery, ...
-                                                    turn);
-    titlename = ['time-samples-',dataName];
-    drawTimeFig(titlename, out_dir, NumQueries, samples, timeQuery, diamondTimes, equalityTimes)
-    titlename = ['recall-samples-',dataName];
-    drawRecallFig(titlename, out_dir, NumQueries, samples, diamondRecall, equalityRecall)
+function oneDataSet(Variables)
+    [ diamond, euqality, extension] = oneSampling(Variables)
+    titlename = ['time-samples-',Variables.dataName];
+    drawTimeFig(titlename, Variables, diamond, equality, extension);
+    titlename = ['recall-samples-',Variables.dataName];
+    drawRecallFig(titlename, Variables, diamond, equality, extension);
 end
