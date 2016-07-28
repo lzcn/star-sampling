@@ -1,7 +1,13 @@
 /*
-	Diamond Sampling with N-1 factor matrices and a query matrix
-	It will return a sparse tensor stored 
-	the sampled result
+	Diamond Sampling for queries
+	[value, time] = querySampling(A, B, C, budget, samples, knn)
+		A: size(R, L1)
+		B: size(L2, R)
+		C: size(L3, R)
+	output:
+		value: size(knn, NumQueries)
+		time: size(NumQueries, 1)
+	
 */
 
 #include <vector>
@@ -20,12 +26,6 @@ int cmp(const indValue &x,const indValue&y){
 	return (x.second > y.second);
 }
 
-/*
-	suppose the dimension of feature is d;
-	The first matrix has d rows;
-	The left matrices have d columns;
-
-*/
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -35,7 +35,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	mexPrintf("Initialization >>>>\n");
+	mexPrintf(">> Initialization\n");
 	// MatA is a set of queries
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	// MatB and MatC are two factor matrices
@@ -56,12 +56,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[1] = mxCreateDoubleMatrix(NumQueries, 1, mxREAL);	
 	double *SamplingTime = mxGetPr(plhs[1]);
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
-	mexPrintf("Initialization Complete!\n");
+	mexPrintf(">> Initialization Complete!\n");
 
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
-	mexPrintf("Start Computing weight!\n");
+	mexPrintf(">> Start Computing weight!\n");
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
 	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
 	double *SumofW = (double*)malloc(MatA.col*sizeof(double));
@@ -82,18 +82,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			tempW *= MatC.SumofCol[r];
 			weight[i*MatA.row + r] = tempW;
 			SumofW[i] += tempW;
-			if(SumofW[i] == 0){
-				isZero[i] = 1;
-			}
+		}
+		if(SumofW[i] == 0){
+			isZero[i] = 1;
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 	}
-	mexPrintf("Computing weight complete!\n");
+	mexPrintf(">> Computing weight complete!\n");
 	//-------------------------------
 	// Compute c_r for each query
 	//-------------------------------
-	mexPrintf("Start computing c_r!\n");
+	mexPrintf(">> Start computing c_r!\n");
 	size_t *freq_r = (size_t*)malloc(MatA.row*MatA.col*sizeof(size_t));
 	memset(freq_r, 0, MatA.row*MatA.col*sizeof(size_t));
 	// c_r has the expectation NumSample*q'_r*/|q'|_1
@@ -118,14 +118,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	// list for sub walk
-	mexPrintf("Start Sampling!\n");
+	mexPrintf(">> Start Sampling!\n");
 	std::vector<std::vector<point2D> > subWalk(MatA.row);
 	size_t *idxRp = (size_t*)malloc((NumSample + MatA.row)*sizeof(size_t));
 	for(int i = 0; i < NumQueries; ++i){
 		if(isZero[i] == 1){
 			continue;
 		}
-		printf(">> Dealing with %d-th equary\n", i);
 		start = clock();
 		// sample r' for this query
 		memset(idxRp, 0, (NumSample + MatA.row)*sizeof(size_t));
@@ -197,10 +196,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
+	mexPrintf(">> Done!\n");
 	//---------------
 	// free
 	//---------------
+	free(weight);
 	free(freq_r);
 	free(idxRp);
 	free(SumofW);
+	free(isZero);
 }

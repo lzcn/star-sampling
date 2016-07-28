@@ -1,7 +1,13 @@
 /*
-	Diamond Sampling with N-1 factor matrices and a query matrix
-	It will return a sparse tensor stored 
-	the sampled result
+	Diamond Sampling for queries
+	[value, time] = querySampling(A, B, C, budget, samples, knn)
+		A: size(L1, R)
+		B: size(L2, R)
+		C: size(L3, R)
+	output:
+		value: size(knn, NumQueries)
+		time: size(NumQueries, 1)
+	
 */
 
 #include <vector>
@@ -33,12 +39,7 @@ double getValue(const point3D &coord, \
     return ans;
 }
 
-/*
-	suppose the dimension of feature is d;
-	The first matrix has d rows;
-	The left matrices have d columns;
 
-*/
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -48,7 +49,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	mexPrintf("Initialization >>>>\n");
+	mexPrintf(">> Initialization >>>>\n");
 	start = clock();
 	// number of queries
 	const size_t NumQueries = mxGetM(prhs[0]);
@@ -80,12 +81,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (size_t i = 0; i < NumQueries; ++i) {
 		SamplingTime[i] = (double)(finish-start)/NumQueries;
 	}
-	mexPrintf("Initialization Complete!\n");
+	mexPrintf(">> Initialization Complete!\n");
 
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
-	mexPrintf("Start Computing weight!\n");
+	mexPrintf(">> Start Computing weight!\n");
 	// weight for each query
 	double *weight = (double*)malloc(NumQueries*rankSize*sizeof(double));
 	memset(weight, 0,NumQueries*rankSize*sizeof(double));
@@ -109,18 +110,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			tempW *= MatC.SumofCol[r];
 			weight[i*rankSize + r] = tempW;
 			SumofW[i] += tempW;
-			if(SumofW[i] == 0){
-				isZero[i] = 1;
-			}
+		}
+		if(SumofW[i] == 0){
+			isZero[i] = 1;
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 	}
-	mexPrintf("Computing weight complete!\n");
+	mexPrintf(">> Computing weight complete!\n");
 	//-------------------------------
 	// Compute c_r for each query
 	//-------------------------------
-	mexPrintf("Start computing c_r!\n");
+	mexPrintf(">> Start computing c_r!\n");
 	size_t *freq_r = (size_t*)malloc(NumQueries*rankSize*sizeof(size_t));
 	memset(freq_r, 0, NumQueries*rankSize*sizeof(size_t));
 	// c_r has the expectation NumSample*q'_r*/|q'|_1
@@ -146,20 +147,15 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	// list for sub walk
-	mexPrintf("Start Sampling!\n");
+	mexPrintf(">> Start Sampling!\n");
 	std::vector<std::vector<point2D>> subWalk(rankSize);
-	size_t *idxRp = (size_t*)malloc((NumSample + rankSize)*sizeof(size_t));
 	for(int i = 0; i < NumQueries; ++i){
 		if(isZero[i] == 1){
 			continue;
 		}
 		start = clock();
-		// sample r' for this query
-		memset(idxRp, 0, (NumSample + rankSize)*sizeof(size_t));
-		vose_alias((NumSample + rankSize), idxRp, rankSize, (weight + i*rankSize), SumofW[i]);
 		// use map IrJc to save the sampled values
 		std::map<point3D, double> IrJc;
-		size_t offset = 0;
 		for(size_t r = 0; r < rankSize; ++r){
 			// Check the list length for each query
 			if(freq_r[i*rankSize + r] > subWalk[r].size()){
@@ -184,19 +180,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 			for(size_t m = 0; m < freq_r[i*rankSize + r]; ++m){
 				// repeat c_r times to sample indexes j, k
-				size_t idxrp = idxRp[offset];
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
 				double valueSampled = 1.0;
 				valueSampled *= sgn_foo(MatA.GetElement(i,r));
 				valueSampled *= sgn_foo(MatB.GetElement(idxJ,r));
 				valueSampled *= sgn_foo(MatC.GetElement(idxK,r));
-				valueSampled *= sgn_foo(MatA.GetElement(i,idxrp));
-				valueSampled *= MatB.GetElement(idxJ,idxrp)/MatB.SumofCol[idxrp];
-				valueSampled *= MatC.GetElement(idxK,idxrp)/MatC.SumofCol[idxrp];
-				valueSampled *= SumofW[i];
 				IrJc[point3D(i,idxJ,idxK)] += valueSampled;
-				++offset;
 			}
 		}
 		// compute the score for each query
@@ -219,10 +209,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
+	mexPrintf(">> Done!\n");
 	//---------------
 	// free
 	//---------------
+	free(weight);
+	free(isZero);
 	free(freq_r);
-	free(idxRp);
 	free(SumofW);
 }

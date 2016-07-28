@@ -71,10 +71,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *weight = (double*)malloc(rankSize*sizeof(double));
 	memset(weight, 0, rankSize*sizeof(double));
 	double tempW = 0;
-	for (int r = 0; r < rankSize; ++r){
+	for (size_t r = 0; r < rankSize; ++r){
 		weight[r] = MatA.SumofCol[r];
-		weight[r] *= MatA.SumofCol[r];
-		weight[r] *= MatA.SumofCol[r];
+		weight[r] *= MatB.SumofCol[r];
+		weight[r] *= MatC.SumofCol[r];
 		SumofW += weight[r]; 
 	}
 
@@ -154,7 +154,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			sign *= sgn_foo(MatB.GetElement(idxj,r));
 			sign *= sgn_foo(MatC.GetElement(idxk,r));
 
-			IrJc_v_1[point3D(idxi, idxj, idxk)] += valueSampled;
+			IrJc_v_1[point3D(idxi, idxj, idxk)] += sign;
 
 			valueSampled *= MatA.GetElement(idxi,idxrp)/MatA.SumofCol[idxrp];
 			valueSampled *= MatB.GetElement(idxj,idxrp)/MatB.SumofCol[idxrp];

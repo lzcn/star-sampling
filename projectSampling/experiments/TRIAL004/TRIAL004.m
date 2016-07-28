@@ -4,7 +4,7 @@ function TRIAL004(data_path,out_dir,samples,budget,top_t,turn)
     ml_2k_path = fullfile(data_path, 'hetrec2011-movielens-2k-v2');
     lastfm_path = fullfile(data_path, 'hetrec2011-lastfm-2k');
     delicious_path = fullfile(data_path, 'hetrec2011-delicious-2k');
-
+    randData_path = fullfile(data_path, 'random');
 
     %% ml-10m
     dataName = 'ml-10m';
@@ -77,13 +77,16 @@ function TRIAL004(data_path,out_dir,samples,budget,top_t,turn)
                     topValue, top_t, turn); 
     %% random data
     dataName = 'random';
-    load('A.Mat');
-    load('B.Mat');
-    load('C.Mat');
-    topValue = 1600*ones(1000,1);
+
+    load(fullfile(randData_path, 'MatA.Mat'));
+    load(fullfile(randData_path, 'MatB.Mat'));
+    load(fullfile(randData_path, 'MAtC.Mat'));
+    load(fullfile(randData_path, 'topValue.Mat'));
+    load(fullfile(randData_path, 'fullTime.Mat'));
+    load(fullfile(randData_path, 'topIndexes.Mat'));
     oneDataSet(dataName, out_dir, ...
                     samples, budget, ...
-                    A, B, C,...
+                    MatA, MatB, MatC,...
                     topValue, top_t, turn);  
 
 end
@@ -118,27 +121,31 @@ function [ Recall_v, Recall ] = oneSampling(samples, budget, A, B, C, topValue, 
     Recall = Recall/turn;
 end
 
-function drawRecallFig(titlename, out_dir, budget, Recall1,Recall2,Recall3,Recall4)
+function drawRecallFig(titlename, out_dir, budget, recall)
     h = figure; hold on; title(titlename); 
     xlabel('log_{10}Budget'); 
     ylabel('recall');
+    c = ['r','b','k','g', 'c','m','y'];
     axis([log10(budget(1)) log10(budget(end)) 0 1.1]);
-    plot(log10(budget),Recall1,'r','LineWidth',2);
-    plot(log10(budget),Recall2,'k','LineWidth',2);
-    plot(log10(budget),Recall3,'g','LineWidth',2);
-    plot(log10(budget),Recall4,'b','LineWidth',2); 
-    legend('v1','v2','v3','v4',4);  
+    for i = 1:size(recall,2)
+        plot(log10(budget),recall(:,i),c(i),'LineWidth',2);
+    end
+    legend('diamond','equality_v_1','equality_v_2','equality_v_3','equality_v_4','extension',4);  
     saveas(h,fullfile(out_dir,[titlename,'.png'])); 
 
 end
 
 function oneDataSet(dataName, out_dir, samples, budget, A, B, C, topValue,top_t,turn)
-    [Recall4] = diamondExp004(A',B,C,budget,samples,top_t,topValue(top_t));
-    %[Recall_v] = equalityExp004(A,B,C,budget,samples,top_t,topValue(top_t));
-    %[Recall] = equality_exp(A,B,C,budget,samples,top_t,topValue(top_t));
-    %[ Recall_v, Recall ] = oneSampling(samples, budget, A, B, C, topValue, top_t, turn);
-    [Recall1,Recall2,Recall3,~] = equalityExp004(A,B,C,budget,samples,top_t,topValue(top_t));
+    recall = zeros(length(budget),6);
+    for t = 1:turn
+        temp = zeros(length(budget),6);
+        temp(:,1) = diamondTRIAL004(A',B,C,budget,samples,top_t,topValue(top_t));
+        [temp(:,2),temp(:,3),temp(:,4),temp(:,5)] = equalityTRIAL004(A,B,C,budget,samples,top_t,topValue(top_t));
+        temp(:,6) = extensionTRIAL004(A,B,C,budget,samples,top_t,topValue(top_t));
+        recall = recall + temp;
+    end
+    recall = recall/turn;
     titlename = ['recall-budget-',dataName];
-    drawRecallFig(titlename, out_dir, budget, Recall1,Recall2,Recall3,Recall4);
-	Recall1
+    drawRecallFig(titlename, out_dir, budget, recall);
+
 end

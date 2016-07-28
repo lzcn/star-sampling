@@ -13,7 +13,7 @@ if(~isdir(out_dir))
 end
 samples = power(10,3:7);
 budget = 1e3*ones(size(samples));
-TRIAL001(data_path,out_dir,samples,budget,1);
+TRIAL001(data_path,out_dir,samples,budget,20);
 
 %% 10k budget
 out_dir = './BUDGET10K';
@@ -22,4 +22,4 @@ if(~isdir(out_dir))
 end
 samples = power(10,4:7);
 budget = 1e4*ones(size(samples));
-TRIAL001(data_path,out_dir,samples,budget,1);
+TRIAL001(data_path,out_dir,samples,budget,20);

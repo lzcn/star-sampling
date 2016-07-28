@@ -37,97 +37,97 @@ function TRIAL001(data_path, out_dir, samples, budget, turn)
     
     oneDataSet(Variables);
     %% ml-20m
-%     Variables.dataName = 'ml-20m';
-%  
-%     load(fullfile(ml_20m_path,'User.Mat'));
-%     load(fullfile(ml_20m_path,'Movie.Mat'));
-%     load(fullfile(ml_20m_path,'Tag.Mat'));
-%     load(fullfile(ml_20m_path,'topValue.Mat'));
-%     load(fullfile(ml_20m_path,'fullTime.Mat'));
-%     load(fullfile(ml_20m_path,'topIndexes.Mat'));
-%  
-%     Variables.MatA = User;
-%     Variables.MatB = Movie;
-%     Variables.MatC = Tag;
-%     Variables.topValue = topValue;
-%     Variables.fullTime = fullTime;
-%     Variables.topIndexes = topIndexes;
-%     
-%     oneDataSet(Variables);
-% 
-%     %% ml-2k
-%     Variables.dataName = 'ml-2k';
-% 
-%     load(fullfile(ml_2k_path,'User.Mat'));
-%     load(fullfile(ml_2k_path,'Movie.Mat'));
-%     load(fullfile(ml_2k_path,'Tag.Mat'));
-%     load(fullfile(ml_2k_path,'topValue.Mat'));
-%     load(fullfile(ml_2k_path,'fullTime.Mat'));
-%     load(fullfile(ml_2k_path,'topIndexes.Mat'));
-% 
-%     Variables.MatA = User;
-%     Variables.MatB = Movie;
-%     Variables.MatC = Tag;
-%     Variables.topValue = topValue;
-%     Variables.fullTime = fullTime;
-%     Variables.topIndexes = topIndexes;   
-% 
-%     oneDataSet(Variables);
-%     %% lastfm 
-%     Variables.dataName = 'lastfm';
-% 
-%     load(fullfile(lastfm_path,'User.Mat'));
-%     load(fullfile(lastfm_path,'Artist.Mat'));
-%     load(fullfile(lastfm_path,'Tag.Mat'));
-%     load(fullfile(lastfm_path,'topValue.Mat'));
-%     load(fullfile(lastfm_path,'fullTime.Mat'));
-%     load(fullfile(lastfm_path,'topIndexes.Mat'));
-%  
-%     Variables.MatA = User;
-%     Variables.MatB = Artist;
-%     Variables.MatC = Tag;
-%     Variables.topValue = topValue;
-%     Variables.fullTime = fullTime;
-%     Variables.topIndexes = topIndexes;
-%      
-%     oneDataSet(Variables);
-%      
-%     %% delicious
-%     Variables.dataName = 'delicious';
-%  
-%     load(fullfile(delicious_path,'User.Mat'));
-%     load(fullfile(delicious_path,'Url.Mat'));
-%     load(fullfile(delicious_path,'Tag.Mat'));
-%     load(fullfile(delicious_path,'topValue.Mat'));
-%     load(fullfile(delicious_path,'fullTime.Mat'));
-%     load(fullfile(delicious_path,'topIndexes.Mat'));
-%  
-%     Variables.MatA = User;
-%     Variables.MatB = Url;
-%     Variables.MatC = Tag;
-%     Variables.topValue = topValue;
-%     Variables.fullTime = fullTime;
-%     Variables.topIndexes = topIndexes;
-%     
-%     oneDataSet(Variables);
-% 
-%     %% random data
-%     Variables.dataName = 'random';
-%     
-%     load(fullfile(randData_path, 'MatA.Mat'));
-%     load(fullfile(randData_path, 'MatB.Mat'));
-%     load(fullfile(randData_path, 'MAtC.Mat'));
-%     load(fullfile(randData_path, 'topValue.Mat'));
-%     load(fullfile(randData_path, 'fullTime.Mat'));
-%     load(fullfile(randData_path, 'topIndexes.Mat'));
-%     Variables.MatA = MatA;
-%     Variables.MatB = MatB;
-%     Variables.MatC = MatC;
-%     Variables.topValue = topValue;
-%     Variables.fullTime = fullTime;
-%     Variables.topIndexes = topIndexes;
-%     
-%     oneDataSet(Variables);
+    Variables.dataName = 'ml-20m';
+ 
+    load(fullfile(ml_20m_path,'User.Mat'));
+    load(fullfile(ml_20m_path,'Movie.Mat'));
+    load(fullfile(ml_20m_path,'Tag.Mat'));
+    load(fullfile(ml_20m_path,'topValue.Mat'));
+    load(fullfile(ml_20m_path,'fullTime.Mat'));
+    load(fullfile(ml_20m_path,'topIndexes.Mat'));
+ 
+    Variables.MatA = User;
+    Variables.MatB = Movie;
+    Variables.MatC = Tag;
+    Variables.topValue = topValue;
+    Variables.fullTime = fullTime;
+    Variables.topIndexes = topIndexes;
+    
+    oneDataSet(Variables);
+
+    %% ml-2k
+    Variables.dataName = 'ml-2k';
+
+    load(fullfile(ml_2k_path,'User.Mat'));
+    load(fullfile(ml_2k_path,'Movie.Mat'));
+    load(fullfile(ml_2k_path,'Tag.Mat'));
+    load(fullfile(ml_2k_path,'topValue.Mat'));
+    load(fullfile(ml_2k_path,'fullTime.Mat'));
+    load(fullfile(ml_2k_path,'topIndexes.Mat'));
+
+    Variables.MatA = User;
+    Variables.MatB = Movie;
+    Variables.MatC = Tag;
+    Variables.topValue = topValue;
+    Variables.fullTime = fullTime;
+    Variables.topIndexes = topIndexes;   
+
+    oneDataSet(Variables);
+    %% lastfm 
+    Variables.dataName = 'lastfm';
+
+    load(fullfile(lastfm_path,'User.Mat'));
+    load(fullfile(lastfm_path,'Artist.Mat'));
+    load(fullfile(lastfm_path,'Tag.Mat'));
+    load(fullfile(lastfm_path,'topValue.Mat'));
+    load(fullfile(lastfm_path,'fullTime.Mat'));
+    load(fullfile(lastfm_path,'topIndexes.Mat'));
+ 
+    Variables.MatA = User;
+    Variables.MatB = Artist;
+    Variables.MatC = Tag;
+    Variables.topValue = topValue;
+    Variables.fullTime = fullTime;
+    Variables.topIndexes = topIndexes;
+     
+    oneDataSet(Variables);
+     
+    %% delicious
+    Variables.dataName = 'delicious';
+ 
+    load(fullfile(delicious_path,'User.Mat'));
+    load(fullfile(delicious_path,'Url.Mat'));
+    load(fullfile(delicious_path,'Tag.Mat'));
+    load(fullfile(delicious_path,'topValue.Mat'));
+    load(fullfile(delicious_path,'fullTime.Mat'));
+    load(fullfile(delicious_path,'topIndexes.Mat'));
+ 
+    Variables.MatA = User;
+    Variables.MatB = Url;
+    Variables.MatC = Tag;
+    Variables.topValue = topValue;
+    Variables.fullTime = fullTime;
+    Variables.topIndexes = topIndexes;
+    
+    oneDataSet(Variables);
+
+    %% random data
+    Variables.dataName = 'random';
+    
+    load(fullfile(randData_path, 'MatA.Mat'));
+    load(fullfile(randData_path, 'MatB.Mat'));
+    load(fullfile(randData_path, 'MAtC.Mat'));
+    load(fullfile(randData_path, 'topValue.Mat'));
+    load(fullfile(randData_path, 'fullTime.Mat'));
+    load(fullfile(randData_path, 'topIndexes.Mat'));
+    Variables.MatA = MatA;
+    Variables.MatB = MatB;
+    Variables.MatC = MatC;
+    Variables.topValue = topValue;
+    Variables.fullTime = fullTime;
+    Variables.topIndexes = topIndexes;
+    
+    oneDataSet(Variables);
 
 end
 function [ diamond, equality, extension ] = initVar(Variables)
@@ -200,7 +200,7 @@ function drawTimeFig(Variables, diamond, equality, extension)
     plot(log10(samples),log10(extension.times),'--c','LineWidth',2);
     
     legend('exhaustive','diamond','equality','extension',4);
-    saveas(h,fullfile(out_dir,[titlename,'.png']));
+    saveas(h,fullfile(out_dir,[titlename,'.pdf']));
     close(h);
 end
 
@@ -223,7 +223,7 @@ function drawRecallFig(Variables, diamond, equality, extension)
         desc{ 2*i } = ['equality:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['diamond-equality-',titlename,'.png']));
+    saveas(h,fullfile(out_dir,['diamond-equality-',titlename,'.pdf']));
     close(h);
     % draw recall-samples diamond vs extension
     h = figure; hold on; title([titlename,'-diamond-extension']);
@@ -240,7 +240,7 @@ function drawRecallFig(Variables, diamond, equality, extension)
         desc{ 2*i } = ['extension:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['diamond-extension-',titlename,'.png']));
+    saveas(h,fullfile(out_dir,['diamond-extension-',titlename,'.pdf']));
     close(h);
     % draw recall-samples extension vs equality
     h = figure; hold on; title([titlename,'-extension-equality']);
@@ -257,7 +257,7 @@ function drawRecallFig(Variables, diamond, equality, extension)
         desc{ 2*i } = ['equality:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['extension-equality-', titlename,'.png']));
+    saveas(h,fullfile(out_dir,['extension-equality-', titlename,'.pdf']));
     close(h);
 end
 
