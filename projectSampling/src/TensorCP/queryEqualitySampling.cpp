@@ -110,9 +110,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			tempW *= MatC.SumofCol[r];
 			weight[i*rankSize + r] = tempW;
 			SumofW[i] += tempW;
-			if(SumofW[i] == 0){
-				isZero[i] = 1;
-			}
+		}
+		if(SumofW[i] == 0){
+			isZero[i] = 1;
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
