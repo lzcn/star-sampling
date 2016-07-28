@@ -31,7 +31,7 @@
 \newcommand{\Def}[1]{\hyperref[def:#1]{Definition~\ref*{def:#1}}}
 \newcommand{\Eqn}[1]{\hyperref[eq:#1]{{Equation~\ref*{eq:#1}}}}
 \newcommand{\Fig}[1]{\hyperref[fig:#1]{Figure~\ref*{fig:#1}}} %
-\newcommand{\Lem}[1]{\hyperref[lem:#1]{Lemma~\ref*{lem:#1}}} %
+\newcommand{\Lem}[1]{\hyperref[lem:#1]{Lemma~\ref*{lemma:#1}}} %
 \newcommand{\Theo}[1]{\hyperref[lem:#1]{Lemma~\ref*{theo:#1}}} %
 \newcommand{\Prop}[1]{\hyperref[prop:#1]{Property~\ref*{prop:#1}}} %
 \newcommand{\Alg}[1]{\hyperref[alg:#1]{Algorithm~\ref*{alg:#1}}}
@@ -46,7 +46,7 @@
 \def\VZ{\V{Z}_{i_3}}
 
 \begin{document}
-\title{Sampling}
+\title{}
 \date{}
 \author{}
 \maketitle
@@ -54,6 +54,12 @@
 
 
 \section{Introducing}
+
+In fashion recommendation system, it is a must to find the most relevant items given a specific user. If we consider all users as a set a feature vectors, and the items are represented by vector with the same dimension. This problem can be abstracted to matrix multiplication tasks when we define the relevance as the inner product of two vectors. However, we may have more than one category items in which we consider is a set of items matrices with a user vector. The item matrix that consist of a mount of feature vectors with the same dimension can be represented as $\M{A} =
+[\V{a}_{1},\V{a}_{2},\cdots,\V{a}_{R}]\in R^{L\times R}$. And $R$ is the feature dimension, $L$ is the number of items. When we evaluate the relevance of an item to a user by the inner-product of item vector $\V{a}_{i}$ and user vector $\V{u}$, it equals to find the max value in $\V{q} = \M{a}^T\V{u}$, where we call $i$ the index. To be more general, we consider a set of matrices $\M{A}^{(n)},n = 1,...,N$ consisting of item vectors. Under the relevance criterion $x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}$, which is inner-product when $N=2$. And the recommendation for one user is a exceptional case when we consider one of matrix as a single vector. For convenience, we call $\V{i} = (i_1,i_2,\ldots,i_N)$ the coordinate or indexes. The hypothesis of relevance criterion is reasonable and useful for there is a good relation between the actual value and the matrices. The items matrices is the CP decomposition of actual value when we arrange it as a tensor.
+
+\subsection{Tensor decomposition}
+
 Consider a $N$-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition of this tensor is
 
 \begin{equation}\label{eq:CPDecomposition}
@@ -103,9 +109,13 @@ estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}
   \caption{Notation}\label{table:Notation}
 \end{table}
 
-\section{Diamond Sampling}
+\section{Related work}
+
+There are many splendid work on finding the max dot-product of two sets of vectors called MAD search and MIPS(Maximum Inner Product Search). We analysis those similar work based on the probabilistic method, which can be called sampling. The main idea of those method is to sample the indexes or coordinate $\V{i}$ that is proportional to the value of this coordinate $x_{\V{i}}$. The most representative work are diamond sampling and wedge sampling. In following section we will exten the diamond sampling method to deal with $N$ factor matrices.
+
+\section{Diamond Sampling for N factor matrices}
 The diamond sampling is a way to sample the multi-index $\V{i}:(i_1,i_2,\ldots,\i_N)$  that is proportional to $x_{\V{i}}^2$.
-We consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_{A}$. Meanwhile, in the adjacent matrix of the graph we use $0$(instead of $\infty$) to represent the two vertices are not adjacent. And the adjacent matrix of $G_{A}$ is:
+It consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_{A}$. Meanwhile, in the adjacent matrix of this graph, using $0$(instead of $\infty$) to represent the two vertices are not adjacent. And the adjacent matrix of $G_{A}$ is:
 \[
 \left(
   \begin{array}{cc}
@@ -116,8 +126,9 @@ We consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_
 \]
 
 \subsection{Graph representation}
+
 In equation \ref{eq:CPDecomposition}, we have $N$ factor matrices $\Mn{A}{1},\dots,\Mn{A}{N}$.
-Those $N$ factor matrices will be represented by a weighted $(N+1)$-partite graph $G_{T}$. And we call those $N+1$ partitions as partition $\overline{V},V_{1},V_{2},\ldots,V_{N}$, in which partition $V_{n}$ has $L_n$ vertexes and partition $\overline{V}$ has $R$ vertexes. We call $v^n_{i_n}$ the $i_n$-th vertex in partition $V_{n}$, and $\overline{v}_{r}$ the $r$-th vertex in partition $\overline{V}$. Every two vertexes from different partition classes $V_i,V_j,i,j\in {1,2,\ldots,N}$ are not adjacent. A vertex $\overline{v}_r$ in $\overline{V}$ is only adjacent to vertexes $v^n_i$ in $V_n$ when $\Sca{a}{n}{r}$ is non-zero with the edge weight $\Sca{a}{n}{r}$. And the adjacent matrix of $G_{T}$ is :
+Those $N$ factor matrices can be represented by a weighted $(N+1)$-partite graph $G_{T}$. And we call those $N+1$ partitions as partition $\overline{V},V_{1},V_{2},\ldots,V_{N}$, in which partition $V_{n}$ has $L_n$ vertexes and partition $\overline{V}$ has $R$ vertexes. We call $v^n_{i_n}$ the $i_n$-th vertex in partition $V_{n}$, and $\overline{v}_{r}$ the $r$-th vertex in partition $\overline{V}$. Every two vertexes from different partition classes $V_i,V_j,i,j\in {1,2,\ldots,N}$ are not adjacent. A vertex $\overline{v}_r$ in $\overline{V}$ is only adjacent to vertexes $v^n_i$ in $V_n$ when $\Sca{a}{n}{r}$ is non-zero and the edge weight $\Sca{a}{n}{r}$. And the adjacent matrix of $G_{T}$ is :
 \[
 \left(
   \begin{array}{cccc}
@@ -170,12 +181,12 @@ The sampling algorithm is shown in ~\Alg{DiamondSampling}.
 
 \subsection{Probability of picking edge and walking to other partitions}
 
-In this part, we introduce the probabilities in each phase.
+In this part, we introduce the probabilities in each phase of event $\varepsilon_{\V{i},r',r}$.
 
 \begin{itemize}
   \item Walking with probability  (~\AlgLines{DiamondSampling}{phase2}{phase3})
 
-  In phase 2 we start from a vertex in $\overline{V}$ to $V_i$, and phase 3 from a vertex in $V_1$ to $\overline{V}$. We choose the path(edge) that we walk through according to its weight. That is picking $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, picking $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
+  In phase 2 we start from a vertex in $\overline{V}$ to $V_i$, and phase 3 from a vertex in $V_1$ to $\overline{V}$. We choose the path(edge) according to its weight. That is in phase 3, picking $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, in phase 2, picking $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
 
   \item Picking an edge (~\AlgLine{DiamondSampling}{phase1})
 
@@ -196,12 +207,12 @@ Totally, we do $s$ times sampling, and each sample we will get an coordinate $\V
 \[
 \M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'}) \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'},
 \]
-and add $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$ into a set where we save the scores. Otherwise, increase $\widehat{x}_{\V{i}}$ in the set by $\M{X}_{\V{i},\ell}$. It is shown in ~\AlgLine{DiamondSampling}{scoring}. For $\V{i}$ that not be sampled in $\ell$-th turn, we can assume that $\M{X}_{\V{i},\ell}=0$. So
+and make $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$ into a set where we save the scores. Otherwise, increase $\widehat{x}_{\V{i}}$ in the set by $\M{X}_{\V{i},\ell}$. It is shown in ~\AlgLine{DiamondSampling}{scoring}. For $\V{i}$ that not be sampled in $\ell$-th turn, we can assume that $\M{X}_{\V{i},\ell}=0$. So
 \[
 \widehat{x}_{\V{i}} = \sum_{\ell} \M{X}_{\V{i},\ell}
 \]
 
-In the next part, we will show that $\widehat{x}_{\V{i}}$ is a good estimation of $x_{\V{i}}$ in scale.
+In the next part, we will show that $\widehat{x}_{\V{i}}$ is a good estimation of $x_{\V{i}}^2$.
 
 \subsection{Correctness and error bounds}
 
@@ -274,7 +285,7 @@ Applying the Chernoff bound,
 \[
 Pr[y_{\V{i}} \geq \mathbb{E}[y_{\V{i}}]] < \exp{(-\epsilon^2\mathbb{E}[y_{\V{i}}]/3)}
 \]
-By~\Lem{Expectation}
+By ~\Lem{Expectation}
 \[
 \mathbb{E}[y_{\V{i}}] = \frac{sx^2_{\V{i}}}{K^{N-1}\norm{\M{W}}{1}}
 \]
@@ -300,6 +311,7 @@ Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all ent
 \begin{proof}[proof:]
 
 \end{proof}
+
 \subsection{Finding top-$t$ largest value}
 
 We use the sampling score $\widehat{x}_{\V{i}}$ and coordinate set $\V{i}$ to find the top-t largest value in $\T{X}$ when given $N$ factor matrices. Let $\Omega_s = \{\V{i}_j|j = 1,2,\ldots,s\}$ be the coordinates have been sampled.
@@ -398,12 +410,16 @@ After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the 
     \end{algorithmic}
 \end{algorithm}
 
-\section{Equality Sampling Method}
+\section{Equality Sampling}
 
-There are two primary factors that affect the recall of sampling. The first one is the probability of indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, which means we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final recall. So, when we use the maximum budget $s$, the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will sampled, and thus the higher the recall will be. The other factor is the score that we assigned to the index $\widehat{x}_{\V{i}}$. Since we will compute the top-$t'$ elements' actual value, the order of score is most considered, even the value is far away of the actual value.
+There are two primary factors that affect the recall of sampling. The first one is the probability of indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final recall. So, when we use the maximum budget large as $s$, the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will sampled, and thus the higher the recall will be. The other factor is the score that we assigned to the index $\widehat{x}_{\V{i}}$. Since we will compute the top-$t'$ elements' actual value, the order of score is most essential. The probability of coordinate $\V{i}$ demarcate the upper bound of final recall. The better of score we assign to coordinate $\V{i}$ will keep the order of actual value do, the closer recall to the upper bound when we consider the budget $t'$.
 
-We summarize these two factors as occurrence probability of indexes and isotonicity of score. The occurrence probability of indexes determine the chance of one index to get a score, the isotonicity of score determine the likelihood of one index to be computed in final stage. The higher the likelihood of large element is the border the largest elements will be sampled. And the better the the isotonicity is the higher the likelihood of identification of high value.
+We summarize these two factors as occurrence probability of indexes and isotonicity of score. The occurrence probability of indexes determine the chance of one index to get a score, the isotonicity of score determine the likelihood of one index to be computed in final stage. 
+
+In the following sections, we introduce a new method that sample the coordinate proportional to the actual value, and score the coordinate to estimate any order of actual value.
+
 \subsection{The probability of indexes}
+
 Consider the two factors, we propose a new sampling method, called equality sampling. It samples the vertexes begin with partition $\overline{V}$. First, we assign a weight to each vertex in partition $\overline{V}$.
 \[
     w_r = \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}
@@ -416,38 +432,70 @@ Pr(\epsilon_{\V{i}}) &= \sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\\
 & = \sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
 \end{align*}
 
-If all factor matrices are nonnegative, then the probability of coordinate $\V{i}$ to be sampled is $x_{\V{i}}/\norm{\V{w}}{1}$. To deal with the negative condition, we use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})$ to update the score in one sample instance $\widehat{x}_{\V{i}}$.
+If all factor matrices are nonnegative, then the probability of coordinate $\V{i}$ to be sampled is $x_{\V{i}}/\norm{\V{w}}{1}$. To deal with the negative condition, we use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})$ to update the score in one sample instance $\widehat{x}_{\V{i}}$. And we call the score the first order score. Similarly, we can adjust the score to make is be the second order estimator. It need an extra sampling from the partition $\overline{V}$. That is when we sampled an index $r$, we sample another index $r'$ which can be same as $r$, and assign the score $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}/\{ \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}\}$ to coordinate $\V{i}$.
+
+The expectation score of first order is:
+\begin{align*}
+\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\M{X}_{\V{i},\ell}\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\\
+& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
+\end{align*}
+
+The expectation score of second order is:
+\begin{align*}
+\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r,r'})\M{X}_{\V{i},\ell}\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
+\frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}
+\frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{ \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\frac{\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\V{W}}{1}}\\
+& = \{\frac{x_{\V{i}}}{\norm{\V{w}}{1}}\}^2
+\end{align*}
+
 
 \subsection{Order preservation}
 
 Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order, the less the budget we need. With the growth of budget $t'$, the recall with approach the recall with maximum budget, which is to compute all actual value of sampled coordinates. So the first factor, occurrence of indexes, determine the upper bound of recall. And the score we assigned to a sampled coordinate decide the ability to approach the bound with less budget. In our method, we can adjustment the score to make it be an estimation of $n$-th power of the actual value. However, the demand number of samples will increase exponentially. In practice, we use the first order or quadratic score to reach a good performance.
 
-\section{Extension of Equality Sampling Method}
+\subsection{Extension of Equality Sampling}
 
-Since we find the occurrence of indexes will determine the upper bound of the final recall. We introduce an extension method of equality sampling to reach a higher bound. We first sampled a pair of indexes $(r',r)$ in partition of $\overline{V}$. Then we sampled other indexes according to the sampled pair. The designed weight is followed. We first get the extension matrix of each factor matrix. That is we expand the factor matrix with size $(L_n \times R)$ to $(L_n \times R^2)$. The rule is 
+Since we find the occurrence of indexes will determine the upper bound of the final recall. We introduce an extension method of equality sampling to reach a higher bound. We first sampled a pair of indexes $(r',r)$ in partition of $\overline{V}$. Then we sampled other indexes according to the sampled pair. The designed weight is followed. We first get the extension matrix of each factor matrix. That is we expand the factor matrix with size $(L_n \times R)$ to $(L_n \times R^2)$. The rule is
 \[
 MatrixExpand(i,j) = Matrix(i,j \setminus R)\times Matrix(i,j\%R)
 \]
 
-After the expansion we get $N$ expanded factor matrices. Then use equality sampling method to process these expanded factor matrices will make the occurrence of indexes proportioning to the 
+After the expansion we get $N$ expanded factor matrices. Then use equality sampling method to process these expanded factor matrices will make the occurrence of indexes proportioning to the
 quadratic of the value.
 
 \begin{align*}
 Pr(\epsilon_{\V{i}}) &= \sum_{r,r'} Pr(\epsilon_{\V{i},r,r'})\\
 &= \sum_{r,r'} Pr({\rm pick\ pair\ }(r,r'))Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
-&= \sum_{r,r'} \frac{\sum_{i_1}{\Sca{a}{1}{r}\Sca{a}{1}{r'}}\ldots\sum_{i_N}{\Sca{a}{N}{r}\Sca{a}{N}{r'}}}{\V{w}}\times 
-\frac{|\Sca{a}{1}{r}\Sca{a}{1}{r'}|}{\sum_{i_1}{\Sca{a}{1}{r}\Sca{a}{1}{r'}}} \times\ldots\times 
+&= \sum_{r,r'} \frac{\sum_{i_1}{\Sca{a}{1}{r}\Sca{a}{1}{r'}}\ldots\sum_{i_N}{\Sca{a}{N}{r}\Sca{a}{N}{r'}}}{\V{w}}\times
+\frac{|\Sca{a}{1}{r}\Sca{a}{1}{r'}|}{\sum_{i_1}{\Sca{a}{1}{r}\Sca{a}{1}{r'}}} \times\ldots\times
 \frac{|\Sca{a}{N}{r}\Sca{a}{N}{r'}|}{\sum_{i_N}{\Sca{a}{N}{r}\Sca{a}{N}{r'}}} \\
 & = \sum_{r,r'} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}{\norm{\V{W}}{1}}\\
 & = \frac{{(\sum_{r=1}^{R} |\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)}^2}{\norm{\V{W}}{1}}
 \end{align*}
 
-If all factor matrices are nonnegative, then the probability of coordinate $\V{i}$ to be sampled is $x_{\V{i}}^2/\norm{\V{w}}{1}$. 
-To deal with the negative condition, we use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})$ 
+If all factor matrices are nonnegative, then the probability of coordinate $\V{i}$ to be sampled is $x_{\V{i}}^2/\norm{\V{w}}{1}$.
+To deal with the negative condition, we use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})$
 to update the score in one sample instance $\widehat{x}_{\V{i}}$.
 
-We can make the occurrence of coordinate to be $n$-the power the its value. However, the cost the computing the extension of factor matrix and the storage will increase exponentially. In 
+We can make the occurrence of coordinate to be $n$-the power the its value. However, the cost the computing the extension of factor matrix and the storage will increase exponentially. In
 some application with appropriate dimension of feature vector, this method will show a better performance.
+
+\subsection{Correctness and error bounds}
+
+\section{Experiments Result}
+We will analysis the recall and time consuming  between different method. Then we evaluate the ability to keep order of different method.
+\subsection{Recall and time consuming}
+The following result show the recall of different method. We both use first order score in quality and extension method.
+
+\subsection{Isotonicity of score}
+Given the number of samples, we use different budget to see each method's ability to keep the order.
+
+\subsection{Sampling for queries}
+We use the list of sub-path to save the computation of sampling for queries, and we will show the recall when we use the sub-indexes pool and not.
 
 \section{Implementing details}
 In section, we introduce some details get the improvement.
@@ -457,8 +505,7 @@ We arrange the factor matrices in specific storage format. we arrange $\Mn{A}{1}
 \subsection{Picking the edge}
 We pick the $s$ edge with probability  $w_{i_1r}/\norm{\M{W}}{1}$. The weight matrix $\M{W}$ is saved in row major order also and suppose $\V{\rho}$ is the vectorization of $\V{W}$. Since $s$ is much larger than the length of $\V{\rho}$, we use the binary search on the cumulative of $\V{p}$ via ~\Alg{Pickedge}. We use $\V{e}=(e_1,\ldots,e_s)$ to record the sampled indexes, and the vertexes pair is $(e_{\ell}\%L_1,e_{\ell}\setminus L_1)$. So the sample result is sorted according ro $r$.
 
-
-\begin{algorithm}[t]
+\begin{algorithm}[ht]
     \caption{Picking Edge}
     \label{alg:Pickedge}
     Given probability $\M{W}\in R^{L_1\times R}$,$\V{\rho}\in[0,1]^p$ is the vectorization, and number of samples $s$.
