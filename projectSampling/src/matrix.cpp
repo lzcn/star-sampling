@@ -139,6 +139,46 @@ int sgn_foo(double x){
 	return x<0? -1:1;
 }
 
+double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t i = 0; i < row; ++i){
+		temp += A.element[coord.x * row + i] * \
+				B.element[coord.y * row + i];
+	}
+	return temp;
+}
+
+double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
+	size_t col = A.col;
+	double temp = 0.0;
+	for(size_t i = 0; i < col; ++i){
+		temp += A.GetElement(coord.x, i) * \
+				B.GetElement(coord.y, i);
+	}
+	return temp;
+}
+double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t i = 0; i < row; ++i){
+		temp += A.element[coord.x * row + i] * \
+				B.element[coord.y * row + i] * \
+				C.element[coord.z * row + i];
+	}
+	return temp;
+}
+
+double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
+	size_t col = A.col;
+	double temp = 0.0;
+	for(size_t i = 0; i < col; ++i){
+		temp += A.GetElement(coord.x, i) * \
+				B.GetElement(coord.y, i) * \
+				C.GetElement(coord.z, i);
+	}
+	return temp;
+}
 double MatrixColMul(const Matrix &A, const Matrix &B, \
 					size_t m, size_t n){
 	if(A.row != B.row){

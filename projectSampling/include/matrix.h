@@ -95,6 +95,23 @@ double MatrixColMul(const Matrix &A, \
 					const Matrix &C, \
 					size_t m, size_t n, size_t p);
 
+double MatrixColMul(const point2D &coord, \
+				   Matrix &A, \
+				   Matrix &B);
+
+double MatrixColMul(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C);
+
+double MatrixRowMul(const point2D &coord, \
+				   Matrix &A, \
+				   Matrix &B);
+double MatrixRowMul(const point3D &coord, \
+				   Matrix &A, \
+				   Matrix &B, \
+				   Matrix &C);
+
 double vectors_mul(const point2D &coord, \
 				   Matrix &A, \
 				   Matrix &B);
@@ -102,6 +119,7 @@ double vectors_mul(const point3D &coord, \
 				   Matrix &A, \
 				   Matrix &B, \
 				   Matrix &C);
+
 double vectors_mul(const pointND &p, std::vector<Matrix*> &vMat);
 /*
 	list is sorted in ascending order;
