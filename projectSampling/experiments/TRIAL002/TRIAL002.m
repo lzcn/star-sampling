@@ -1,6 +1,7 @@
 function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
     
      Variables.samples = samples;
+     Variables.out_dir = out_dir;
      Variables.budget = budget;
      Variables.turn = turn;
      Variables.knn = knn;
@@ -24,6 +25,7 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      Variables.MatC = Tag;
      Variables.valueQuery = valueQuery;
      Variables.timeQuery = timeQuery;
+     Variables.NumQueries = size(User,1);
      oneDataSet(Variables);
      
      %% ml-20m
@@ -40,6 +42,7 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      Variables.MatC = Tag;
      Variables.valueQuery = valueQuery;
      Variables.timeQuery = timeQuery;
+     Variables.NumQueries = size(User,1);
      oneDataSet(Variables);
      
      %% ml-2k
@@ -56,6 +59,7 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      Variables.MatC = Tag;
      Variables.valueQuery = valueQuery;
      Variables.timeQuery = timeQuery;
+     Variables.NumQueries = size(User,1);
      oneDataSet(Variables);
      
      %% lastfm
@@ -73,6 +77,7 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      Variables.MatC = Tag;
      Variables.valueQuery = valueQuery;
      Variables.timeQuery = timeQuery;
+     Variables.NumQueries = size(User,1);
      oneDataSet(Variables);
      
       
@@ -90,6 +95,7 @@ function TRIAL002(data_path, out_dir, samples, budget, knn, turn)
      Variables.MatC = Tag;
      Variables.valueQuery = valueQuery;
      Variables.timeQuery = timeQuery;
+     Variables.NumQueries = size(User,1);
      oneDataSet(Variables);
      
 end
@@ -97,18 +103,19 @@ end
 %% Initialize Variables
 function [ diamond, equality, extension ] = initVar(Variables)
     varSize = [Variables.NumQueries, length(Variables.samples)];
-    diaond.recall = zeros(varSize);
-    diaond.time = zeros(varSize);
+    diamond.recall = zeros(varSize);
+    diamond.times = zeros(varSize);
     equality.recall = zeros(varSize);
-    equality.time = zeros(varSize);
+    equality.times = zeros(varSize);
     extension.recall = zeros(varSize);
-    extension.time = zeros(varSize);
+    extension.times = zeros(varSize);
 end
 
 % Do one sampling for one data set
-function [ diamond, euqality, extension] = oneSampling(Variables)
+function [ diamond, equality, extension] = oneSampling(Variables)
     % 
     [ diamond, equality, extension ] = initVar(Variables);
+    turn = Variables.turn;
     MatA = Variables.MatA;
     MatB = Variables.MatB;
     MatC = Variables.MatC;
@@ -130,8 +137,8 @@ function [ diamond, euqality, extension] = oneSampling(Variables)
             for n = 1:Variables.NumQueries
                 % for each query compute the recall
                 diamondTemp.recall(n,i) = sum(diamondValues(1:knn,n) >= valueQuery(knn,n))/knn;
-                equalityTemp.recall(n,i) = sum(euqalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
-                extensionTemp.recall(n,i) = sum(euqalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
+                equalityTemp.recall(n,i) = sum(equalityValues(1:knn,n) >= valueQuery(knn,n))/knn;
+                extensionTemp.recall(n,i) = sum(extensionValues(1:knn,n) >= valueQuery(knn,n))/knn;
             end
         end
         diamond.recall = diamond.recall + diamondTemp.recall;
@@ -179,7 +186,6 @@ end
 function drawRecallFig(titlename, Variables, diamond, equality, extension)
     out_dir = Variables.out_dir;
     NumQueries = Variables.NumQueries;
-    c = ['r','b','k','g', 'c'];
     for i= 1:length(samples)
         h = figure; hold on;
         sample = Variables.samples(i);
@@ -196,7 +202,7 @@ function drawRecallFig(titlename, Variables, diamond, equality, extension)
 end
 
 function oneDataSet(Variables)
-    [ diamond, euqality, extension] = oneSampling(Variables)
+    [ diamond, equality, extension] = oneSampling(Variables);
     titlename = ['time-samples-',Variables.dataName];
     drawTimeFig(titlename, Variables, diamond, equality, extension);
     titlename = ['recall-samples-',Variables.dataName];
