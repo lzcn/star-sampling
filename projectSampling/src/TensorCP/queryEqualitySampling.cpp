@@ -49,7 +49,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	mexPrintf(">> Initialization >>>>\n");
+	mexPrintf(">> Initialization \n");
 	start = clock();
 	// number of queries
 	const size_t NumQueries = mxGetM(prhs[0]);
