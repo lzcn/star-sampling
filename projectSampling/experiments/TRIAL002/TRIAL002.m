@@ -163,17 +163,17 @@ end
 %% draw the time figure
 function drawTimeFig(titlename, Variables, diamond, equality, extension)
     NumQueries = Variables.NumQueries;
-    fullTime = Variables.fullTime;
+    timeQuery = Variables.timeQuery;
     out_dir = Variables.out_dir;
     % queries-recall under each samples
-    for i = 1: length(Variabes.samples)
-      sample = Variabes.samples(i);
+    for i = 1: length(Variables.samples)
+      sample = Variables.samples(i);
       h = figure; hold on;
       title([titlename,'-',num2str(sample)]); 
       xlabel('queries');
       ylabel('log_{10} t(s)');
       % average time for each query in exhaustive search
-      plot(1:NumQueries,log10(fullTime*ones(NumQueries,1)),'c');
+      plot(1:NumQueries,log10(timeQuery*ones(NumQueries,1)),'c');
       plot(1:Variables.NumQueries, diamond.times(:,i),'--b'); 
       plot(1:Variables.NumQueries, equality.times(:,i),'--r');
       plot(1:Variables.NumQueries, extension.times(:,i),'--g');
@@ -186,7 +186,7 @@ end
 function drawRecallFig(titlename, Variables, diamond, equality, extension)
     out_dir = Variables.out_dir;
     NumQueries = Variables.NumQueries;
-    for i= 1:length(samples)
+    for i= 1:length(Variables.samples)
         h = figure; hold on;
         sample = Variables.samples(i);
         title([titlename,'-',num2str(sample)]);
