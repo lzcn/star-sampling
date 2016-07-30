@@ -114,15 +114,16 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(weight, 0, NumQueries*rankSizeExt*sizeof(double));
 	double *SumofW = (double*)malloc(NumQueries*sizeof(double));
 	memset(SumofW, 0, NumQueries*sizeof(double));
-	double tempW = 0;
 	for (size_t i = 0; i < NumQueries; ++i) {
 		start = clock();
 		SumofW[i] = 0;
 		for (size_t r = 0; r < rankSizeExt; ++r){
-			weight[r] = abs(MatAex.GetElement(i,r));
-			weight[r] *= MatBex.SumofCol[r];
-			weight[r] *= MatCex.SumofCol[r];
-			SumofW[i] += weight[r]; 
+			double tempW;
+			tempW = abs(MatAex.GetElement(i,r));
+			tempW *= MatBex.SumofCol[r];
+			tempW *= MatCex.SumofCol[r];
+			weight[i*rankSizeExt + r] = tempW;
+			SumofW[i] += tempW; 
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
@@ -132,17 +133,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	mexPrintf(">> Start computing c_r!\n");
-	size_t *freq_r = (size_t *)malloc(NumSample*rankSizeExt*sizeof(size_t));
+	size_t *freq_r = (size_t *)malloc(NumQueries*rankSizeExt*sizeof(size_t));
 	memset( freq_r, 0, NumQueries*rankSizeExt*sizeof(size_t));
 	for (size_t i = 0; i < NumQueries; ++i){
 		start = clock();
 		for (size_t r = 0; r < rankSizeExt; ++r){
 			double u = (double)rand()/(double)RAND_MAX;
-			double c = (double)NumSample*weight[r]/SumofW;
+			double c = (double)NumSample*weight[i*rankSizeExt + r]/SumofW[i];
 			if(u < (c - floor(c)))
-				freq_r[r] = ceil(c);
+				freq_r[i*rankSizeExt + r] = (size_t)ceil(c);
 			else
-				freq_r[r] = floor(c);
+				freq_r[i*rankSizeExt + r] = (size_t)floor(c);
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish - start);
@@ -152,16 +153,16 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------
 	mexPrintf(">> Start Sampling Indexes!\n");
 	std::vector<std::vector<point2D>> subWalk(rankSizeExt);
-	for(size_t i = 0; i < NumSample; ++i){
+	for(size_t i = 0; i < NumQueries; ++i){
 		start = clock();
 		std::map<point3D, double> IrJc;
 		for(size_t r = 0; r < rankSizeExt; ++r){
 			if(freq_r[i*rankSizeExt + r] > subWalk[r].size()){
 				size_t remain = freq_r[i*rankSizeExt + r] - subWalk[r].size();
-				size_t *IdxK = (size_t*)malloc(remain*sizeof(size_t));
 				size_t *IdxJ = (size_t*)malloc(remain*sizeof(size_t));
-				memset(IdxJ, 0, (NumSample + rankSizeExt)*sizeof(size_t));
-				memset(IdxK, 0, (NumSample + rankSizeExt)*sizeof(size_t));
+				size_t *IdxK = (size_t*)malloc(remain*sizeof(size_t));
+				memset(IdxJ, 0, remain*sizeof(size_t));
+				memset(IdxK, 0, remain*sizeof(size_t));
 				// sample indexes
 				vose_alias( remain, IdxJ, \
 							MatBex.row, \
@@ -181,9 +182,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
 				double valueSampled = 1.0;
-				valueSampled *= sgn_foo(MatA.GetElement(i,r));
-				valueSampled *= sgn_foo(MatB.GetElement(idxJ,r));
-				valueSampled *= sgn_foo(MatC.GetElement(idxK,r));
+				valueSampled *= sgn_foo(MatAex.GetElement(i,r));
+				valueSampled *= sgn_foo(MatBex.GetElement(idxJ,r));
+				valueSampled *= sgn_foo(MatCex.GetElement(idxK,r));
 				IrJc[point3D(i,idxJ,idxK)] += valueSampled;
 			}
 		}
