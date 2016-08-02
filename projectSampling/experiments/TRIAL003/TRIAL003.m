@@ -1,4 +1,4 @@
-function TRIAL002()
+function TRIAL003(data_path, out_dir)
 
     ml_10m_path = fullfile(data_path,'MovieLens','ml-10m');
     ml_20m_path = fullfile(data_path,'MovieLens','ml-20m');
