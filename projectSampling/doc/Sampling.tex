@@ -55,7 +55,7 @@
 \newcommand{\norm}[2]{\parallel#1\parallel_{#2}}
 
 %% ------------
-%% reference   
+%% reference
 %% ------------
 
 % reference:definition
@@ -94,8 +94,12 @@
 
 \section{Introducing}
 
-In fashion recommendation system, it is a must to find the most relevant items given a specific user. If we consider all users as a set a feature vectors, and the items are represented by vector with the same dimension. This problem can be abstracted to matrix multiplication tasks when we define the relevance as the inner product of two vectors. However, we may have more than one category items in which we consider is a set of items matrices with a user vector. The item matrix that consist of a mount of feature vectors with the same dimension can be represented as $\M{A} =
-[\V{a}_{1},\V{a}_{2},\cdots,\V{a}_{R}]\in R^{L\times R}$. And $R$ is the feature dimension, $L$ is the number of items. When we evaluate the relevance of an item to a user by the inner-product of item vector $\V{a}_{i}$ and user vector $\V{u}$, it equals to find the max value in $\V{q} = \M{a}^T\V{u}$, where we call $i$ the index. To be more general, we consider a set of matrices $\M{A}^{(n)},n = 1,...,N$ consisting of item vectors. Under the relevance criterion $x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}$, which is inner-product when $N=2$. And the recommendation for one user is a exceptional case when we consider one of matrix as a single vector. For convenience, we call $\V{i} = (i_1,i_2,\ldots,i_N)$ the coordinate or indexes. The hypothesis of relevance criterion is reasonable and useful for there is a good relation between the actual value and the matrices. The items matrices is the CP decomposition of actual value when we arrange it as a tensor.
+In fashion recommendation system, it is a must to find the most relevant items given a specific user. If we consider all users as a set of feature vectors, and items are also represented by vectors with the same dimension. Then this problem can be abstracted to matrix multiplication tasks when we define the relevance as the inner product of two vectors. However, we may have more than one categories of items, that is, we have more than one item matrices and relevance of user to a suit of items may defined by another way. 
+
+The item matrix that consist of a mount of feature vectors with the same dimension is represented as $\M{A} =
+[\V{a}_{1},\V{a}_{2},\cdots,\V{a}_{R}]\in R^{L\times R}$.  Without loss of generality, we use $R$ to represent the dimension of a feature vector, and $L$ as the number of items in one category. In one category situation, when we evaluate the relevance of an item to a user by the inner-product which is $\M{A}(i,:)\V{u}=(a_{i1},a_{i2},\ldots,a_{iR})\cdot\V{u}$, it equals to find the max value in $\V{q} = \M{a}\V{u}$. 
+
+To be more general, we consider a set of matrices $\M{A}^{(n)},n = 1,...,N$ consisting of item vectors, and the relevance criterion $x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}$, which degenerate into inner-product when $N=2$. By this definition, the recommendation for one user is an exceptional case when we consider one of matrix as a single vector. For convenience, we call $\V{i} = (i_1,i_2,\ldots,i_N)$ the coordinate or multi-index. The hypothesis of relevance criterion is reasonable and used widely in recommendation system for multi-category. If we rearrange the actual values as a $N$-way tensor, these items matrices would be the CP decomposition of this tensor.
 
 \subsection{Tensor decomposition}
 
@@ -118,7 +122,7 @@ where
 \begin{bmatrix}\VnC{a}{N}{1},\VnC{a}{N}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_N\times R}\\
 \end{gather*}
 
-In equation \ref{eq:CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix, and the column size $R$ represents the rank of this tenors, which means that $\T{X}$ can be represented by a sum of these $R$ rank one tensors. The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
+In equation \ref{eq:CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix, and the column size $R$ represents the rank of this tenors, which is also the dimension of feature vector. The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
 In general, let $\Vacol{n}$ be the $k$-th column of $\M{A}^{(n)}$, $\Varow{n}$ be the $i_n$-th row vector of $\M{A}^{(n)}$, and $\Sca{a}{n}{k}$ be the element of $\M{A}^{(n)}$.
 
 The element in $\T{X}$ satisfies the following equation:
@@ -127,10 +131,11 @@ The element in $\T{X}$ satisfies the following equation:
 x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}
 \end{equation}
 
-The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. We propose two methods, which are wedge sampling and diamond sampling, for
+The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. And the value in tensor is what we need to find when we have those factor matrices. It is a time-consuming task to compute all value of each element. We propose two methods, which are wedge sampling and diamond sampling, for
 estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}{n}, n = 1,2,\ldots,N$ are given. The wedge sampling is so much like the diamond sampling, and the diamond sampling ia an improvement of wedge sampling.
 
-\begin{table}
+\begin{table}[ht]
+  \label{table:Notation}
   \centering
   \begin{tabular}{|c|c|}
     \hline
@@ -142,13 +147,14 @@ estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}
     $\V{A}_{*r},\V{A}_r$ & $k$-th column of matrix \\
     $\V{A}_{i*}$ & $i$-th row of matrix \\
     $\V{A}$ & vector \\
-    $a_{ir}$ & element of matrix\\
+    $a_{ir}$ & element of matrix, a scalar\\
     \hline
   \end{tabular}
   \caption{Notation}\label{table:Notation}
 \end{table}
 
 \subsection{Notation}
+
 We use the different vector and matrix $1$-norm refereed in as followed:
 
 
@@ -594,16 +600,48 @@ The error bounds for each algorithm
 Suppose all of factor matrices is nonnegative, then we get the occurrence probability of coordinate for different algorithms.
 \begin{eqnarray}
 % \nonumber to remove numbering (before each equation)
+    \label{eq:ProbabilityDianomd}
     Pr^d(\varepsilon_{\V{i}}) & = & x_\V{i}\norm{\Varow{1}}{1}/\norm{\M{W}}{1}\\
+    \label{eq:ProbabilityCentral}
     Pr^c(\varepsilon_{\V{i}}) & = & x_{\V{i}}/\norm{\V{W}^c}{1}\\
+    \label{eq:ProbabilityExtensiom}
     Pr^e(\varepsilon_{\V{i}}) & = & x_{\V{i}}^2/\norm{\V{w}^e}{1}
 \end{eqnarray}
 
 \subsection{Order preservation via scores}
 
 The ~\Lem{Bound} indicates the ability of diamond sampling to keep order after the sample. To be comparable, we give the error bound of central sampling by similar technique.
+As mentioned previously, we can sample extra indexes to make the score be the estimation of $x^n_{\V{i}}$. The $n$-th order estimation in central sampling is $\mathbb{E}[\widehat{x}_{\V{i}}]= sx^n_{\V{i}}/\norm{\V{w}}{1}^n$.
+\begin{align*}
+\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r_1,r_2,...,r_n} Pr(\epsilon_{\V{i},r_1,r_2,...,r_n})\M{X}_{\V{i},\ell}\\
+& = \sum_{\ell=1}^{s}\sum_{r_1,r_2,...,r_n}
+%% Probability
+\frac{w_{r_1}w_{r_2}\cdots w_{r_n}}{\norm{\V{W}}{1}^n}
+\frac{|\Sca{a}{1}{r_1}\cdots\Sca{a}{N}{r_1}|}{\norm{\Vacol{1}}{1}\cdots\norm{\Vacol{N}}{1}}
+%% score
+sgn(\Sca{a}{1}{r_1}\cdots\Sca{a}{N}{r_1})\frac{\Sca{a}{1}{r_2}\cdots\Sca{a}{N}{r_2}}{w_2}\cdots\frac{\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}}{w_n}
+\\
+& = \sum_{\ell=1}^{s}\sum_{r_1,r_2,...,r_n} \frac{\Sca{a}{1}{r_1}\cdots\Sca{a}{N}{r_1}\cdots\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}}{\norm{\V{W}}{1}^n}\\
+& = \frac{sx^n_{\V{i}}}{\norm{\V{w}}{1}^n}
+\end{align*}
 
-As mentioned previously, we can sample extra indexes to make the score be the estimation of $x^n_{\V{i}}$. The $n$-th order estimation is 
+And it is easy to prove that if the number of samples
+\[
+s \geq 3\norm{\V{w}}{1}^n\log{(2/\sigma)}/(\epsilon x^n_{\V{i}})
+\]
+We have
+\[
+Pr(|\frac{\widehat{x}_\V{i}\norm{\V{w}}{1}^n}{s} - x^n_{\V{i}}| < \epsilon x^n_{\V{i}}) \leq \sigma
+\]
+And
+\[
+    s \geq 12\norm{\V{w}}{1}^n\log{(2/\sigma)}/\tau^n
+\]
+Then with probability $1-\sigma$, we have
+\[
+if\ x_{\V{i}} > \tau\ and \ x_{\V{i'}} < \tau/\sqrt[n]{4e}, \ then\ \widehat{x_{\V{i}}} > \widehat{x_{\V{i'}}}
+\]
+The more indexes we sampled, the better order will keep. We call $\sqrt[n]{4e}$ the distinguishability. But to get high distinguishability, we need more sample number to get the reasonable result. The ideal distinguishability is 1, and  $\sqrt[n]{4e} \geq 1$. And we use $s\sqrt[n]{4e}$ to evaluate the goodness of the algorithm.
 \section{Implementing details}
 In section, we introduce some details get the improvement.
 \subsection{Data Structure}
