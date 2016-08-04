@@ -1,5 +1,10 @@
-\documentclass{article}
-
+\documentclass[letterpaper]{article}
+\usepackage{aaai}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
 %
 \usepackage{amsfonts}
 
@@ -19,10 +24,10 @@
 \usepackage{algpseudocode}
 
 %
-\usepackage[text={148mm,220mm},left=21mm,top=25.5mm]{geometry}
+%\usepackage[left=21mm]{geometry}
 
 % hyperref
-\usepackage[colorlinks]{hyperref}
+\usepackage[colorlinks,linkcolor=blue, filecolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
 
 \newcommand{\Sca}[3]{{#1}^{(#2)}_{i_#2#3}}%Scalar with superscript and subscript
 \newcommand{\Scah}[3]{h^{(#1,#2)}_{#3}(\V{x}_{i_#1})}
@@ -64,6 +69,8 @@
 \newcommand{\Eqn}[1] {\hyperref[eq:#1]  {Equation~\ref*{eq:#1}}}
 % reference:figure
 \newcommand{\Fig}[1] {\hyperref[fig:#1] {Figure~\ref*{fig:#1}}} %
+% reference:table
+\newcommand{\Table}[1] {\hyperref[table:#1] {Table~\ref*{table:#1}}} %
 % reference:lemma
 \newcommand{\Lem}[1] {\hyperref[lem:#1] {Lemma~\ref*{lem:#1}}} %
 % reference:theorem
@@ -79,9 +86,9 @@
 
 
 
-\newtheorem{definition}{Definition}[section]
-\newtheorem{lemma}{Lemma}[section]
-\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
 
 
 \begin{document}
@@ -90,20 +97,35 @@
 \author{}
 \maketitle
 
+\section{Introduction}
+
+In fashion recommendation system, it is an essential task to find the most relevant items given a specific user. Similar application can also be found in information retrieval. If we consider all users as a set of feature vectors, and items are also represented by vectors with the same dimension. Then this problem can be abstracted to matrix multiplication tasks when we define the relevance as the inner product of two vectors, which known as maximum inner-product search(MIPS). An application of MIPS is the  matrix-factorization framework in recommender system\cite{KoYe09}. However, we may have more than one categories of items, that is, we have more than one item matrices and relevance of user to a suit of items may defined by another way. And the tensor factorization models was used for multi-items recommendation\cite{Rendle10} and outfit recommendation\cite{HuYiLa15}. Those problem can be summarized into the top-t problem:
+
+\begin{definition}\label{def:DefinitionTopt}
+(top-t Retrial.) Suppose $S_1,S_2,..S_N$ are set for $N$ different kind of items(tags). $\V{t}_{i_1},\V{t}_{i_2},...,\V{t}_{i_N}$ are items in each set that are all represented by same dimension vector. And there is a ranking function $f(\V{t}_{i_1},\V{t}_{i_2},...,\V{t}_{i_N})$: find the $t$ tuples $(i_1,i_2,...,i_N)$ that have the largest or lowest ranking function value of all.
+\end{definition}
+
+For two sets case, there are three ranking functions that used widely, Euclidean distance, cosine similarity and inner-product. And when we fix one of item, say ${i_1}$, this is the query retrial problem.
+\subsection{Notations}
+
+The item matrix that consists of a mount of feature vectors with the same dimension is represented as $\M{A} =
+[\V{a}_{1},\V{a}_{2},\cdots,\V{a}_{R}]\in R^{L\times R}$.  Without loss of generality, we use $R$ to represent the dimension of a feature vector, and $L$ as the number of items in one category. In one category situation, when we evaluate the relevance of an item to a user by the inner-product which is $\M{A}(i,:)\V{u}=(a_{i1},a_{i2},\ldots,a_{iR})\cdot\V{u}$, it equals to find the max value in $\V{q} = \M{a}\V{u}$.
+
+To be more general, we consider a set of matrices $\M{A}^{(n)},n = 1,...,N$ consisting of item vectors, and the ranking function $x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}$, which degenerate into inner-product when $N=2$. By this definition, the recommendation for one user is an exceptional case when we consider one of matrix as a single vector. For convenience, we call $\V{i} = (i_1,i_2,\ldots,i_N)$ the coordinate or multi-index. The hypothesis of relevance criterion is reasonable and used widely in recommendation system for multi-category. If we rearrange the actual values as a $N$-way tensor, these items matrices would be the CP decomposition of this tensor.
 
 
-\section{Introducing}
+We use the some definition vector and matrix norm refereed in \cite{BaPiKoSe15}. Suppose $\V{v}\in R^n$ is a vector and $\M{M}\in R^{m\times n}$ is a matrix. The norm $\norm{*}{1}$ operation is defined as followed:
+\[
+    \norm{\V{v}}{1} = \sum_{i=1}^{n}|v_i|
+    \ \  and \ \
+    \norm{\M{M}}{1} = \sum_{i=1}^{m}\sum_{j=1}^{n}|m_{ij}|
+\]
 
-In fashion recommendation system, it is a must to find the most relevant items given a specific user. If we consider all users as a set of feature vectors, and items are also represented by vectors with the same dimension. Then this problem can be abstracted to matrix multiplication tasks when we define the relevance as the inner product of two vectors. However, we may have more than one categories of items, that is, we have more than one item matrices and relevance of user to a suit of items may defined by another way. 
-
-The item matrix that consist of a mount of feature vectors with the same dimension is represented as $\M{A} =
-[\V{a}_{1},\V{a}_{2},\cdots,\V{a}_{R}]\in R^{L\times R}$.  Without loss of generality, we use $R$ to represent the dimension of a feature vector, and $L$ as the number of items in one category. In one category situation, when we evaluate the relevance of an item to a user by the inner-product which is $\M{A}(i,:)\V{u}=(a_{i1},a_{i2},\ldots,a_{iR})\cdot\V{u}$, it equals to find the max value in $\V{q} = \M{a}\V{u}$. 
-
-To be more general, we consider a set of matrices $\M{A}^{(n)},n = 1,...,N$ consisting of item vectors, and the relevance criterion $x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}$, which degenerate into inner-product when $N=2$. By this definition, the recommendation for one user is an exceptional case when we consider one of matrix as a single vector. For convenience, we call $\V{i} = (i_1,i_2,\ldots,i_N)$ the coordinate or multi-index. The hypothesis of relevance criterion is reasonable and used widely in recommendation system for multi-category. If we rearrange the actual values as a $N$-way tensor, these items matrices would be the CP decomposition of this tensor.
+We also use different letters to represent the tensor, matrix, etc. And some frequently used notations are listed in ~\Table{Notation}.
 
 \subsection{Tensor decomposition}
 
-Consider a $N$-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition of this tensor is
+Consider a $N$-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$, the CP decomposition\cite{KoBa09} of this tensor is
 
 \begin{equation}\label{eq:CPDecomposition}
 \T{X}= \KT{ \Mn{A}{1},\dots,\Mn{A}{N}} =
@@ -122,8 +144,7 @@ where
 \begin{bmatrix}\VnC{a}{N}{1},\VnC{a}{N}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_N\times R}\\
 \end{gather*}
 
-In equation \ref{eq:CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix, and the column size $R$ represents the rank of this tenors, which is also the dimension of feature vector. The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
-In general, let $\Vacol{n}$ be the $k$-th column of $\M{A}^{(n)}$, $\Varow{n}$ be the $i_n$-th row vector of $\M{A}^{(n)}$, and $\Sca{a}{n}{k}$ be the element of $\M{A}^{(n)}$.
+In ~\Eqn{CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix, and the column size $R$ represents the rank of this tenors, which is also the dimension of feature vector. The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
 
 The element in $\T{X}$ satisfies the following equation:
 
@@ -131,15 +152,14 @@ The element in $\T{X}$ satisfies the following equation:
 x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}
 \end{equation}
 
-The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. And the value in tensor is what we need to find when we have those factor matrices. It is a time-consuming task to compute all value of each element. We propose two methods, which are wedge sampling and diamond sampling, for
-estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}{n}, n = 1,2,\ldots,N$ are given. The wedge sampling is so much like the diamond sampling, and the diamond sampling ia an improvement of wedge sampling.
+The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$. And the value in tensor is what we need to find when we have those factor matrices. It is a time-consuming task to compute all value of each element. In following sections, we will introduce the diamond sampling\cite{BaPiKoSe15} for approximating matrix multiplication tasks which is an improvement of wedge sampling\cite{Cohen97}. Then we extend this method to handle the tensor factorization models.
 
-\begin{table}[ht]
+\begin{table}[t]
   \label{table:Notation}
   \centering
   \begin{tabular}{|c|c|}
     \hline
-    Notation & Explanation \\
+    Notations & Explanation \\
     \hline
     $\T{A}$ & tensor \\
     $\M{A}$ & matrix \\
@@ -153,21 +173,16 @@ estimating the maximum elements $x_\V{i}$ in tensor when factor matrices $\Mn{A}
   \caption{Notation}\label{table:Notation}
 \end{table}
 
-\subsection{Notation}
 
-We use the different vector and matrix $1$-norm refereed in as followed:
-
-
-  $\V{v} = \sum_{i=1}^{n}|v_i|$  $\M{M}=\sum_{i=1}^{m}\sum_{j=1}^{n}|m_{ij}|$
 
 \section{Related work}
 
-There are many splendid work on finding the max dot-product of two sets of vectors called MAD search and MIPS(Maximum Inner Product Search). We analysis those similar work based on the probabilistic method, which can be called sampling. The main idea of those method is to sample the indexes or coordinate $\V{i}$ that is proportional to the value of this coordinate $x_{\V{i}}$. The most representative work are diamond sampling and wedge sampling. In following section we will exten the diamond sampling method to deal with $N$ factor matrices.
+There are many splendid work on finding the max dot-product of two sets of vectors called MAD search\cite{BaPiKoSe15} and MIPS(Maximum Inner Product Search)\cite{Cohen97,Ram12}. We analysis those similar work based on the probabilistic method, which can be called sampling. The main idea of those method is to sample the indexes or coordinate $\V{i}$ that is proportional to the value of this coordinate $x_{\V{i}}$. The most representative work are diamond sampling and wedge sampling. In following section we will exten the diamond sampling method to deal with $N$ factor matrices.
 
 
 \section{Diamond Sampling Algorithm}
-The diamond sampling is a way to sample the index-pair $(i,j)$ given matrix multiplication $\M{C} = \M{A}\M{B}^T$. $\V{i}:(i_1,i_2,\ldots,\i_N)$  that is proportional to $c^2_{i,j}$.
-It consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_{A}$. Meanwhile, in the adjacent matrix of this graph, using $0$(instead of $\infty$) to represent the two vertices are not adjacent. And the adjacent matrix of $G_{A}$ is:
+
+The diamond sampling is a way to sample the index-pair $(i,j)$ proportional to $c^2_{i,j}$ in matrix multiplication $\M{C} = \M{A}\M{B}^T$. This method consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_{A}$. Meanwhile, in the adjacent matrix of this graph, using $0$(instead of $\infty$) to represent the two vertices are not adjacent. And the adjacent matrix of $G_{A}$ is:
 \[
 \left(
   \begin{array}{cc}
@@ -177,7 +192,7 @@ It consider a matrix $A$ with size $m\times n$ as a weighted bipartite graph $G_
 \right)
 \]
 
-\subsection{Sampling Mechanism via Graph representation}
+\subsection{Sampling via Graph representation}
 
 In equation \ref{eq:CPDecomposition}, we have $N$ factor matrices $\Mn{A}{1},\dots,\Mn{A}{N}$.
 Those $N$ factor matrices can be represented by a weighted $(N+1)$-partite graph $G_{T}$. And we call those $N+1$ partitions as partition $\overline{V},V_{1},V_{2},\ldots,V_{N}$, in which partition $V_{n}$ has $L_n$ vertexes and partition $\overline{V}$ has $R$ vertexes. We call $v^n_{i_n}$ the $i_n$-th vertex in partition $V_{n}$, and $\overline{v}_{r}$ the $r$-th vertex in partition $\overline{V}$. Every two vertexes from different partition classes $V_i,V_j,i,j\in {1,2,\ldots,N}$ are not adjacent. A vertex $\overline{v}_r$ in $\overline{V}$ is only adjacent to vertexes $v^n_i$ in $V_n$ when $\Sca{a}{n}{r}$ is non-zero and the edge weight $\Sca{a}{n}{r}$. And the adjacent matrix of $G_{T}$ is :
@@ -203,30 +218,33 @@ When the event $\varepsilon_{\V{i},r',r}$ happened, we give a score according to
 
 The sampling algorithm is shown in ~\Alg{DiamondSampling}.
 
-\begin{algorithm}[ht]
+\begin{algorithm}[t]
     \caption{Diamond Sampling with factor matrixes}
     \label{alg:DiamondSampling}
     Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.\\
     Let $s$ be the number of samples.
     \begin{algorithmic}[1]
-    \For{all $\Sca{a}{1}{r} \neq 0$}
+    \For{all $(i_1,r)$}
     \State $w_{i_1r} \leftarrow \mid \Sca{a}{1}{r}\mid
     \norm{\Varow{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1} $
     \EndFor
-    \State $\T{X} \leftarrow$ all-zeros tensor of size
-    $L_1\times L_2\ldots\times L_N$
+    \State Initialize an empty map for coordinate.
     \For{$ \ell = 1,\ldots,s$}
-    \State Sample $(i_1,r)$ with probability $w_{i_1r}/\norm{\M{W}}{1}$        \label{line:phase1}
+    \State Sample $(i_1,r)$ with probability $w_{i_1r}/\norm{\V{W}}{1}$        \label{line:phase1}
     \For {$n=2,...,N$}
     \State Sample $i_n$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
     \label{line:phase2}
     \EndFor
     \State Sample $r'$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$
     \label{line:phase3}
-    \State $x_{i_1,i_2,\cdots,i_N}\leftarrow x_{i_1,i_2,\cdots,i_N} +
-    sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
+    \State \label{line:scoring}
+        Get score: $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
     \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}$
-    \label{line:scoring}
+    \If {the map has key $i_1,i_2,\cdots,i_N$}
+    \State  Set a new key with this score
+    \Else
+    \State Increase the key by this score
+    \EndIf
     \EndFor
     \end{algorithmic}
 \end{algorithm}
@@ -244,11 +262,11 @@ In this part, we introduce the probabilities in each phase of event $\varepsilon
 
   When we pick an edge $e=(v^1_{i_1},\overline{v}_r)$ in phase 1, we are picking the vertexes pair $(v^1_{i_1},\overline{v}_r)$. Beforehand, we assign each pair a probability when $ \Sca{a}{1}{k} \neq 0 $:
   \[
-    p(i_1,r) = \mid\Sca{a}{1}{r}\mid \norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\M{W}}{1}
+    p(i_1,r) = |\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\V{W}}{1}
   \]
   Where
   \[
-    \norm{\M{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
+    \norm{\V{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
   \]
   Then we pick the pair $(v^1_{i_1},\overline{v}_r)$ according the probability $p(i_1,r)$.
 \end{itemize}
@@ -299,46 +317,48 @@ The reason to do so is that although the score $\widehat{x}$ is a good estimatio
 As we defined previously, the event $\varepsilon_{\V{i},r',r}$ is picking a pair $(v^1_{i_1},\overline{v}_r)$ then pick paths from $V_1$ to $\overline{V}$ and some addition pathes from $\overline{V}$ to $V_i,i\in{2,\ldots,N}$. And we assume that $\M{X}_{\V{i},\ell},\ell\in\{1,2\ldots,s\}$ are independent. Under these assumptions, we give two lemmas.
 
 \begin{lemma}\label{lem:Expectation}
-The expectation of $\widehat{x}_{\V{i}}$ equals to $s\cdot x^2_{\V{i}}/\norm{\M{W}}{1}$.
+The expectation of $\widehat{x}_{\V{i}}$ equals to $sx^2_{\V{i}}/\norm{\M{W}}{1}$.
 \end{lemma}
+
+
 \begin{proof}[Proof:]
 The final score $\widehat{x}_{\V{i}} = \sum_{\ell=1}\M{X}_{\V{i},\ell}$. And
 \begin{equation}\label{eq:Expectation}
-\mathbb{E}[\widehat{x}_{\V{i}}] = \mathbb{E}[\sum_{\ell=1}\M{X}_{\V{i},\ell}]=s\mathbb{E}[\M{X}_{\V{i},1}]
+\mathbb{E}[\widehat{x}_{\V{i}}] = \sum_{\ell=1}\mathbb{E}[\M{X}_{\V{i},\ell}]=s\mathbb{E}[\M{X}_{\V{i},1}]
 \end{equation}
 
 The probability of $\varepsilon_{\V{i},r',r}$ is
+
 \begin{align*}
 Pr(\varepsilon_{\V{i},r',r})
-& = Pr( {\rm pick\ } (v^1_{i_1},\overline{v}_r))\cdot
-Pr( {\rm walk\ to\ } \overline{v}_r' | {\rm given\ }v^1_{i_1} )\cdot
-Pr( {\rm walk\ to\ } v^2_{i_2} | {\rm given\ }\overline{v}_r) \cdots Pr( {\rm walk\ to\ } v^N_{i_N} | {\rm given\ }\overline{v}_r ) \\
-&=\frac{w_{i_1r}}{\norm{\M{W}}{1}}\cdot
-  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
+%& = Pr( {\rm pick\ } (v^1_{i_1},\overline{v}_r))
+%Pr( {\rm walk\ to\ } \overline{v}_r' | {\rm given\ }v^1_{i_1} )
+%Pr( {\rm walk\ to\ } v^2_{i_2} | {\rm given\ }\overline{v}_r) \cdots Pr( {\rm walk\ to\ } v^N_{i_N} | {\rm given\ }\overline{v}_r ) \\
+& = Pr({\rm phase\ 1})Pr({\rm phase\ 2})Pr({\rm phase\ 3})\\
+&=\frac{w_{i_1r}}{\norm{\V{W}}{1}}
   \frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\cdots
-  \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
-&=\frac{    |\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\norm{{\VnC{a}{2}{*r}}}{1}\cdots\norm{{\VnC{a}{N}{*r}}}{1}   }{  \norm{\M{W}}{1}  }\cdot
-  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\cdot
-\frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\cdots
-  \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
-&=\frac{    |\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|    }{\norm{\M{W}}{1}}
+  \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}
+  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\\
+%&=\frac{    |\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\norm{{\VnC{a}{2}{*r}}}{1}\cdots\norm{{\VnC{a}{N}{*r}}}{1}   }{  \norm{\V{W}}{1}  }\frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}} \frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
+&=\frac{    |\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|    }{\norm{\V{W}}{1}}
 \end{align*}
-We get the probability of one walk:
+
+Then we get the probability of one walk:
+
 \begin{equation}\label{eq:ProbabilityOneWalk}
-Pr(\varepsilon_{\V{i},r',r})=\frac{|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\M{W}}{1}}
+Pr(\varepsilon_{\V{i},r',r})=\frac{|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
 \end{equation}
 
 Using \Eqn{Expectation} and \Eqn{ProbabilityOneWalk}. The expectation
 \begin{align*}
-\mathbb{E}[x_{\V{i}}/s]
-&= \mathbb{E}[\M{X}_{\V{i},1}]\\
-&=\sum_{r}\sum_{r'}Pr(\varepsilon_{\V{i},r',r})\cdot sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
+&\mathbb{E}[x_{\V{i}}/s] = \mathbb{E}[\M{X}_{\V{i},1}]\\
+&=\sum_{r,r'} Pr(\varepsilon_{\V{i},r',r}) sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
 \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}\\
-&=\frac{\sum_{r}\sum_{r'}|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
-\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\M{W}}{1}}\\
-&=\frac{\sum_{r}\sum_{r'} \Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'} \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\M{W}}{1}} \\
-&=\frac{\{\sum_{r}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\}^2}{\norm{\M{W}}{1}}\\
-&=\frac{x_{\V{i}}^2}{\norm{\M{W}}{1}}
+%&=\frac{\sum_{r,r'}|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
+%\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\M{W}}{1}}\\
+&=\frac{\sum_{r,r'} \Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\V{W}}{1}}\\
+&=\frac{(\sum_{r}\Sca{a}{1}{r}\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})^2}{\norm{\V{W}}{1}}\\
+&=\frac{x_{\V{i}}^2}{\norm{\V{W}}{1}}
 \end{align*}
 \end{proof}
 
@@ -395,19 +415,21 @@ Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all ent
 
 \section{Central Sampling Algorithm}
 
-Actually, there are two primary factors that affect the recall of sampling. The first one is the probability of indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final recall. So, when we use the maximum budget large as $s$, the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will sampled, and thus the higher the recall will be. The other factor is the score that we assigned to the index $\widehat{x}_{\V{i}}$. Since we will compute the top-$t'$ elements' actual value, the order of score is most essential. The probability of coordinate $\V{i}$ demarcate the upper bound of final recall. The better of score we assign to coordinate $\V{i}$ will keep the order of actual value do, the closer recall to the upper bound when we consider the budget $t'$.
+Actually, there are two primary factors that affect the recall of sampling. The first one is the probability of multi-indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final accuracy. So the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will be sampled, and thus the higher the accuracy will be. The other factor is the final score $\widehat{x}_{\V{i}}$ that we assigned. Since we compute the top-$t'$ elements' actual value after pre-sorting, the order of original score is mostly concerned. That ideal case is if the final score keeps the order of actual value, the amount of budget will not influence the accuracy against the maximum budget.
 
-We summarize these two factors as occurrence probability of indexes and isotonicity of score. The occurrence probability of indexes determine the chance of one index to get a score, the isotonicity of score determine the likelihood of one index to be computed in final stage.
+The probability of coordinate $\V{i}$ determine the upper bound of final accuracy in expectation. The better of score we assign to coordinate $\V{i}$ will keep the order of actual value do, the closer accuracy to the upper bound when we consider the budget $t'$.
 
-In the following sections, we introduce a new method that sample the coordinate proportional to the actual value, and score the coordinate to estimate any order of actual value. It starts from the central points in partition $\overline{V}$, then spread to the other partitions.
+We summarize these two factors as occurrence probability of coordinate and isotonicity of score. 
 
-\subsection{Sample indexes and score the indexes}
+In the following sections, we introduce the new method that sample the coordinate proportional to the $x_{\V{i}}$, and different kind of scores we assign to coordinate for estimating any order of actual value. 
 
-In our sampling, we start to sample the index in partition $\overline{V}$.
+\subsection{Sampling Mechanism}
 
-\subsubsection{The weight of central points and transfer probability}
+We starts from the central nodes in partition $\overline{V}$ by assigning some appropriate weight to it, then transfer to the other partitions from the vertex we sampled.
 
-Consider the two factors, we propose a new sampling method, called central sampling. It start to sample the vertexes in partition $\overline{V}$ that is called central points. And we will assign a weight to each vertex in partition $\overline{V}$. The weight we designed is followed:
+\subsubsection{Weight and Transfer Probability}
+
+The weight we designed for central nodes is followed:
 \[
     w_r = \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}
 \]
@@ -441,10 +463,11 @@ It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2$. Also, 
 As mentioned the occurrence of coordinates determine the upper bound of sampling recall. Suppose all factor are nonnegative, then the probability of each coordinate $\V{i}$ that will be sampled is
 
 \begin{align*}
-Pr(\epsilon_{\V{i}}) &= \sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\\
-&= \sum_{r=1}^{R} Pr({\rm pick\ }r)Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
-&= \sum_{r=1}^{R} \frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\times \frac{|\Sca{a}{1}{r}|}{\norm{\Vacol{1}}{1}} \times\ldots\times \frac{|\Sca{a}{N}{r}|}{\norm{\Vacol{N}}{1}} \\
-& = \sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}} = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
+Pr(\epsilon_{\V{i}}) = &\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\\
+=& \sum_{r=1}^{R} Pr({\rm pick\ }r)Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
+=& \sum_{r=1}^{R} \frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\\
+& \times \frac{|\Sca{a}{1}{r}|}{\norm{\Vacol{1}}{1}} \times\ldots\times \frac{|\Sca{a}{N}{r}|}{\norm{\Vacol{N}}{1}} \\
+=& \sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}} = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
 
 And it is easy that the extra sampling in partition $\overline{V}$ will not change the probability of each coordinate. For example, if we sample one more index $r'$. Then the occurrence probability of coordinate $\V{i}$ is:
@@ -464,12 +487,12 @@ The expectation score of first order is:
 
 The expectation score of second order is:
 \begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r,r'})\M{X}_{\V{i},\ell}\\
-& = \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
-\frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}
-\frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{ \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}\\
-& = \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\frac{\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\V{W}}{1}}\\
-& = \{\frac{x_{\V{i}}}{\norm{\V{w}}{1}}\}^2
+\mathbb{E}[\widehat{x}_{\V{i}}]=&\sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r,r'})\M{X}_{\V{i},\ell}\\
+=& \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
+\frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\\
+&\frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{ \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}\\
+=& \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\frac{\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\V{W}}{1}}\\
+=& \{\frac{x_{\V{i}}}{\norm{\V{w}}{1}}\}^2
 \end{align*}
 
 
@@ -555,9 +578,9 @@ After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the 
         \left\{
           \begin{array}{ll}
             \lfloor su'_r/\norm{u'}{1} \rfloor,
-            & \hbox{with probability $\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\\\
+            & \hbox{$p=\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\\\
             \lceil su'_r/\norm{u'}{1} \rceil,
-            & \hbox{with probability $\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
+            & \hbox{$p=\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
           \end{array}
         \right.
     \end{equation*}
@@ -719,6 +742,7 @@ We use the list of sub-path to save the computation of sampling for queries, and
 \section{Conclusion}
 
 
-
+\bibliographystyle{aaai}
+\bibliography{IIP}
 \end{document}
 
