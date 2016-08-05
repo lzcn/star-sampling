@@ -43,8 +43,10 @@
 %% Vector
 %% -------
 \newcommand{\V}[1]{{\bm{{\MakeLowercase{#1}}}}}
-%Vector with superscript and subscript
+% Vector with superscript and subscript
 \newcommand{\VnC}[3]{\V{#1}^{(#2)}_{#3}}
+% norm one of r-th cloumn
+\newcommand{\Nrocl}[2]{\norm{\VnC{a}{#1}{*#2}}{1}}
 
 \newcommand{\Varow}[1]{\V{a}^{(#1)}_{i_#1*}}
 \newcommand{\Vacol}[1]{\V{a}^{(#1)}_{*r}}
@@ -57,7 +59,7 @@
 \newcommand{\Mn}[2]{\M{#1}^{(#2)}}
 
 % p-norm
-\newcommand{\norm}[2]{\parallel#1\parallel_{#2}}
+\newcommand{\norm}[2]{\|#1\|_{#2}}
 
 %% ------------
 %% reference
@@ -82,7 +84,7 @@
 \newcommand{\AlgLine}[2]{\hyperref[alg:#1]{line~\ref*{line:#2} of Algorithm~\ref*{alg:#1}}}
 \newcommand{\AlgLines}[3]{\hyperref[alg:#1]{lines~\ref*{line:#2}--\ref*{line:#3} of Algorithm~\ref*{alg:#1}}}
 
-
+\newcommand{\Coord}{(i_1,i_2,\ldots,i_N)}
 
 
 
@@ -367,11 +369,11 @@ Using \Eqn{Expectation} and \Eqn{ProbabilityOneWalk}. The expectation
 \begin{lemma}\label{lem:Bound}
 Fix $\varepsilon > 0$ and error probability $\sigma \in (0,1)$. Assuming all entries in factor matrices are nonnegative and at most $K$. If the number of samples
 \[
-s \leq 3K^{N-1}\norm{\M{W}}{1}\log{(2/\sigma)}/(\varepsilon ^2{x_{\V{i}}}^2),
+s \leq 3K^{N-1}\norm{\V{W}}{1}\log{(2/\sigma)}/(\varepsilon ^2{x_{\V{i}}}^2),
 \]
 then
 \[
-Pr[|{\widehat{x}_{\V{i}}}\norm{\M{W}}{1}/s-{x_{\V{i}}}^2| \geq \varepsilon{x_{\V{i}}}^2] \leq \sigma
+Pr[|{\widehat{x}_{\V{i}}}\norm{\V{W}}{1}/s-{x_{\V{i}}}^2| \geq \varepsilon{x_{\V{i}}}^2] \leq \sigma
 \]
 \end{lemma}
 
@@ -387,25 +389,25 @@ Pr[y_{\V{i}} \geq \mathbb{E}[y_{\V{i}}]] < \exp{(-\epsilon^2\mathbb{E}[y_{\V{i}}
 \]
 By ~\Lem{Expectation}
 \[
-\mathbb{E}[y_{\V{i}}] = \frac{sx^2_{\V{i}}}{K^{N-1}\norm{\M{W}}{1}}
+\mathbb{E}[y_{\V{i}}] = \frac{sx^2_{\V{i}}}{K^{N-1}\norm{\V{W}}{1}}
 \]
-By the choice of $s$ we have $\mathbb{E}[y_{\V{i}}]=(sx^2_{\V{i}})/(K^{N-1}\norm{\M{W}}{1}) \leq 3\log{(2/\sigma)}$. Then
+By the choice of $s$ we have $\mathbb{E}[y_{\V{i}}]=(sx^2_{\V{i}})/(K^{N-1}\norm{\V{W}}{1}) \leq 3\log{(2/\sigma)}$. Then
 \[
 Pr[y_{\V{i}} \geq \mathbb{E}[y_{\V{i}}]] < \sigma/2
 \]
 By the substitution of $y_{\V{i}}=\sum_{\ell}\M{X}_{\V{i},\ell}/K^{N-1}=\widehat{x}_{\V{i}}/K^{N-1}$
 \[
-Pr[\widehat{x}_{\V{i}}\cdot\norm{\M{W}}{1} \geq s\cdot x_{\V{i}}] < \sigma/2
+Pr[\widehat{x}_{\V{i}}\cdot\norm{\V{W}}{1} \geq s\cdot x_{\V{i}}] < \sigma/2
 \]
 
 Using the Chernoff lower tail bound and identical reasoning. We get
 \[
-Pr[\widehat{x}_{\V{i}}\cdot\norm{\M{W}}{1}/s \leq (1-\epsilon)x_{\V{i}}] \leq \sigma/2
+Pr[\widehat{x}_{\V{i}}\cdot\norm{\V{W}}{1}/s \leq (1-\epsilon)x_{\V{i}}] \leq \sigma/2
 \]
 \end{proof}
 
 \begin{theorem}\label{theo:Order}
-Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^{N-1}\norm{\M{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indexes $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
+Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^{N-1}\norm{\V{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indexes $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
 \end{theorem}
 
 \begin{proof}[proof:]
@@ -419,9 +421,9 @@ Actually, there are two primary factors that affect the recall of sampling. The 
 
 The probability of coordinate $\V{i}$ determine the upper bound of final accuracy in expectation. The better of score we assign to coordinate $\V{i}$ will keep the order of actual value do, the closer accuracy to the upper bound when we consider the budget $t'$.
 
-We summarize these two factors as occurrence probability of coordinate and isotonicity of score. 
+We summarize these two factors as occurrence probability of coordinate and isotonicity of score.
 
-In the following sections, we introduce the new method that sample the coordinate proportional to the $x_{\V{i}}$, and different kind of scores we assign to coordinate for estimating any order of actual value. 
+In the following sections, we introduce the new method that sample the coordinate proportional to the $x_{\V{i}}$, and different kind of scores we assign to coordinate for estimating any order of actual value.
 
 \subsection{Sampling Mechanism}
 
@@ -429,52 +431,56 @@ We starts from the central nodes in partition $\overline{V}$ by assigning some a
 
 \subsubsection{Weight and Transfer Probability}
 
-The weight we designed for central nodes is followed:
+The weight we designed for central nodes is:
+
 \[
     w_r = \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}
 \]
 
-For each turn, We sample the index $r$ with probability $w_r/\norm{\V{w}}{1}$.Then repeat $N$ times, walk form the index $r$ in partition $\overline{V}$ to other partition $V_i$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
+In each turn, we sample the index $r$ with probability $w_r/\norm{\V{w}}{1}$.Then repeat $N$ times, walk form the node $\overline{v}_r$ in partition $\overline{V}$ to other partition $V_i$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
 
 \subsubsection{Scoring the Coordinates}
 
-Each time we sampled an coordinate $\V{i} = (i_1,i_2,\ldots,\i_N) $. If this coordinate has not been sampled previously, let the score of this coordinate in the $\ell $-th turn be
+Each time we sampled an coordinate $\V{i} = \Coord $. The score of this coordinate in the $\ell $-th turn is 
 \[
 \M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})
 \]
-and make $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$ into a set where we save the scores. Otherwise, increase $\widehat{x}_{\V{i}}$ in the set by $\M{X}_{\V{i},\ell}$.For $\V{i}$ that not be sampled in $\ell$-th turn, we can assume that $\M{X}_{\V{i},\ell}=0$. So
+If this coordinate has not been sampled previously, create a container $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$. Otherwise, increase $\widehat{x}_{\V{i}}$ by $\M{X}_{\V{i},\ell}$. For $\V{i}$ that not be sampled in $\ell$-th turn, we also assume that $\M{X}_{\V{i},\ell}=0$, so that
+
 \[
 \widehat{x}_{\V{i}} = \sum_{\ell} \M{X}_{\V{i},\ell}
 \]
 
-It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}$.
+We will show that $\widehat{x}_{\V{i}}$ is an estimation of $x_{\V{i}}/\norm{\V{w}}{1}$.
 
 \subsubsection{Use Different Score in Central Sampling}
-The benefit of central sampling is that we can use different scores if we do extra sampling in partition $\overline{V}$. For example, after sampled $r$ in one turn, we sample another $r'$ with the sample probability $w_{r'}/\norm{\V{w}}{1}$. And the score we use become:
+The benefit of central sampling is that we can use different scores if we do extra sampling in partition $\overline{V}$. For example, after sampled $r$ in one turn, we sample another $r'$ with the sample probability $w_{r'}/\norm{\V{w}}{1}$. And the score we use:
 
 \[
 \M{X}_{\V{i},\ell}  = \frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}
 \]
 
-It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2$. Also, we can sample more additional indexes in partition $\overline{V}$ and adjust the score to make the final score be an estimation of $x_{\V{i}}^3$ or $x_{\V{i}}^4$. Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order, the less the budget we need. With the growth of budget $t'$, the recall with approach the recall with maximum budget, which is to compute all actual value of sampled coordinates. So the first factor, occurrence of indexes, determine the upper bound of recall. And the score we assigned to a sampled coordinate decide the ability to approach the bound with less budget. In our method, we can adjustment the score to make it be an estimation of $n$-th power of the actual value. However, the demand number of samples will increase exponentially. In practice, we use the first order or quadratic score to reach a good performance.
+It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2/\norm{\V{w}}{1}^2$. Also, we can sample more additional nodes in partition $\overline{V}$ and adjust the score to make the final score be an estimation of $x_{\V{i}}^n/\norm{\V{w}}{1}^n$. 
 
-\subsection{The probability of indexes}
+Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order of actual values, the less the budget we need. And with the growth of budget $t'$, the accuracy with approach closer to the accuracy with maximum budget in expectation. 
 
-As mentioned the occurrence of coordinates determine the upper bound of sampling recall. Suppose all factor are nonnegative, then the probability of each coordinate $\V{i}$ that will be sampled is
+So the first factor, occurrence of indexes, determine the upper bound of recall, and the score we assigned to a sampled coordinate decide the ability to approach the bound with less budget. In our method, we can adjustment the score to make it be an estimation of $n$-th power of the actual value. However, the demand number of samples will increase exponentially. In practice, we use the first order or quadratic score to reach a good performance.
+
+\subsection{The Probability of Coordinates}
+
+As mentioned, the occurrence of coordinates determine the upper bound of sampling accuracy. Suppose all factor are nonnegative, then the probability of each coordinate $\V{i}$ that to be sampled is
 
 \begin{align*}
 Pr(\epsilon_{\V{i}}) = &\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\\
-=& \sum_{r=1}^{R} Pr({\rm pick\ }r)Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
-=& \sum_{r=1}^{R} \frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\\
-& \times \frac{|\Sca{a}{1}{r}|}{\norm{\Vacol{1}}{1}} \times\ldots\times \frac{|\Sca{a}{N}{r}|}{\norm{\Vacol{N}}{1}} \\
+=& \sum_{r=1}^{R} \frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\frac{|\Sca{a}{1}{r}|}{\norm{\Vacol{1}}{1}}\ldots \frac{|\Sca{a}{N}{r}|}{\norm{\Vacol{N}}{1}} \\
 =& \sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}} = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
 
-And it is easy that the extra sampling in partition $\overline{V}$ will not change the probability of each coordinate. For example, if we sample one more index $r'$. Then the occurrence probability of coordinate $\V{i}$ is:
+And it is easy to prove that the extra sampling in partition $\overline{V}$ will not change the probability of each coordinate. For example, if we sample one more index $r'$. Then the occurrence probability of coordinate $\V{i}$ is:
 \begin{align*}
-Pr(\epsilon_{\V{i}}) &= \sum_{r=1}^{R} \sum_{r'=1}^{R} Pr(\epsilon_{\V{i},r,r'})\\
+Pr(\epsilon_{\V{i}}) &= \sum_{r=1}^{R} \sum_{r'=1}^{R} Pr(\epsilon_{\V{i},r})\\
 &= \sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{\norm{\V{a}^{(1)}_{*r'}}{1}\ldots\norm{\V{a}^{(N)}_{*r'}}{1}}{\norm{\V{W}}{1}}Pr(\epsilon_{\V{i},r,r'})\\
-&= \sum_{r=1}^{R}Pr(\epsilon_{\V{i},r})
+&= \sum_{r=1}^{R}Pr(\epsilon_{\V{i},r})= \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
 
 The expectation score of first order is:
@@ -482,54 +488,85 @@ The expectation score of first order is:
 \mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\M{X}_{\V{i},\ell}\\
 & = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\\
 & = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\\
-& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
+& = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
+\subsection{The Expectation of Score}
+In this section, we will show that with extra sampling, the expectation of final score will be $x_{\V{i}}^n/\norm{\V{w}}{1}^n$. The score for $n$-th power estimation in $\ell$-th turn is 
+\[
+\M{X}_{\V{i},\ell,n}  = \frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\Nrocl{1}{r_n}\ldots\Nrocl{N}{r_n}}
+\M{X}_{\V{i},\ell,n-1}
+\]
+Because each extra sampling is independent, we have $Pr(\epsilon_{\V{i},r_1,\ldots,r_n})=Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}/\norm{\V{w}}{1}$. So the expectation score of $n$-th power estimation is:
 
-The expectation score of second order is:
 \begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i}}]=&\sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r,r'})\M{X}_{\V{i},\ell}\\
-=& \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
-\frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\\
-&\frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{ \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}\\
-=& \sum_{\ell=1}^{s}\sum_{r=1}^{R}\sum_{r'=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\frac{\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\V{W}}{1}}\\
-=& \{\frac{x_{\V{i}}}{\norm{\V{w}}{1}}\}^2
+\mathbb{E}[\widehat{x}_{\V{i},n}/s] 
+& = \sum_{r_1,\ldots,r_n}Pr(\epsilon_{\V{i},r_1,\cdots,r_n})\M{X}_{\V{i},\ell,n}\\
+& = \sum_{r_1,\ldots,r_n}
+\frac{Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}}{\norm{\V{w}}{1}}\M{X}_{\V{i},\ell,n}\\
+& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\sum_{r_1,\ldots,r_{n-1}}
+Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
+& = \sum_{r_1,\ldots,r_{n-1}}
+\frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\norm{\V{w}}{1}}
+Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
+& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\mathbb{E}[\widehat{x}_{\V{i},n-1}/s]
 \end{align*}
-
-
+Then we get 
+\begin{equation}
+\mathbb{E}[\widehat{x}_{\V{i},n}/s] = \frac{x^n_{\V{i}}}{\norm{\V{w}}{1}^n}
+\end{equation}
 
 \subsection{Extension of Central Sampling}
 
-Since we notice that the occurrence of indexes will determine the upper bound of the final recall. The effort to improve the final recall significantly is focus on the occurrence probability of coordinate. So we introduce the extension version of equality sampling to reach a higher bound. We first sampled a pair of indexes pair $(r',r)$ in partition of $\overline{V}$ instead of one index $r$. Then we sampled other indexes according to the sampled pair. To realize this mechanism, we introduce the extension of factor matrices, and the sampling method will same as the original central sampling. We first get the extension matrix of each factor matrix, that is, we expand the factor matrix with size $(L_n \times R)$ to $(L_n \times R^2)$. We use the notation $\bm{Epd}\ \M{A}$ to represent the expended matrix. The rule to expand the factor matrix is:
+Since we notice that the occurrence of coordinate will determine the upper bound of the final accuracy. The effort of significantly improving the final accuracy significantly need to focus on $Pr(\epsilon_{\V{i}})$. So we introduce the extension version of central sampling to reach a higher bound. 
 
+We first sampled an indexes pair $(r,r')$ of central nodes instead of one index $r$ a time. Then we sampled other indexes with designed probability according to the sampled pair. To realize this mechanism, we introduce the extension matrix, and the sampling method will be same as the original central sampling. The extension matrix expend the feature dimension to $R^2$. Suppose $\V{v}$ is an item vector with dimension $R$, the extension vector, assumed $\V{v}^e$, is generated following the rule below:
 \[
-\bm{Epd}\ \M{A}(i,r+r'\times R) = \M{A}(i,r)\times \M{A}(i,r')\  r,r' = {1,2,...,R}
+\V{v}^e(r+r'R) = \V{v}(r)\V{v}(r')\ r,r' = {1,2,...,R}
 \]
 
-After the expansion we get $N$ expanded factor matrices. Then use equality sampling method to process these expanded factor matrices will make the occurrence of indexes proportioning to the quadratic of the value.
-
+After this expansion, we get $N$ expanded factor matrices. And we just simply use $\M{E}^{(n)}=[\VnC{e}{n}{1},\ldots,\VnC{e}{n}{R^2}]$ to represent the extension of factor matrix $\M{A}^{(n)}$. And it is easy to notice that 
+\[
+\VnC{e}{n}{*l} = \sum\nolimits_{i_n}\Sca{a}{n}{r}\Sca{a}{n}{r'},l=r+r'R
+\]
+Then use the origin central  sampling to process these expanded factor matrices, which will make the probability of coordinate proportioning to $x_{\V{i}}^2$.
+\begin{proof}
+Suppose all factor matrices are nonnegative. According to central sampling, we first sample the indexes pair $(r,r')$ in which $l = r+r'R$ with probability $w_l/\norm{\V{w}}{1}$. And sample the other nodes in partition $V_n$ with probability $e^{(n)}_{i_nl}/\norm{\VnC{e}{n}{*l}}{1}$. By definition, we know
+\[
+w_l = \norm{\VnC{e}{1}{*l}}{1}\cdots \norm{\VnC{e}{N}{l}}{1}, l = 1,\ldots,R^2
+\]
+and
+\[
+e^{(n)}_{i_nl} = \Sca{a}{n}{r}\Sca{a}{n}{r'}, l = r+r'R 
+\]
+So, let $l = r+r'R$
 \begin{align*}
-Pr(\epsilon_{\V{i}}) &= \sum_{r,r'} Pr(\epsilon_{\V{i},r,r'})\\
-&= \sum_{r,r'} Pr({\rm pick\ pair\ }(r,r'))Pr({\rm pick\ }i)Pr({\rm pick\ }j)Pr({\rm pick\ }k)\\
-&= \sum_{r,r'} \frac{\norm{\bm{Epd}\ \Vacol{1}}{1}\ldots\norm{\bm{Epd}\ \Vacol{N}}{1}}{\V{w}}\times
-\frac{|\Sca{a}{1}{r}\Sca{a}{1}{r'}|}{\norm{\bm{Epd}\ \Vacol{1}}{1}} \times\ldots\times
-\frac{|\Sca{a}{N}{r}\Sca{a}{N}{r'}|}{\norm{\bm{Epd}\ \Vacol{N}}{1}} \\
-& = \sum_{r,r'} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}{\norm{\V{W}}{1}}\\
-& = \frac{\sum_{r}|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|\sum_{r'} |\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}{\norm{\V{W}}{1}} = \frac{x_{\V{i}}^2}{\norm{\V{w}}{1}}
+Pr(\epsilon_{\V{i}}) &= \sum_{l} Pr(\epsilon_{\V{i},l})= \sum_{r,r'} Pr(\epsilon_{\V{i},r,r'})\\
+&= \sum_{l} \frac{w_l}{\V{w}}
+\frac{|e^{(1)}_{i_1l}|}{\norm{\VnC{e}{1}{*l}}{1}}\cdots
+\frac{|e^{(N)}_{i_Nl}|}{\norm{\VnC{e}{N}{*l}}{1}}\\
+& = \sum_{r,r'} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}
+{\norm{\V{W}}{1}}\\
+& = \frac{(\sum_{r}|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)^2}{\norm{\V{W}}{1}}\\
+& = \frac{x_{\V{i}}^2}{\norm{\V{w}}{1}}
 \end{align*}
+\end{proof} 
 
-Where we assume that all factor matrices are nonnegative, and $\norm{\bm{Epd}\ \Vacol{n}}{1} = \sum_{i_n}|\Sca{a}{n}{r}\Sca{a}{n}{r'}|$. We use use the value $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})$ to update the score in one sample instance $\widehat{x}_{\V{i}}$.
+The same as central sampling, we can use different score for sampled coordinate. In practice, we use the following score to update a coordinate:
+\[ 
+\widehat{x}_{\V{i}} \leftarrow \widehat{x}_{\V{i}} +sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})
+\]
 
-We can make the occurrence of coordinate to be $n$-the power the its value. However, the cost the computing the extension of factor matrix and the storage will increase exponentially. And in some application with appropriate dimension of feature vector, this method will show a better performance.
+We can make the probability of coordinate proportioning to $n$-the power the its value by extending the feature vector to $R^N$. However, the cost the computing cost and storage for the extension matrix will increase exponentially.
 
 
 \subsection{Finding top-$t$ largest value}
 
-The algorithm for finding the top-$t$ largest value is same as diamond sampling which is shown in ~\Alg{Topt}.
+The algorithm for finding the top-$t$ largest value is same as diamond sampling which is shown in ~\Alg{Topt}. The score $\widehat{x}_\V{i}$ depend on the specific algorithm used.
 
 
 \section{Sampling methods for queries}
 
-In recommendation system, it is demanded to find the most $k$ relevant items for a user. On this occasion, there will be a matrix for all users, for consistency, say $\M{A}^{(1)}$ and $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ for items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the tenor with $N-1$ order consisting a user $\V{u}$ and items matrices is called a ranking tensor(matrix).
+In recommendation system, it is demanded to find the most $k$ relevant items for a set of users. For consistency, say $\M{A}^{(1)}$ stands for the querying users, and the rest $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ are items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the $N-1$ order tenor represents the ranking score of a 
 
 \begin{equation}\label{eq:RankTensorCP}
 \T{X}_{\V{u}}= \KT{ \V{u},\Mn{A}{2}\dots,\Mn{A}{N}} =
