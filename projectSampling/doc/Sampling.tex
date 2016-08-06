@@ -20,11 +20,8 @@
 \usepackage{graphicx}
 \usepackage{subfigure}
 % for algorithm
-\usepackage{algorithm}
+\usepackage[ruled]{algorithm}
 \usepackage{algpseudocode}
-
-%
-%\usepackage[left=21mm]{geometry}
 
 % hyperref
 \usepackage[colorlinks,linkcolor=blue, filecolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
@@ -441,7 +438,7 @@ In each turn, we sample the index $r$ with probability $w_r/\norm{\V{w}}{1}$.The
 
 \subsubsection{Scoring the Coordinates}
 
-Each time we sampled an coordinate $\V{i} = \Coord $. The score of this coordinate in the $\ell $-th turn is 
+Each time we sampled an coordinate $\V{i} = \Coord $. The score of this coordinate in the $\ell $-th turn is
 \[
 \M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})
 \]
@@ -460,9 +457,9 @@ The benefit of central sampling is that we can use different scores if we do ext
 \M{X}_{\V{i},\ell}  = \frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}
 \]
 
-It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2/\norm{\V{w}}{1}^2$. Also, we can sample more additional nodes in partition $\overline{V}$ and adjust the score to make the final score be an estimation of $x_{\V{i}}^n/\norm{\V{w}}{1}^n$. 
+It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2/\norm{\V{w}}{1}^2$. Also, we can sample more additional nodes in partition $\overline{V}$ and adjust the score to make the final score be an estimation of $x_{\V{i}}^n/\norm{\V{w}}{1}^n$.
 
-Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order of actual values, the less the budget we need. And with the growth of budget $t'$, the accuracy with approach closer to the accuracy with maximum budget in expectation. 
+Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order of actual values, the less the budget we need. And with the growth of budget $t'$, the accuracy with approach closer to the accuracy with maximum budget in expectation.
 
 So the first factor, occurrence of indexes, determine the upper bound of recall, and the score we assigned to a sampled coordinate decide the ability to approach the bound with less budget. In our method, we can adjustment the score to make it be an estimation of $n$-th power of the actual value. However, the demand number of samples will increase exponentially. In practice, we use the first order or quadratic score to reach a good performance.
 
@@ -491,7 +488,7 @@ The expectation score of first order is:
 & = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
 \subsection{The Expectation of Score}
-In this section, we will show that with extra sampling, the expectation of final score will be $x_{\V{i}}^n/\norm{\V{w}}{1}^n$. The score for $n$-th power estimation in $\ell$-th turn is 
+In this section, we will show that with extra sampling, the expectation of final score will be $x_{\V{i}}^n/\norm{\V{w}}{1}^n$. The score for $n$-th power estimation in $\ell$-th turn is
 \[
 \M{X}_{\V{i},\ell,n}  = \frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\Nrocl{1}{r_n}\ldots\Nrocl{N}{r_n}}
 \M{X}_{\V{i},\ell,n-1}
@@ -499,32 +496,32 @@ In this section, we will show that with extra sampling, the expectation of final
 Because each extra sampling is independent, we have $Pr(\epsilon_{\V{i},r_1,\ldots,r_n})=Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}/\norm{\V{w}}{1}$. So the expectation score of $n$-th power estimation is:
 
 \begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i},n}/s] 
+\mathbb{E}[\widehat{x}_{\V{i},n}/s]
 & = \sum_{r_1,\ldots,r_n}Pr(\epsilon_{\V{i},r_1,\cdots,r_n})\M{X}_{\V{i},\ell,n}\\
 & = \sum_{r_1,\ldots,r_n}
 \frac{Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}}{\norm{\V{w}}{1}}\M{X}_{\V{i},\ell,n}\\
 & = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\sum_{r_1,\ldots,r_{n-1}}
 Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
-& = \sum_{r_1,\ldots,r_{n-1}}
+& = \sum_{r_1,\ldots,r_{n-1}} 
 \frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\norm{\V{w}}{1}}
 Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
 & = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\mathbb{E}[\widehat{x}_{\V{i},n-1}/s]
 \end{align*}
-Then we get 
+Then we get
 \begin{equation}
 \mathbb{E}[\widehat{x}_{\V{i},n}/s] = \frac{x^n_{\V{i}}}{\norm{\V{w}}{1}^n}
 \end{equation}
 
 \subsection{Extension of Central Sampling}
 
-Since we notice that the occurrence of coordinate will determine the upper bound of the final accuracy. The effort of significantly improving the final accuracy significantly need to focus on $Pr(\epsilon_{\V{i}})$. So we introduce the extension version of central sampling to reach a higher bound. 
+Since we notice that the occurrence of coordinate will determine the upper bound of the final accuracy. The effort of significantly improving the final accuracy significantly need to focus on $Pr(\epsilon_{\V{i}})$. So we introduce the extension version of central sampling to reach a higher bound.
 
 We first sampled an indexes pair $(r,r')$ of central nodes instead of one index $r$ a time. Then we sampled other indexes with designed probability according to the sampled pair. To realize this mechanism, we introduce the extension matrix, and the sampling method will be same as the original central sampling. The extension matrix expend the feature dimension to $R^2$. Suppose $\V{v}$ is an item vector with dimension $R$, the extension vector, assumed $\V{v}^e$, is generated following the rule below:
 \[
 \V{v}^e(r+r'R) = \V{v}(r)\V{v}(r')\ r,r' = {1,2,...,R}
 \]
 
-After this expansion, we get $N$ expanded factor matrices. And we just simply use $\M{E}^{(n)}=[\VnC{e}{n}{1},\ldots,\VnC{e}{n}{R^2}]$ to represent the extension of factor matrix $\M{A}^{(n)}$. And it is easy to notice that 
+After this expansion, we get $N$ expanded factor matrices. And we just simply use $\M{E}^{(n)}=[\VnC{e}{n}{1},\ldots,\VnC{e}{n}{R^2}]$ to represent the extension of factor matrix $\M{A}^{(n)}$. And it is easy to notice that
 \[
 \VnC{e}{n}{*l} = \sum\nolimits_{i_n}\Sca{a}{n}{r}\Sca{a}{n}{r'},l=r+r'R
 \]
@@ -536,7 +533,7 @@ w_l = \norm{\VnC{e}{1}{*l}}{1}\cdots \norm{\VnC{e}{N}{l}}{1}, l = 1,\ldots,R^2
 \]
 and
 \[
-e^{(n)}_{i_nl} = \Sca{a}{n}{r}\Sca{a}{n}{r'}, l = r+r'R 
+e^{(n)}_{i_nl} = \Sca{a}{n}{r}\Sca{a}{n}{r'}, l = r+r'R
 \]
 So, let $l = r+r'R$
 \begin{align*}
@@ -549,10 +546,10 @@ Pr(\epsilon_{\V{i}}) &= \sum_{l} Pr(\epsilon_{\V{i},l})= \sum_{r,r'} Pr(\epsilon
 & = \frac{(\sum_{r}|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)^2}{\norm{\V{W}}{1}}\\
 & = \frac{x_{\V{i}}^2}{\norm{\V{w}}{1}}
 \end{align*}
-\end{proof} 
+\end{proof}
 
 The same as central sampling, we can use different score for sampled coordinate. In practice, we use the following score to update a coordinate:
-\[ 
+\[
 \widehat{x}_{\V{i}} \leftarrow \widehat{x}_{\V{i}} +sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})
 \]
 
@@ -566,68 +563,43 @@ The algorithm for finding the top-$t$ largest value is same as diamond sampling 
 
 \section{Sampling methods for queries}
 
-In recommendation system, it is demanded to find the most $k$ relevant items for a set of users. For consistency, say $\M{A}^{(1)}$ stands for the querying users, and the rest $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ are items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the $N-1$ order tenor represents the ranking score of a 
+In recommendation system, it is demanded to find the most $k$ relevant items for a set of users. For consistency, say $\M{A}^{(1)}$ stands for the querying users, and the rest $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ are items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the $N-1$ order tenor in ~\Eqn{RankTensorCP} represents the predicted ranking score of this user for all combinations.
 
 \begin{equation}\label{eq:RankTensorCP}
 \T{X}_{\V{u}}= \KT{ \V{u},\Mn{A}{2}\dots,\Mn{A}{N}} =
 \sum_{r=1}^{R} u_r \cdot \VnC{A}{2}{r}\circ \cdots \circ \VnC{A}{N}{r}
 \end{equation}
 
-It is a exception to reduce one factor matrix into a vector in previous algorithm. However, when we have so many queries, it is time consuming to do sampling one query by one. Obviously, the difference between different queries in sampling processing is the probability for picking vertexes in partition $\overline{V}$, in other word, or the frequency number $(c_1,c_2,\ldots,c_R)$ of each $\overline{v}_r$ that is expected to be sampled.
+For one use, it is a exception to reduce one factor matrix into a vector in previous algorithm. However, when we have so many queries, the previous user will have many useful information for the next user we process. The most noted one in sampling processing is picking the nodes in partitions $(V_2,\ldots,V_n)$. And the biggest difference between two users in the probability for picking nodes in partition $\overline{V}$, in other word, the frequency number $(c_1,c_2,\ldots,c_R)$ of each $\overline{v}_r$ that is expected to be sampled.
 
-In the phase 2(walk from a vertex $\overline{v}_r$ in $\overline{V}$ to $V_i,i\in\{2,\ldots,N\}$) of the event $\varepsilon_{\V{i},r',r}$, we call the coordinate $\{i_2,\ldots,i_N\}$ a sub-path. For effectively implementation, we use these lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to save the sub-paths of sampled query.
+The probabilities of indexes that from other partition $(V_2,\ldots,V_N)$ is only depend on the items matrices, and this is the useful information that can be utilized for the next user. We define the sub-path $(i_2,\ldots,i_N)$ and lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to save the sub-paths for convenience. 
 
+The algorithm for query sampling is show in ~\Alg{QuerySampling}.
+In ~\AlgLine{QuerySampling}{Indexes}, the user-oriented indexes $r$ is depending on the 
+specific sampling algorithm. For central sampling, and we notcie that for one user, the probability of nodes $\overline{v}_r$ is the same.
 
-\subsection{Weight assigning and frequency generating}
-Instead of pick a random pair $(\V{u},\overline{v}_{\V{i}})$, we use the frequency number sequence $(c_1,c_2,\ldots,c_R)$ for phase 1. For each $1 \leq r \leq R$, let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$ the same in phase 1.
-And then choose $c_r$ to have the expected value of $su'_r/\norm{u'}{1}$.
-
- \begin{equation*}c_r=
-    \left\{
-      \begin{array}{ll}
-        \lfloor su'_r/\norm{u'}{1} \rfloor,
-        & \hbox{with probability $\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\\\
-        \lceil su'_r/\norm{u'}{1} \rceil,
-        & \hbox{with probability $\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
-      \end{array}
-    \right.
-    \end{equation*}
-
-\subsection{Sub-paths}
-After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the the rest indexes $(i_1,i_2,\ldots,i_N)$ by randomly walking from the $\overline{v}_r$ to other partitions $V_2,\ldots,V_N$ that is of the same probability between different queries. So the sub-path $(i_1,i_2,\ldots,i_N)$ is used for the next query to save computation. We give the algorithm in ~\Alg{QuerySampling}.
 
 
 \begin{algorithm}[t]
-    \caption{Finding k-NN for a query}
-    \label{alg:QuerySampling}
+    \caption{Finding k-NN for a query}\label{alg:QuerySampling}
         Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.$\M{A}^{(1)}$ is the query matrix.\\
         Let $s$ be the number of samples, $t'$ be the budget.
     \begin{algorithmic}[1]
-    \State Initialize $R$ empty sub-paths lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ for each $\overline{v}_r$.
+    \State Initialize $R$ empty sub-path lists $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$
+    \State Initialize $c_r = 0,r= 1,\ldots,R$
     \For {$i_1 =1,2,\ldots,L_1$}
     \State Let query $\V{u}=\VnC{a}{1}{i_1*}$
-    \For {$r=1,\ldots,R$}
-    \State Let $u'_r \leftarrow \mid u_r\mid \norm{\Vacol{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}$
-    \EndFor
-    \For{$r=1,\ldots,R$ determine $c_r$}
-    \State
-    \begin{equation*}c_r=
-        \left\{
-          \begin{array}{ll}
-            \lfloor su'_r/\norm{u'}{1} \rfloor,
-            & \hbox{$p=\lceil su'_r/\norm{u'}{1} \rceil - su'_r/\norm{u'}{1}$} \\\\
-            \lceil su'_r/\norm{u'}{1} \rceil,
-            & \hbox{$p=\lfloor su'_r/\norm{u'}{1} \rfloor - su'_r/\norm{u'}{1}$}
-          \end{array}
-        \right.
-    \end{equation*}
+    \For {$\ell = 1,\ldots,s$}
+    \State Sample the user-oriented indexes $r$. \label{line:Indexes}
+    \State  Increment $c_r$.
     \EndFor
     \For {$r= 1,\ldots,R$}
     \If {$c_r\leq |\V{g}_r|$ }
-    \State Use $c_r$ sub-paths in $\V{g}_r$ as the sampled coordinates.
+    \State Use the $c_r$ sub-paths in $\V{g}_r$ pool.
     \Else
-    \State Sample $n = c_r - |\V{g}_r|$ sub-paths and append it into $\V{g}_r$.
+    \State Sample $(c_r - |\V{g}_r|)$ sub-paths and append into $\V{g}_r$.
     \EndIf
+    \State Get the score each sub-path of $\V{u}$.
     \State Use the method in ~\Alg{Topt} to find the top-$k$ largest value for query $\V{u}$.
     \EndFor
     \EndFor
@@ -635,25 +607,37 @@ After the choice of $c_r$, the sampling method repeat $c_r$ times to sample the 
 \end{algorithm}
 
 
+\section{Use Different Ranking Function}
+As for \Def{DefinitionTopt}, we mention three diffrent ranking fucntioin: Euclidean distance, cosine similarity and inner product. The algorithm we designed is  mainly aim at the inner product. But we can modify the soce of coordiante to hanle the other ranking function.
+
+\subsection{Relation of Three Ranking Funtion}
+Since the Euclidean distance, cosine similarity and inner product are both defined for two vectors, we suppose $\V{q},\V{p}$ are both in same dimension $n$. For Euclidean metric,
+\[
+\arg\min_{\V{q} \in S}(\V{q}-\V{p})^2 = \arg\max_{\V{q} \in S}(\langle\V{q},\V{p}\rangle-\langle\V{p},\V{p}\rangle/2)
+\]
 \section{Theoretical Analysis}
 
-For comparison, we use the similar error bound used in diamond sampling. And we will compare the probability of coordinate between each algorithm, and evaluate score for keeping the origin order after sampling.
+For comparison, we use the similar error bound used in diamond sampling. 
+We will compare the probability of coordinate between each algorithm, and evaluate score for keeping the origin order after sampling.
 
-\subsection{Expectation of sampled scores and Error Bound}
-The expectation of score in diamond sampling is $x^2_{\V{i}}/\norm{\M{W}^d}{1}$. And
-\[
-\norm{\M{W}^d}{1} = \sum_{i_1,r}|\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
-\]
-The expectation of score in central sampling is $x_{\V{i}}/\norm{\V{W}^c}{1}$. And
-\[
-\norm{\V{W}^c}{1} = \sum_{r}\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}
-\]
-The expectation of score in the extension version of central sampling is $x_{\V{i}}^2/\norm{\V{w}^e}{1}$. And
-\[
-\norm{\V{w}^e}{1} = \sum_{r,r'}\{\sum_{i_1}|\Sca{a}{1}{r}\Sca{a}{1}{r'}|\ldots\sum_{i_N}|\Sca{a}{N}{r}\Sca{a}{N}{r'}|\}
-\]
+\subsection{Error Bounds}
+We use $\V{w}^d,\V{w}^c,\V{w}^e$ to represnet the different weight of those sampling algorithm.
+We sum the expectation of score in each algorithm up:
 
-The error bounds for each algorithm
+\begin{align}
+    \mathbb{E}[\widehat{x}_{\V{i}}^d] &= sx^2_{\V{i}}/\norm{\V{W}^d}{1} \\
+    \mathbb{E}[\widehat{x}_{\V{i}}^c] &= sx^n_{\V{i}}/\norm{\V{W}^c}{1}^n\\
+    \mathbb{E}[\widehat{x}_{\V{i}}^e] &= sx_{\V{i}}^2/\norm{\V{w}^e}{1} 
+\end{align}
+Where
+\begin{align*}
+    \norm{\V{W}^d}{1} &= \sum\nolimits_{i_1,r}
+        |\Sca{a}{1}{r}|\norm{\Varow{1}}{1}\norm{\Vacol{2}}{1}\cdots\norm{\Vacol{N}}{1}\\
+    \norm{\V{W}^c}{1} &= \sum\nolimits_{r}
+        \norm{\Vacol{1}}{1}\cdots\norm{\Vacol{N}}{1}\\
+    \norm{\V{W}^c}{1} &= \sum\nolimits_{l}
+        \norm{\VnC{e}{1}{*l}}{1}\cdots\norm{\VnC{e}{N}{l}}{1}
+\end{align*}
 
 \subsection{Probability of sampling a coordinate}
 
@@ -661,7 +645,7 @@ Suppose all of factor matrices is nonnegative, then we get the occurrence probab
 \begin{eqnarray}
 % \nonumber to remove numbering (before each equation)
     \label{eq:ProbabilityDianomd}
-    Pr^d(\varepsilon_{\V{i}}) & = & x_\V{i}\norm{\Varow{1}}{1}/\norm{\M{W}}{1}\\
+    Pr^d(\varepsilon_{\V{i}}) & = & x_\V{i}\norm{\Varow{1}}{1}/\norm{\V{W^d}}{1}\\
     \label{eq:ProbabilityCentral}
     Pr^c(\varepsilon_{\V{i}}) & = & x_{\V{i}}/\norm{\V{W}^c}{1}\\
     \label{eq:ProbabilityExtensiom}
@@ -671,66 +655,68 @@ Suppose all of factor matrices is nonnegative, then we get the occurrence probab
 \subsection{Order preservation via scores}
 
 The ~\Lem{Bound} indicates the ability of diamond sampling to keep order after the sample. To be comparable, we give the error bound of central sampling by similar technique.
-As mentioned previously, we can sample extra indexes to make the score be the estimation of $x^n_{\V{i}}$. The $n$-th order estimation in central sampling is $\mathbb{E}[\widehat{x}_{\V{i}}]= sx^n_{\V{i}}/\norm{\V{w}}{1}^n$.
-\begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r_1,r_2,...,r_n} Pr(\epsilon_{\V{i},r_1,r_2,...,r_n})\M{X}_{\V{i},\ell}\\
-& = \sum_{\ell=1}^{s}\sum_{r_1,r_2,...,r_n}
-%% Probability
-\frac{w_{r_1}w_{r_2}\cdots w_{r_n}}{\norm{\V{W}}{1}^n}
-\frac{|\Sca{a}{1}{r_1}\cdots\Sca{a}{N}{r_1}|}{\norm{\Vacol{1}}{1}\cdots\norm{\Vacol{N}}{1}}
-%% score
-sgn(\Sca{a}{1}{r_1}\cdots\Sca{a}{N}{r_1})\frac{\Sca{a}{1}{r_2}\cdots\Sca{a}{N}{r_2}}{w_2}\cdots\frac{\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}}{w_n}
-\\
-& = \sum_{\ell=1}^{s}\sum_{r_1,r_2,...,r_n} \frac{\Sca{a}{1}{r_1}\cdots\Sca{a}{N}{r_1}\cdots\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}}{\norm{\V{W}}{1}^n}\\
-& = \frac{sx^n_{\V{i}}}{\norm{\V{w}}{1}^n}
-\end{align*}
-
-And it is easy to prove that if the number of samples
+As mentioned previously, we can sample extra indexes to make the score be the estimation of $x^n_{\V{i}}$. It is easy to prove that if the number of samples
 \[
-s \geq 3\norm{\V{w}}{1}^n\log{(2/\sigma)}/(\epsilon x^n_{\V{i}})
+s \geq 3\norm{\V{w^c}}{1}^n\log{(2/\sigma)}/(\epsilon x^n_{\V{i}})
 \]
 We have
 \[
-Pr(|\frac{\widehat{x}_\V{i}\norm{\V{w}}{1}^n}{s} - x^n_{\V{i}}| < \epsilon x^n_{\V{i}}) \leq \sigma
+Pr(|\frac{\widehat{x}_\V{i}\norm{\V{w^c}}{1}^n}{s} - x^n_{\V{i}}| < \epsilon x^n_{\V{i}}) \leq \sigma
 \]
-And
+and for
 \[
-    s \geq 12\norm{\V{w}}{1}^n\log{(2/\sigma)}/\tau^n
+    s \geq 12\norm{\V{w^c}}{1}^n\log{(2/\sigma)}/\tau^n
 \]
 Then with probability $1-\sigma$, we have
 \[
 if\ x_{\V{i}} > \tau\ and \ x_{\V{i'}} < \tau/\sqrt[n]{4e}, \ then\ \widehat{x_{\V{i}}} > \widehat{x_{\V{i'}}}
 \]
-The more indexes we sampled, the better order will keep. We call $\sqrt[n]{4e}$ the distinguishability. But to get high distinguishability, we need more sample number to get the reasonable result. The ideal distinguishability is 1, and  $\sqrt[n]{4e} \geq 1$. And we use $s\sqrt[n]{4e}$ to evaluate the goodness of the algorithm.
-\section{Implementing details}
-In section, we introduce some details get the improvement.
-\subsection{Data Structure}
-We arrange the factor matrices in specific storage format. we arrange $\Mn{A}{1}$ to be saved in row major order, and the rest factor matrices in column major order. Also, the sum of each row in $\Mn{A}{1}$ and the sum of each column in $\Mn{A}{n},n=2,\ldots,N$ will be computed previously.
 
-\subsection{Picking the edge}
-We pick the $s$ edge with probability  $w_{i_1r}/\norm{\M{W}}{1}$. The weight matrix $\M{W}$ is saved in row major order also and suppose $\V{\rho}$ is the vectorization of $\V{W}$. Since $s$ is much larger than the length of $\V{\rho}$, we use the binary search on the cumulative of $\V{p}$ via ~\Alg{Pickedge}. We use $\V{e}=(e_1,\ldots,e_s)$ to record the sampled indexes, and the vertexes pair is $(e_{\ell}\%L_1,e_{\ell}\setminus L_1)$. So the sample result is sorted according ro $r$.
+The more extra indexes we sampled, the better order will keep. We call $\sqrt[n]{4e}\geq 1$ the distinguishability. To get high distinguishability, we need more sample number to reach the same error bound. And we use the product $s\sqrt[n]{4e}$ to evaluate central sampling with different $n$.
+\section{Implementing details}
+In section, we introduce some tircks get the improvement for algorithm.
+
+\subsection{Data Structure}
+The first one is the matrix sturcture, we use the row major order, and the rest factor matrices in column major order, since it is efficient for row index sampling. And the absoult sum of each column  will be computed saved previously. Particularly, we use the transposition of the user matrix when diamond sampling is in processing.
+
+\subsection{Picking Central Nodes}
+In central sampling when we sample the $r$ and in ~\AlgLine{QuerySampling}{Indexes}, instead of sample $r$ once a time, we compute the $c_r$ with expectation $sw_r/\norm{\V{w}}{1}$. $\V{w}$ is determined in use of sampling algorithm.
+\begin{equation*}c_r=
+    \left\{
+      \begin{array}{ll}
+        \lfloor sw_r/\norm{w}{1} \rfloor,
+        & \hbox{$p=\lceil sw_r/\norm{w}{1} \rceil - sw_r/\norm{w}{1}$} \\\\
+        \lceil sw_r/\norm{w}{1} \rceil,
+        & \hbox{$p=\lfloor sw_r/\norm{w}{1} \rfloor - sw_r/\norm{w}{1}$}
+      \end{array}
+    \right.
+\end{equation*}
+
+\subsection{Picking the Edge}
+We arrange the weight probability vector in diamond as $p(i_1,r) = w_{i_1+rL_1}$.
+We pick the $s$ edge with probability  $w_{i_1+rL_1}/\norm{\V{W}}{1}$. Since $s$ is much larger than the length of $\V{w^d}$, we use the binary search on the cumulative of $\V{w^d}$ via ~\Alg{Pickedge}. During the sampling we can count $c_r$ for each central nodes.
 
 \begin{algorithm}[ht]
-    \caption{Picking Edge}
+    \caption{Sample the Indexes Pair}
     \label{alg:Pickedge}
-    Given probability $\M{W}\in R^{L_1\times R}$,$\V{\rho}\in[0,1]^p$ is the vectorization, and number of samples $s$.
-    The result saved in $\V{e}$
+    Given weight vector $\V{W}\in R^{L\times R}$ and number of samples $s$. Sample the indexes pair $(i_1,r)$.
     \begin{algorithmic}[1]
+    \State Initialize $c_r=0,r=1,\ldots,R$,and $\V{i}\in R^s$
     \State Sample $\mu_{\ell} \thicksim U(0,1)$ for $\ell \in \{1,\ldots,s\}$
     \State Sort $\V{\mu}$ so that $\mu_1 \leq \cdots\leq\mu_s$
-    \State $k \leftarrow 1,\overline{\mu} \leftarrow \mu_k$,$\V{\gamma}\in R^R\leftarrow$ all-zero vector.
+    \State $k \leftarrow 1,\rho \leftarrow \mu_k$
     \For {$\ell = 1,\ldots,s$}
-    \While {$\mu_{\ell} > \overline{\mu}$}
-    \State $k \leftarrow k+1,\overline{\mu} \leftarrow \mu_k$
+    \While {$\mu_{\ell} > \rho$}
+    \State $k \leftarrow k+1,\rho \leftarrow \mu_k$
     \EndWhile
-    \State $r = k \setminus L_1$
-    \State $e_{\ell}\leftarrow k$,$\gamma_{r}\leftarrow \gamma_{r} + 1$
+    \State $r = k \% L$, $i = k \backslash L$
+    \State $\V{i}_{\ell} \leftarrow i$, $c_r\leftarrow c_r + 1$
     \EndFor
     \end{algorithmic}
 \end{algorithm}
-\subsection{Random walking}
 
-In phase 2, when we walk from $\overline{v}_r$ to other partitions $V_n$. We use the previous result $\gamma_{r}$, which means we need walk totally $\gamma_{r}$ times from $\overline{v}_r$ to each  partition. Let $\V{\rho} = (|{a}^{(n)}_{1}{r}|/\norm{\Vacol{n}}{1},\ldots,|{a}^{(n)}_{L_n}{r}|/\norm{\Vacol{n}}{1})$, then sample $\gamma_{r}$ times using vose alias's method.
+We use vose alias's method to sample $c_r$ times $i_n$ wih probability ${\Sca{a}{n}{r}}/\Nrocl{n}{r}$.
+
 \section{Experiments Result}
 We will analysis the recall and time consuming  between different method. Then we evaluate the ability to keep order of different method.
 \subsection{Data for Experiments}
@@ -782,4 +768,3 @@ We use the list of sub-path to save the computation of sampling for queries, and
 \bibliographystyle{aaai}
 \bibliography{IIP}
 \end{document}
-
