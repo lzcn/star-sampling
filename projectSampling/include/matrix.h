@@ -71,13 +71,15 @@ public:
 	size_t col;
 	double* element;
 	double* SumofCol;
+	double* SumofRow;
 	Matrix(size_t r, size_t c, double*pr);
 	~Matrix();
 	double GetElement(size_t i, size_t j);
 	double GetColSum(size_t column);
-	// given a column index n sample a row index m 
-	// with probability abs(M_{m,n})/SumofCol(n)
+	// return m with probability abs(M_{m,n})/SumofCol(n)
 	size_t randRow(size_t n);
+	// return n with probability abs(M_{m,n})/SumofRow(m)
+	size_t randCol(size_t m);
 };
 /*
 	sign function

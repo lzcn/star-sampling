@@ -100,18 +100,19 @@ Matrix::Matrix(size_t r, size_t c, double*pr){
 	element = pr;
 	SumofCol = (double*)malloc(col*sizeof(double));
 	memset(SumofCol, 0, col*sizeof(double));
+	SumofRow = (double*)malloc(row*sizeof(double));
+	memset(SumofRow, 0, row*sizeof(double));
 	//get the absolute sum of each columns
-	double temp = 0.0;
 	for(size_t i = 0; i < col; ++i){
-		temp = 0.0;
 		for(size_t j = 0; j < row; ++j){
-			temp += abs(element[i*row + j]);
-		}
-		SumofCol[i] = temp;
-		}
+			SumofCol[i] += abs(element[i*row + j]);
+			SumofRow[j] += abs(element[i*row + j]);
+		}	
 	}
+}
 Matrix::~Matrix(){
 	free(SumofCol);
+	free(SumofRow);
 }
 
 double Matrix::GetElement(size_t i, size_t j){
@@ -134,7 +135,18 @@ size_t Matrix::randRow(size_t n){
 	}
 	return (row-1);
 }
-
+size_t Matrix::randCol(size_t m){
+	double x,temp;
+	x = SumofRow[m]*((double)rand()/(double)RAND_MAX);
+	temp = 0;
+	for (size_t j = 0; j < col; ++j){
+		temp += abs(element[m + j*row]);
+		if(x <= temp){ 
+			return j;
+		}
+	}
+	return (row-1);
+}
 int sgn_foo(double x){
 	return x<0? -1:1;
 }
