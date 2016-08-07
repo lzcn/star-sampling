@@ -18,6 +18,7 @@
 \usepackage{paralist}
 \usepackage{indentfirst}
 \usepackage{graphicx}
+\setkeys{Gin}{width=0.2\textwidth,height=35mm}
 \usepackage{subfigure}
 % for algorithm
 \usepackage[ruled]{algorithm}
@@ -25,7 +26,7 @@
 
 % hyperref
 \usepackage[colorlinks,linkcolor=blue, filecolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
-
+\usepackage{url}
 \newcommand{\Sca}[3]{{#1}^{(#2)}_{i_#2#3}}%Scalar with superscript and subscript
 \newcommand{\Scah}[3]{h^{(#1,#2)}_{#3}(\V{x}_{i_#1})}
 
@@ -91,7 +92,7 @@
 
 
 \begin{document}
-\title{}
+\title{Central Sampling for Top t Retial Processing}
 \date{}
 \author{}
 \maketitle
@@ -169,7 +170,7 @@ The indexes vector $\V{i}$ is a shorthand for multi-index $(i_1,i_2,\ldots,i_N)$
     $a_{ir}$ & element of matrix, a scalar\\
     \hline
   \end{tabular}
-  \caption{Notation}\label{table:Notation}
+  \caption{Notation}
 \end{table}
 
 
@@ -487,6 +488,7 @@ The expectation score of first order is:
 & = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\\
 & = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
+
 \subsection{The Expectation of Score}
 In this section, we will show that with extra sampling, the expectation of final score will be $x_{\V{i}}^n/\norm{\V{w}}{1}^n$. The score for $n$-th power estimation in $\ell$-th turn is
 \[
@@ -553,14 +555,50 @@ The same as central sampling, we can use different score for sampled coordinate.
 \widehat{x}_{\V{i}} \leftarrow \widehat{x}_{\V{i}} +sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})
 \]
 
-We can make the probability of coordinate proportioning to $n$-the power the its value by extending the feature vector to $R^N$. However, the cost the computing cost and storage for the extension matrix will increase exponentially.
+We can make the probability of coordinate proportioning to $n$-the power the its value by extending the feature vector to $R^N$. However, the cost the computing cost and storage for the extension matrix will increase exponentially. 
+The exsimation of final score is in some form of $x^2_{\V{i}}$, to reach the $x^n_{\V{i}}$ we use the following algorithm.
 
+\subsubsection{Using Different Central Probability}
+For each node $\overline{v}_r$ in parition $\overline{V}$. We use the different wight
+\[
+w_r = \sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{1}{*l}}{1}
+\cdots\sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{N}{*l}}{1}
+\]\
+After sampling the index $r$, we sample each index $i_n$ according to probability:
+\[
+\frac{\sum_{l=rR}^{l=rR+r}|e^{(n)}_{i_nl}|}{\norm{\VnC{e}{n}{*l}}{1}}
+\]
+And sample $N$ more indexes $r_1,\ldots,r_N$ with probability $|\Sca{a}{n}{r_n}|/\norm{\VnC{a}{n}{*r_n}}{1}$.
+This will make the final score be an estimation of  $x^{n+1}_{\V{i}}$.
+After each sampling we use the score:
+\[
+\M{X}_{\V{i},\ell} = sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\prod_{n=1}^{n=N}(\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n})
+\]
 
+This is the max extension, we can reduce the times of term $\sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{n}{*l}}{1}$ used, and replace by the term $\Nrocl{n}{r}$ to save computation. And adjust the score to get a resonabale result.
 \subsection{Finding top-$t$ largest value}
 
 The algorithm for finding the top-$t$ largest value is same as diamond sampling which is shown in ~\Alg{Topt}. The score $\widehat{x}_\V{i}$ depend on the specific algorithm used.
 
-
+\subsection{The Realation to Diamond Sampling}
+If we divide the indexes pair $(i_1,r)$ in diamond sampling into sampling $r$ then $i_1$. We will find that those two methods are similiar. For diamond sampling, if we only sample the inndex $r$, we notice that the probability of node $\overline{v}_r$ is
+\begin{align*}
+P(r) &= \sum\nolimits_{i_1}P(i_1,r)\\
+&= \sum\nolimits_{i_1} 
+|\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} 
+/ \norm{\V{W^d}}{1}\\
+& = \sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{1}{*l}}{1}\norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} 
+/ \norm{\V{W^d}}{1}
+\end{align*}
+and 
+\begin{align*}
+P(i_1) &= \sum\nolimits_{r}P(i_1,r)\\
+&= \sum\nolimits_{r} 
+|\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} 
+/ \norm{\V{W^d}}{1}\\
+& = \frac{\sum_{l=rR}^{l=rR+r}|e^{(1)}_{i_1l}|}{\norm{\VnC{e}{1}{*l}}{1}}
+\end{align*}
+where $l=r+RL$. We can see it is the special case to expend only the first matrix and combine the index $l$ with $r$.
 \section{Sampling methods for queries}
 
 In recommendation system, it is demanded to find the most $k$ relevant items for a set of users. For consistency, say $\M{A}^{(1)}$ stands for the querying users, and the rest $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ are items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the $N-1$ order tenor in ~\Eqn{RankTensorCP} represents the predicted ranking score of this user for all combinations.
@@ -611,10 +649,36 @@ specific sampling algorithm. For central sampling, and we notcie that for one us
 As for \Def{DefinitionTopt}, we mention three diffrent ranking fucntioin: Euclidean distance, cosine similarity and inner product. The algorithm we designed is  mainly aim at the inner product. But we can modify the soce of coordiante to hanle the other ranking function.
 
 \subsection{Relation of Three Ranking Funtion}
-Since the Euclidean distance, cosine similarity and inner product are both defined for two vectors, we suppose $\V{q},\V{p}$ are both in same dimension $n$. For Euclidean metric,
+Since the Euclidean distance, cosine similarity and inner product are both defined for two vectors, we suppose that there are only two factor matrices $\M{A}\in R^{M\times R},\M{B}\in R^{N\times R}$. 
+
+For Euclidean metric,
 \[
-\arg\min_{\V{q} \in S}(\V{q}-\V{p})^2 = \arg\max_{\V{q} \in S}(\langle\V{q},\V{p}\rangle-\langle\V{p},\V{p}\rangle/2)
+\arg\min_{(i,j))}(\V{a}_{i*}-\V{b}_{j*})^2 
+= \arg\max_{(i,j))}(2\V{a}_{i*}^T\V{b}_{j*}
+- \V{a}_{i*}^T\V{a}_{i*}
+- \V{b}_{j*}^T\V{b}_{j*})
 \]
+So we adjust the socre for $(i,j)$:
+\[
+\widehat{x}_{ij} = (a_{ir}-b_{jr})^2/|a_{ir}b_{jr}|
+\]
+Then the expectation of $\widehat{x}_{ij}$ will be $s(\V{a}_{i*}-\V{b}_{j*})^2/\norm{\V{w}}{1}$.
+
+For cosine similarity,
+\[
+\arg\max_{(i,j))}\frac{\V{a}_{i*}^T\V{b}_{j*}}
+{\V{a}_{i*}^T\V{a}_{i*}\V{b}_{j*}^T\V{b}_{j*}}
+\]
+So we adjust the socre for $(i,j)$:
+\[
+\widehat{x}_{ij} =\frac{sgn(a_{ir}b_{jr})}{\V{a}_{i*}^T\V{a}_{i*}\V{b}_{j*}^T\V{b}_{j*}}
+\]
+Then the expectation of $\widehat{x}_{ij}$ will be 
+\[
+\frac{s\V{a}_{i*}^T\V{b}_{j*}}
+{\V{a}_{i*}^T\V{a}_{i*}\V{b}_{j*}^T\V{b}_{j*}\norm{\V{w}}{1}}.
+\]
+
 \section{Theoretical Analysis}
 
 For comparison, we use the similar error bound used in diamond sampling. 
@@ -706,7 +770,7 @@ We pick the $s$ edge with probability  $w_{i_1+rL_1}/\norm{\V{W}}{1}$. Since $s$
     \State Sort $\V{\mu}$ so that $\mu_1 \leq \cdots\leq\mu_s$
     \State $k \leftarrow 1,\rho \leftarrow \mu_k$
     \For {$\ell = 1,\ldots,s$}
-    \While {$\mu_{\ell} > \rho$}
+    \While {$\mu_k > \rho$}
     \State $k \leftarrow k+1,\rho \leftarrow \mu_k$
     \EndWhile
     \State $r = k \% L$, $i = k \backslash L$
@@ -719,50 +783,116 @@ We use vose alias's method to sample $c_r$ times $i_n$ wih probability ${\Sca{a}
 
 \section{Experiments Result}
 We will analysis the recall and time consuming  between different method. Then we evaluate the ability to keep order of different method.
-\subsection{Data for Experiments}
+\subsection{Data and Preprocessing}
+We evalute our algorithms on some real datesets:
+DeliciousBookmarks\footnote{http://www.delicious.com
+}(delicious for short), 
+Last.FM\footnote{http://www.lastfm.com}(lastfm),
+MovieLens\footnote{http://www.grouplens.org}+IMDb\footnote{http://www.imdb.com }/Rotten Tomatoes\footnote{http://www.imdb.com}(ml-2k).
+Those datasets are released in the framework of the 2nd International Workshop (HetRec2011)\cite{Cantador:RecSys2011}. 
+And two more larger datasets of MovieLens\cite{Harper2015}:ml-10m and ml-20m.
 
-\subsection{Recall and time consuming}
-The following result show the recall of different method. We both use first order score in quality and extension method.
-When we use the maximum budget witch is using actual values of all sampled coordinates, the recall of each data set is show in ~
+We remove the minority until all user, item and tag occured in at lesat 5 times. The statistics of reduced tuple is shown in ~\Table{Data}.
+
+\begin{table}[t]
+  \label{table:Data}
+  \centering
+  \begin{tabular}{|c|c|c|c|c|}
+    \hline
+    DataSet & User & Item & Tag & Triplets \\
+    \hline
+    lastfm      & 1133 &  2556   &  1289  &  54174   \\
+    delicious   & 1106 &  11613  &  1858  &  92663   \\
+    ml-2k       & 364  &  1326   &  957   &  18288   \\
+    ml-10m      & 507  &  1746   &  1246  &  26579   \\
+    ml-20m      & 3176 &  6785   &  7162  &  329050  \\
+    \hline
+  \end{tabular}
+  \caption{Data Statistics}
+\end{table}
+
+Then we use the user, item(url, movie, artist, etc for different datasets), tag and ranking to form a sparse tensor\cite{TTB_Sparse}. The tensor toolbox\cite{TTB_Software} help us to do the CP decomposition.After the decomposition we have three factor matrices for user, item and tag.
+
+\subsection{Recall and Time consuming}
+
+The following result show the recall of different method. We both use first order score in central and extension method.
+When we use the maximum budget witch is using actual values of all sampled coordinates, the recall of each data set is show in ~\Fig{RecallMaxBudget}
 
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[draft]{recall-maximum-budget.pdf}\\
+  \includegraphics[draft]{recall}\\
   \caption{Accuracy for different methods in different data sets in witch we use a maximum budget, and the number of samples varies from $10^3$ to $10^7$.}
-  \label{Fig:RecallMaxBudget}
+  \label{fig:RecallMaxBudget}
 \end{figure}
 
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[draft]{recall-1k-budget.pdf}\\
+  \includegraphics{./img/full/recall/1k/diamond-equality-recall-samples-delicious}
+  \includegraphics{./img/full/recall/1k/diamond-equality-recall-samples-lastfm}
+  \includegraphics{./img/full/recall/1k/diamond-equality-recall-samples-ml-2k}
+  \includegraphics{./img/full/recall/1k/diamond-equality-recall-samples-ml-10m}
+  \includegraphics{./img/full/recall/1k/diamond-equality-recall-samples-ml-20m}\\
   \caption{Accuracy for different methods in different data sets in witch we use a const budget of $10^3$, and the number of samples varies from $10^3$ to $10^7$.}
-  \label{Fig:Recall1kBudget}
+  \label{fig:Recall1kBudget}
 \end{figure}
 
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[draft]{recall-10k-budget.pdf}\\
+  \includegraphics{./img/full/recall/10k/diamond-equality-recall-samples-delicious}
+  \includegraphics{./img/full/recall/10k/diamond-equality-recall-samples-lastfm}
+  \includegraphics{./img/full/recall/10k/diamond-equality-recall-samples-ml-2k}
+  \includegraphics{./img/full/recall/10k/diamond-equality-recall-samples-ml-10m}
+  \includegraphics{./img/full/recall/10k/diamond-equality-recall-samples-ml-20m}\\
   \caption{Accuracy for different methods in different data sets in witch we use a const budget of $10^4$, and the number of samples varies from $10^4$ to $10^7$.}
-  \label{Fig:Recall10kBudget}
+  \label{fig:Recall10kBudget}
 \end{figure}
 
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[draft]{time-consuming.pdf}\\
+  \includegraphics{./img/full/time/time-samples-delicious}
+  \includegraphics{./img/full/time/time-samples-lastfm}
+  \includegraphics{./img/full/time/time-samples-ml-2k}
+  \includegraphics{./img/full/time/time-samples-ml-10m}
+  \includegraphics{./img/full/time/time-samples-ml-20m}\\
   \caption{Time for different sampling approaches in different data sets. All methods use the maximum budget that equals to the number of samples}
-  \label{Fig:Recall10kBudget}
+  \label{fig:Time}
 \end{figure}
+
 \subsection{Isotonicity of score}
 Given the number of samples, we use different budget to see each method's ability to keep the order.
 
-\subsection{Sampling for queries}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics{./img/order/recall-budget-delicious}
+  \includegraphics{./img/order/recall-budget-lastfm}
+  \includegraphics{./img/order/recall-budget-ml-2k}
+  \includegraphics{./img/order/recall-budget-ml-10m}
+  \includegraphics{./img/order/recall-budget-ml-20m}\\
+  \caption{Accuracy for different sampling approaches in different data sets. All methods use the same samples $10^6$ and the budget varies form $10^3$ to $10^6$}
+  \label{fig:RecallBudget}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics{./img/query/recall/recall-samples-ml-2k}
+  \includegraphics{./img/query/recall/recall-samples-ml-10m}
+  \includegraphics{./img/query/recall/recall-samples-ml-20m}\\
+  \caption{Accuracy for different sampling approaches in different data sets. All methods use the same samples $10^6$ and the budget varies form $10^3$ to $10^6$}
+  \label{fig:RecallBudget}
+\end{figure}
+
+\subsection{Sampling for Queries}
 We use the list of sub-path to save the computation of sampling for queries, and we will show the recall when we use the sub-indexes pool and not.
 
-\section{Conclusion}
+\subsection{Other Ranking Functions}
+
+
+
 
 
 \bibliographystyle{aaai}
