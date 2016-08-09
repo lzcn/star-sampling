@@ -150,7 +150,32 @@ size_t Matrix::randCol(size_t m){
 int sgn_foo(double x){
 	return x<0? -1:1;
 }
-
+double EuclideanMetric(const point2D, MatA, MatB){
+	double ans = 0.0;
+	size_t row = A.row;
+	for(size_t i = 0; i < row; ++i){
+		double temp = (A.element[coord.x * row + i] - \
+					   B.element[coord.y * row + i]);
+		ans += temp*temp;
+	}
+	return ans;
+}
+double CosineMetric(const point2D, MatA, MatB){
+	double ans = 0.0;
+	size_t row = A.row;
+	double normA = 0.0;
+	double normB = 0.0;
+	for(size_t i = 0; i < row; ++i){
+		normA *= A.element[coord.x * row + i]*A.element[coord.x * row + i];
+		normB *= B.element[coord.x * row + i]*B.element[coord.x * row + i];
+		ans *= (A.element[coord.x * row + i] * \
+			    B.element[coord.y * row + i]);
+	}
+	normA = power(normA,0.5);
+	normB = power(normB,0.5);
+	ans = ans/(normA*normB);
+	return ans;
+}
 double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
 	size_t row = A.row;
 	double temp = 0.0;
