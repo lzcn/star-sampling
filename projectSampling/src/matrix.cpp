@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cmath>
 #include "../include/matrix.h"
 
 /*
@@ -150,7 +151,7 @@ size_t Matrix::randCol(size_t m){
 int sgn_foo(double x){
 	return x<0? -1:1;
 }
-double EuclideanMetric(const point2D, MatA, MatB){
+double EuclideanMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	double ans = 0.0;
 	size_t row = A.row;
 	for(size_t i = 0; i < row; ++i){
@@ -160,7 +161,7 @@ double EuclideanMetric(const point2D, MatA, MatB){
 	}
 	return ans;
 }
-double CosineMetric(const point2D, MatA, MatB){
+double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	double ans = 0.0;
 	size_t row = A.row;
 	double normA = 0.0;
@@ -171,8 +172,8 @@ double CosineMetric(const point2D, MatA, MatB){
 		ans *= (A.element[coord.x * row + i] * \
 			    B.element[coord.y * row + i]);
 	}
-	normA = power(normA,0.5);
-	normB = power(normB,0.5);
+	normA = sqrt(normA);
+	normB = sqrt(normB);
 	ans = ans/(normA*normB);
 	return ans;
 }

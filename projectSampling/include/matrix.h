@@ -86,9 +86,9 @@ public:
 */
 int sgn_foo(double x);
 
-double EuclideanMetric(const point2D, MatA, MatB);
+double EuclideanMetric(const point2D, const Matrix &A, const Matrix &B);
 
-double CosineMetric(const point2D, MatA, MatB);
+double CosineMetric(const point2D, const Matrix &A, const Matrix &B);
 /*
 	compute the dot product of two matrices' column
 	ans = A(:,m)'*B(:,n)
