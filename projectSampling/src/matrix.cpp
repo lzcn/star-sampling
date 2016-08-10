@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cmath>
-#include "../include/matrix.h"
+#include "matrix.h"
 
 /*
 	class for point2D
@@ -79,7 +79,7 @@ bool point3D::operator > (const point3D &toCmp)const{
 /*
 	class for pointND
 */
-pointND::pointND(size_t *p, int n){
+pointND::pointND(size_t *p, size_t n){
 	coord = p;
 	num = n;
 }
@@ -111,6 +111,7 @@ Matrix::Matrix(size_t r, size_t c, double*pr){
 		}	
 	}
 }
+
 Matrix::~Matrix(){
 	free(SumofCol);
 	free(SumofRow);
@@ -146,7 +147,7 @@ size_t Matrix::randCol(size_t m){
 			return j;
 		}
 	}
-	return (row-1);
+	return (col-1);
 }
 int sgn_foo(double x){
 	return x<0? -1:1;
@@ -167,15 +168,36 @@ double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	double normA = 0.0;
 	double normB = 0.0;
 	for(size_t i = 0; i < row; ++i){
-		normA *= A.element[coord.x * row + i]*A.element[coord.x * row + i];
-		normB *= B.element[coord.x * row + i]*B.element[coord.x * row + i];
-		ans *= (A.element[coord.x * row + i] * \
-			    B.element[coord.y * row + i]);
+		normA *= A.element[coord.x * row + i] * \
+				 A.element[coord.x * row + i];
+		normB *= B.element[coord.x * row + i] * \
+				 B.element[coord.x * row + i];
+		ans += A.element[coord.x * row + i] * \
+			   B.element[coord.y * row + i];
 	}
-	normA = sqrt(normA);
-	normB = sqrt(normB);
-	ans = ans/(normA*normB);
+	ans /= sqrt(normA)*sqrt(normB);
 	return ans;
+}
+double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
+	size_t col = A.col;
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t j = 0; j < col; ++j){
+		temp += A.element[coord.x + j * row] * \
+				B.element[coord.y + j * row];
+	}
+	return temp;
+}
+double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
+	size_t col = A.col;
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t j = 0; j < col; ++j){
+		temp += A.element[coord.x + j * row] * \
+				B.element[coord.y + j * row] * \
+				C.element[coord.z + j * row];
+	}
+	return temp;
 }
 double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
 	size_t row = A.row;
@@ -187,15 +209,6 @@ double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
 	return temp;
 }
 
-double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
-	size_t col = A.col;
-	double temp = 0.0;
-	for(size_t i = 0; i < col; ++i){
-		temp += A.GetElement(coord.x, i) * \
-				B.GetElement(coord.y, i);
-	}
-	return temp;
-}
 double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
 	size_t row = A.row;
 	double temp = 0.0;
@@ -207,22 +220,8 @@ double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
 	return temp;
 }
 
-double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
-	size_t col = A.col;
-	double temp = 0.0;
-	for(size_t i = 0; i < col; ++i){
-		temp += A.GetElement(coord.x, i) * \
-				B.GetElement(coord.y, i) * \
-				C.GetElement(coord.z, i);
-	}
-	return temp;
-}
 double MatrixColMul(const Matrix &A, const Matrix &B, \
 					size_t m, size_t n){
-	if(A.row != B.row){
-		printf("<TrackBack:MatrixColMul>row size doesn't match\n");
-		return 0;
-	}
 	size_t row = A.row;
 	double temp = 0.0;
 	for(size_t i = 0; i < row; ++i){
@@ -236,10 +235,6 @@ double MatrixColMul(const Matrix &A, \
 					const Matrix &B, \
 					const Matrix &C, \
 					size_t m, size_t n, size_t p){
-		if(A.row != B.row || B.row != C.row){
-		printf("<TrackBack:MatrixColMul>row size doesn't match\n");
-		return 0;
-	}
 	size_t row = A.row;
 	double temp = 0.0;
 	for(size_t i = 0; i < row; ++i){

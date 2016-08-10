@@ -1,25 +1,26 @@
 %% maximum budget
-out_dir = './BUDGETMAXIMUM';
+out_dir = './max';
 if(~isdir(out_dir))
     mkdir(out_dir);
 end
 samples = power(10,3:7);
-budget = power(10,3:7);
-TRIAL001(data_path,out_dir,samples,budget,1);
+top_t = power(10,0:3);
+budget = zeros(length(samples),length(top_t));
+for t = 1:length(top_t)
+    budget(:,t) = power(10,3:7);
+end
+turn = 20;
+TRIAL001(data_path,out_dir,budget,samples,top_t,turn,false);
 %% 1k budget
-out_dir = './BUDGET1K';
+out_dir = './budget';
 if(~isdir(out_dir))
     mkdir(out_dir);
 end
 samples = power(10,3:7);
-budget = 1e3*ones(size(samples));
-TRIAL001(data_path,out_dir,samples,budget,20);
-
-%% 10k budget
-out_dir = './BUDGET10K';
-if(~isdir(out_dir))
-    mkdir(out_dir);
+top_t = power(10,0:3);
+budget = zeros(length(samples),length(top_t));
+for t = 1:length(top_t)
+    budget(:,t) = 10*top_t(t);
 end
-samples = power(10,4:7);
-budget = 1e4*ones(size(samples));
-TRIAL001(data_path,out_dir,samples,budget,20);
+turn = 20;
+TRIAL001(data_path,out_dir,budget,samples,top_t,turn,false);

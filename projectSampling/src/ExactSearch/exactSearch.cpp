@@ -14,7 +14,7 @@
 #include <ctime>
 
 #include "mex.h"
-#include "../../include/matrix.h"
+#include "matrix.h"
 
 /*
     Compute the value in coordinate
