@@ -17,7 +17,6 @@ function TRIAL001(data_path, out_dir, ...
     % dataName for data set
     Variables.dataName = '';
     Variables.topValue = [];
-    Variables.topIndexes = [];
     Variables.top_t = top_t;
     Variables.varSize = [size(samples,2),size(Variables.top_t,2)];
     Variables.samples = samples;
@@ -32,14 +31,12 @@ function TRIAL001(data_path, out_dir, ...
     load(fullfile(ml_10m_path,'Tag.Mat'));
     load(fullfile(ml_10m_path,'topValue.Mat'));
     load(fullfile(ml_10m_path,'fullTime.Mat'));
-    load(fullfile(ml_10m_path,'topIndexes.Mat'));
     
     Variables.A = User;
     Variables.B = Movie;
     Variables.C = Tag;
     Variables.topValue = topValue;
     Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
     
     oneDataSet(Variables);
     %% ml-20m
@@ -50,14 +47,12 @@ function TRIAL001(data_path, out_dir, ...
     load(fullfile(ml_20m_path,'Tag.Mat'));
     load(fullfile(ml_20m_path,'topValue.Mat'));
     load(fullfile(ml_20m_path,'fullTime.Mat'));
-    load(fullfile(ml_20m_path,'topIndexes.Mat'));
  
     Variables.A = User;
     Variables.B = Movie;
     Variables.C = Tag;
     Variables.topValue = topValue;
     Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
     
     oneDataSet(Variables);
 
@@ -69,14 +64,12 @@ function TRIAL001(data_path, out_dir, ...
     load(fullfile(ml_2k_path,'Tag.Mat'));
     load(fullfile(ml_2k_path,'topValue.Mat'));
     load(fullfile(ml_2k_path,'fullTime.Mat'));
-    load(fullfile(ml_2k_path,'topIndexes.Mat'));
 
     Variables.A = User;
     Variables.B = Movie;
     Variables.C = Tag;
     Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;   
+    Variables.fullTime = fullTime;   
 
     oneDataSet(Variables);
     %% lastfm 
@@ -87,14 +80,12 @@ function TRIAL001(data_path, out_dir, ...
     load(fullfile(lastfm_path,'Tag.Mat'));
     load(fullfile(lastfm_path,'topValue.Mat'));
     load(fullfile(lastfm_path,'fullTime.Mat'));
-    load(fullfile(lastfm_path,'topIndexes.Mat'));
  
     Variables.A = User;
     Variables.B = Artist;
     Variables.C = Tag;
     Variables.topValue = topValue;
     Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
      
     oneDataSet(Variables);
      
@@ -106,14 +97,12 @@ function TRIAL001(data_path, out_dir, ...
     load(fullfile(delicious_path,'Tag.Mat'));
     load(fullfile(delicious_path,'topValue.Mat'));
     load(fullfile(delicious_path,'fullTime.Mat'));
-    load(fullfile(delicious_path,'topIndexes.Mat'));
  
     Variables.A = User;
     Variables.B = Url;
     Variables.C = Tag;
     Variables.topValue = topValue;
     Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
     
     oneDataSet(Variables);
 
@@ -125,13 +114,13 @@ end
 % V.times(:,j):  time-samples for finding top_t[j]
 
 function [ diamond, central, extension ] = initVar(Variables)
-    varSize = [size(Variables.samples,2),size(Variables.top_t,2)];
-    diamond.recall = zeros(varSize);
-    diamond.times = zeros(varSize);
-    central.recall = zeros(varSize);
-    central.times = zeros(varSize);
+    varSize = [length(Variables.samples),length(Variables.top_t)];
+    diamond.recall   = zeros(varSize);
+    diamond.times    = zeros(varSize);
+    central.recall   = zeros(varSize);
+    central.times    = zeros(varSize);
     extension.recall = zeros(varSize);
-    extension.times = zeros(varSize);
+    extension.times  = zeros(varSize);
 end
 
 function [ diamond, central, extension ] = oneSampling(Variables)
@@ -142,7 +131,7 @@ function [ diamond, central, extension ] = oneSampling(Variables)
     B = Variables.B;
     C = Variables.C;
     for TurnNum = 1:Variables.turn
-        [ diamondTemp, equalityTemp, extensionTemp ] = initVar(Variables);
+        [ diamondTemp, centralTemp, extensionTemp ] = initVar(Variables);
         for i = 1 : length(Variables.samples)
             s = Variables.samples(i);
             for j = 1 : length(Variables.top_t)
@@ -153,20 +142,20 @@ function [ diamond, central, extension ] = oneSampling(Variables)
                 % top-t value
                 value = Variables.topValue(t);
                 [dValue, dTime, ~] = diamondTensor(A',B,C,tp,s,t);
-                [cValue, cTime, ~] = equalitySampling(A,B,C,tp,s,t);
+                [cValue, cTime, ~] = centralSampling(A,B,C,tp,s,t);
                 [eValue, eTime, ~] = extensionSampling(A,B,C,tp,s,t);
                 diamondTemp.recall(i,j) = sum(dValue(1:t) >= value)/t;
-                equalityTemp.recall(i,j) = sum(cValue(1:t) >= value)/t;
+                centralTemp.recall(i,j) = sum(cValue(1:t) >= value)/t;
                 extensionTemp.recall(i,j) = sum(eValue(1:t) >= value)/t;
                 extensionTemp.times(i,j) = eTime;
                 diamondTemp.times(i,j) = dTime;
-                equalityTemp.times(i,j) = cTime;
+                centralTemp.times(i,j) = cTime;
             end
         end
         diamond.recall = diamond.recall + diamondTemp.recall;
         diamond.times = diamond.times + diamondTemp.times;
-        central.recall = central.recall + equalityTemp.recall;
-        central.times = central.times + equalityTemp.times;
+        central.recall = central.recall + centralTemp.recall;
+        central.times = central.times + centralTemp.times;
         extension.recall = extension.recall + extensionTemp.recall;
         extension.times = extension.times + extensionTemp.times;
     end
