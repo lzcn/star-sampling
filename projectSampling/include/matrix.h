@@ -91,11 +91,11 @@ int sgn_foo(double x);
 /*
 	Euclidean distance of two cloumns
 */
-double EuclideanMetric(const point2D, const Matrix &A, const Matrix &B);
+double EuclideanMetric(const point2D&, const Matrix &A, const Matrix &B);
 /*
 	Cosine similarity distance of two cloumns
 */
-double CosineMetric(const point2D, const Matrix &A, const Matrix &B);
+double CosineMetric(const point2D&, const Matrix &A, const Matrix &B);
 /*
 	Inner product of two columns
 */
@@ -137,6 +137,7 @@ double vectors_mul(const pointND &p, std::vector<Matrix*> &vMat);
 	insert p to the list;
 	length: size of list;
 */
+void doInsertReverse(double p, std::list<double> &listTop);
 void doInsert(double p, std::list<double> &listTop);
 void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<point3D> &listIdx);
 

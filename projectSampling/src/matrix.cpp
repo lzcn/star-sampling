@@ -163,19 +163,19 @@ double EuclideanMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	return ans;
 }
 double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
-	double ans = 0.0;
 	size_t row = A.row;
+	double ans = 0.0;
 	double normA = 0.0;
 	double normB = 0.0;
 	for(size_t i = 0; i < row; ++i){
-		normA *= A.element[coord.x * row + i] * \
+		normA += A.element[coord.x * row + i] * \
 				 A.element[coord.x * row + i];
-		normB *= B.element[coord.x * row + i] * \
-				 B.element[coord.x * row + i];
+		normB += B.element[coord.y * row + i] * \
+				 B.element[coord.y * row + i];
 		ans += A.element[coord.x * row + i] * \
 			   B.element[coord.y * row + i];
 	}
-	ans /= sqrt(normA)*sqrt(normB);
+	ans = ans/(sqrt(normA)*sqrt(normB));
 	return ans;
 }
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
@@ -288,7 +288,22 @@ double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
     return ans;
 }
 
-
+void doInsertReverse(double p, std::list<double> &listTop){
+    std::list<double>::iterator itr = listTop.begin();
+    if(p < listTop.front()){
+        listTop.push_front(p);
+        listTop.pop_back();
+        return;
+    }
+    itr++;
+    for(;itr != listTop.end(); ++itr){
+        if(p < (*itr)){
+            listTop.insert(itr,p);
+            listTop.pop_back();
+            return;
+        }
+    }
+}
 void doInsert(double p, std::list<double> &listTop){
     std::list<double>::iterator itr = listTop.begin();
     if(p > listTop.front()){
