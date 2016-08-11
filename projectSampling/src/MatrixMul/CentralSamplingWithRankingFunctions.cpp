@@ -8,11 +8,10 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point2D,double> indValue;
-bool EuclideanComp(const indValue &x, const indValue &y){
+int EuclideanComp(const pidx2d &x, const pidx2d &y){
 	return (x.second < y.second);
 }
-bool CosineComp(const indValue &x, const indValue &y){
+int CosineComp(const pidx2d &x, const pidx2d &y){
 	return (x.second > y.second);
 }
 double EuclideanScore(size_t i, size_t j, size_t r, const Matrix &A, const Matrix &B){
@@ -44,7 +43,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	srand(unsigned(time(NULL)));
 	double (*metric)(const point2D&, const Matrix&B, const Matrix&A);
 	double (*score)(size_t, size_t, size_t, const Matrix&A, const Matrix&B);
-	bool (*comp)(const indValue &x, const indValue &y);
+	int (*comp)(const pidx2d &x, const pidx2d &y);
 	//--------------------
 	// Initialization
 	//--------------------
@@ -161,9 +160,9 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	//sort the values have been sampled
 	//-----------------------------------
 	// for pre sort
-	std::vector<indValue> tempSortedVec;
+	std::vector<pidx2d> tempSortedVec;
 	// sort by actual value
-	std::vector<indValue> sortVec;
+	std::vector<pidx2d> sortVec;
 	// push the value into a vector for sorting
 	std::map<point2D, double>::iterator mapItr;
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
@@ -186,13 +185,10 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	sort(sortVec.begin(), sortVec.end(), comp);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tsec += duration;
-	mexPrintf("%f seconds during computing and sorting\n",duration);
- 
+	*tsec += duration; 
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
-	start = clock();
 	// value
 	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
@@ -202,9 +198,6 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 		//j
 		plhs_pr[m + top_t] = (sortVec[m].first.y + 1);
 	}
-	finish = clock();
-	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	mexPrintf("%f seconds during converting \n",duration);
 	
 	//---------------
 	// free
@@ -212,4 +205,5 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	free(IdxI);
 	free(IdxJ);
 	free(freq_r);
+	free(weight);
 }

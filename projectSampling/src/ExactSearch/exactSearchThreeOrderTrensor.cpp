@@ -14,12 +14,6 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point3D,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-    return (x.second > y.second);
-}
-
 /*
     all matrices must has the same row dimension
     [value, time, indexes] = exactSearchThreeOrderTrensor(A,B,C,top_t)
@@ -30,7 +24,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     clock_t start, finish;
     double *duration;
-    const int rank_size = mxGetM(prhs[0]);
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
     duration = mxGetPr(plhs[1]);
     Matrix A(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
@@ -39,7 +32,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     std::list<double> listTop;
     std::list<point3D> listIdx;
-    std::vector<indValue> tempVec;
+    std::vector<pidx3d> tempVec;
 
     const int top_t = mxGetPr(prhs[3])[0];
     double temp = 0.0;
@@ -54,7 +47,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         tempVec.push_back(std::make_pair(point3D(index.getIdx()[0],index.getIdx()[1],index.getIdx()[2]),temp));
         ++count;
     }
-    sort(tempVec.begin(),tempVec.end(),cmp);
+    sort(tempVec.begin(),tempVec.end(),compgt<pidx3d>);
     for(auto itr = tempVec.begin(); itr != tempVec.end(); ++itr){
         listTop.push_back(itr->second);
         listIdx.push_back(itr->first);

@@ -55,7 +55,13 @@ public:
 	size_t num;
 	size_t *coord;
 };
-
+typedef std::pair<point2D,double> pidx2d;
+typedef std::pair<point3D,double> pidx3d;
+typedef std::pair<pointND,double> pidxNd;
+template <typename Tpair>
+int compgt(const Tpair &v1,const Tpair &v2){
+	return (v1.second > v2.second);
+}
 /*
 	class for Matrix: column major order
 			that is a matrix A will be stored in 

@@ -13,14 +13,6 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point3D,double> indValue;
-
-size_t cmp(const indValue &x,const indValue&y){
-	return x.second > y.second;
-}
-
-
-
 void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs[])
 {
 	clock_t start,finish;
@@ -144,14 +136,14 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	//sort the values have been sampled
 	//-----------------------------------
 
-	std::vector<indValue> tempSortedVec;
-	std::vector<indValue> sortVec;
+	std::vector<pidx3d> tempSortedVec;
+	std::vector<pidx3d> sortVec;
 	std::map<point3D, double>::iterator mapItr;
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	start = clock();
-	sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
+	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
@@ -163,7 +155,7 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 		true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
-	sort(sortVec.begin(), sortVec.end(), cmp);
+	sort(sortVec.begin(), sortVec.end(), compgt<pidx3d>);
 
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;

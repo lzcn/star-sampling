@@ -9,18 +9,9 @@
 #include <cstdio>
 #include <cmath>
 #include <ctime>
+
 #include "mex.h"
 #include "matrix.h"
-
-typedef std::pair<pointND,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-	return x.second > y.second;
-}
-
-
-
-
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -138,7 +129,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		IrJc[pointND(coords[s],MatNum)] += valueSampled;
 	}
 	start = clock();
-	std::vector<indValue> sortVec;
+	std::vector<pidxNd> sortVec;
 	std::map<pointND, double>::iterator mapItr;
 	double true_value = 0;
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
@@ -146,7 +137,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		sortVec.push_back(std::make_pair(mapItr->first,true_value));
 		//sortVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
-	sort(sortVec.begin(),sortVec.end(),cmp);
+	sort(sortVec.begin(),sortVec.end(),compgt<pidxNd>);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	printf("%f seconds during computer and sorting tensor \n",duration);

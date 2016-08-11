@@ -20,25 +20,6 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point3D,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-	return (x.second > y.second);
-}
-
-double getValue(const point3D &coord, \
-				   Matrix &A, \
-				   Matrix &B, \
-				   Matrix &C){
-	double ans = 0;
-    for (size_t k = 0; k < A.col; ++k){
-        ans += A.GetElement(coord.x,k) * \
-        	   B.GetElement(coord.y,k) * \
-        	   C.GetElement(coord.z,k);
-    }
-    return ans;
-}
-
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	clock_t start,finish;
@@ -191,18 +172,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//-----------------------------------
 		//sort the values have been sampled
 		//-----------------------------------
-		std::vector<indValue> tempSortedVec;
+		std::vector<pidx3d> tempSortedVec;
 		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr) {
 			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
-		sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
+		sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
 		
-		std::vector<indValue> sortVec;
+		std::vector<pidx3d> sortVec;
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
-			double true_value = getValue(tempSortedVec[t].first, MatA, MatB, MatC);
+			double true_value = MatrixColMul(tempSortedVec[t].first, MatA, MatB, MatC);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
 		}
-		sort(sortVec.begin(),sortVec.end(),cmp);
+		sort(sortVec.begin(),sortVec.end(),compgt<pidx3d>);
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 		SamplingTime[i] /= CLOCKS_PER_SEC;

@@ -20,12 +20,6 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point3D,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-	return (x.second > y.second);
-}
-
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -175,20 +169,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 		}
 		// pre-sorting the scores
-		std::vector<indValue> tempSortedVec;
+		std::vector<pidx3d> tempSortedVec;
 		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); mapItr++){
 			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
-		sort(tempSortedVec.begin(),tempSortedVec.end(),cmp);
+		sort(tempSortedVec.begin(),tempSortedVec.end(),compgt<pidx3d>);
 		
-		std::vector<indValue> sortVec;
+		std::vector<pidx3d> sortVec;
 		
 		// compute the actual value for top-t' indexes
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
 			double true_value = vectors_mul(tempSortedVec[t].first, MatA, MatB, MatC);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first, true_value));
 		}
-		sort(sortVec.begin(),sortVec.end(),cmp);
+		sort(sortVec.begin(),sortVec.end(),compgt<pidx3d>);
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 		SamplingTime[i] /= CLOCKS_PER_SEC;

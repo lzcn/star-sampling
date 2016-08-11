@@ -29,25 +29,6 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point3D,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-	return (x.second > y.second);
-}
-
-double getValue(const point3D &coord, \
-				   Matrix &A, \
-				   Matrix &B, \
-				   Matrix &C){
-	double ans = 0;
-    for (size_t k = 0; k < A.col; ++k){
-        ans += A.GetElement(coord.x,k) * \
-        	   B.GetElement(coord.y,k) * \
-        	   C.GetElement(coord.z,k);
-    }
-    return ans;
-}
-
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	clock_t start,finish;
@@ -210,16 +191,16 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------------------
 
 	// for pre sort
-	std::vector<indValue> tempSortedVec;
+	std::vector<pidx3d> tempSortedVec;
 	// sort by actual value
-	std::vector<indValue> sortVec;
+	std::vector<pidx3d> sortVec;
 	// push the value into a vector for sorting
 	std::map<point3D, double>::iterator mapItr;
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	start = clock();
-	sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
+	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
@@ -229,11 +210,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double true_value = 0;
 	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = getValue(tempSortedVec[m].first, MatA, MatB, MatC);
+		true_value = MatrixColMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
 	// sort the vector according to the actual value
-	sort(sortVec.begin(), sortVec.end(), cmp);
+	sort(sortVec.begin(), sortVec.end(), compgt<pidx3d>);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
