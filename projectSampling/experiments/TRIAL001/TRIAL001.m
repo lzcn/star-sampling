@@ -125,7 +125,7 @@ end
 % V.times(:,j):  time-samples for finding top_t[j]
 
 function [ diamond, central, extension ] = initVar(Variables)
-    varSize = [size(samples,2),size(Variables.top_t,2)];
+    varSize = [size(Variables.samples,2),size(Variables.top_t,2)];
     diamond.recall = zeros(varSize);
     diamond.times = zeros(varSize);
     central.recall = zeros(varSize);
@@ -149,7 +149,7 @@ function [ diamond, central, extension ] = oneSampling(Variables)
                 % budget
                 tp = Variables.budget(i,j);
                 % top-t
-                t = Variables.t(j);
+                t = Variables.top_t(j);
                 % top-t value
                 value = Variables.topValue(t);
                 [dValue, dTime, ~] = diamondTensor(A',B,C,tp,s,t);

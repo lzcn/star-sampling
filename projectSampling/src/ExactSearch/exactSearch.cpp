@@ -27,7 +27,7 @@ double getValue(const size_t *curIdx, \
     for (int i = 0; i < rank; ++i){
         temp[i] = 1.0;
     }
-    // the feature vector 
+    // the feature vector
     double *feature;
     for (int i = 0; i < numMat; ++i){
         // element-wise multiplication
