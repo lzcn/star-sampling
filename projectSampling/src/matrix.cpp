@@ -150,7 +150,7 @@ size_t Matrix::randCol(size_t m){
 	return (col-1);
 }
 int sgn_foo(double x){
-	return x<0? -1:1;
+	return (x < 0 ? -1:1);
 }
 double EuclideanMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	double ans = 0.0;
@@ -175,7 +175,7 @@ double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 		ans += A.element[coord.x * row + i] * \
 			   B.element[coord.y * row + i];
 	}
-	ans = ans/(sqrt(normA)*sqrt(normB));
+	ans /= (sqrt(normA)*sqrt(normB));
 	return ans;
 }
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
@@ -202,9 +202,9 @@ double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
 double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
 	size_t row = A.row;
 	double temp = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		temp += A.element[coord.x * row + i] * \
-				B.element[coord.y * row + i];
+	for(size_t r = 0; r < row; ++r){
+		temp += A.element[coord.x * row + r] * \
+				B.element[coord.y * row + r];
 	}
 	return temp;
 }
@@ -212,21 +212,21 @@ double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
 double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
 	size_t row = A.row;
 	double temp = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		temp += A.element[coord.x * row + i] * \
-				B.element[coord.y * row + i] * \
-				C.element[coord.z * row + i];
+	for(size_t r = 0; r < row; ++r){
+		temp += A.element[coord.x * row + r] * \
+				B.element[coord.y * row + r] * \
+				C.element[coord.z * row + r];
 	}
 	return temp;
 }
 
 double MatrixColMul(const Matrix &A, const Matrix &B, \
-					size_t m, size_t n){
+					size_t i, size_t j){
 	size_t row = A.row;
 	double temp = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		temp += A.element[m * row + i] * \
-				B.element[n * row + i];
+	for(size_t r = 0; r < row; ++r){
+		temp += A.element[i * row + r] * \
+				B.element[j * row + r];
 	}
 	return temp;
 }
@@ -234,13 +234,13 @@ double MatrixColMul(const Matrix &A, const Matrix &B, \
 double MatrixColMul(const Matrix &A, \
 					const Matrix &B, \
 					const Matrix &C, \
-					size_t m, size_t n, size_t p){
+					size_t i, size_t j, size_t k){
 	size_t row = A.row;
 	double temp = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		temp += A.element[m * row + i] * \
-				B.element[n * row + i] * \
-				C.element[p * row + i];
+	for(size_t r = 0; r < row; ++r){
+		temp += A.element[i * row + r] * \
+				B.element[j * row + r] * \
+				C.element[k * row + r];
 	}
 	return temp;
 }
@@ -248,9 +248,9 @@ double vectors_mul(const point2D &coord, \
 				   Matrix &A, \
 				   Matrix &B){
 	double ans = 0;
-    for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetElement(k,coord.x) * \
-        	   B.GetElement(coord.y,k);
+    for (size_t r = 0; r < A.row; ++r){
+        ans += A.GetElement(r,coord.x) * \
+        	   B.GetElement(coord.y,r);
     }
     return ans;
 }
@@ -259,10 +259,10 @@ double vectors_mul(const point3D &coord, \
 				   Matrix &B, \
 				   Matrix &C){
 	double ans = 0;
-    for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetElement(k,coord.x) * \
-        	   B.GetElement(coord.y,k) * \
-        	   C.GetElement(coord.z,k);
+    for (size_t r = 0; r < A.row; ++r){
+        ans += A.GetElement(r,coord.x) * \
+        	   B.GetElement(coord.y,r) * \
+        	   C.GetElement(coord.z,r);
     }
     return ans;
 }
@@ -299,7 +299,7 @@ void doInsertReverse(double p, std::list<double> &listTop){
     for(;itr != listTop.end(); ++itr){
         if(p < (*itr)){
             listTop.insert(itr,p);
-            listTop.pop_back();
+            listTop.pop_back(); 
             return;
         }
     }
@@ -410,8 +410,8 @@ int vose_alias(size_t s, size_t *dst, \
 
 
 int sample_index(size_t S, size_t *index, \
-				 size_t *IndforI, size_t *IndforK, \
-				 size_t *freq_k, \
+				 size_t *IndforI, size_t *IndforR, \
+				 size_t *freq_r, \
 				 size_t m, size_t n, \
 				 double*pdf, double sum_pdf){
 	// pdf has size (m, n) the sample 
@@ -433,8 +433,8 @@ int sample_index(size_t S, size_t *index, \
 		}
 		index[i] = ind;
 		IndforI[i] = ind % n;
-		IndforK[i] = ind / n;
-		freq_k[IndforK[i]] ++;
+		IndforR[i] = ind / n;
+		freq_r[IndforR[i]] ++;
 	}
 	return 1;
 }
