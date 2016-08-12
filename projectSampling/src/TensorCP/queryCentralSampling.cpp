@@ -1,13 +1,12 @@
 /*
-	Diamond Sampling for queries
-	[value, time] = querySampling(A, B, C, budget, samples, knn)
+	Central Sampling for queries
+	[value, time] = queryCentralSampling(A, B, C, budget, samples, knn)
 		A: size(L1, R)
 		B: size(L2, R)
 		C: size(L3, R)
 	output:
 		value: size(knn, NumQueries)
 		time: size(NumQueries, 1)
-	
 */
 
 #include <vector>
@@ -28,44 +27,36 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	mexPrintf(">> Initialization \n");
-	start = clock();
 	// number of queries
 	const size_t NumQueries = mxGetM(prhs[0]);
 	// rank size
 	const size_t rankSize = mxGetN(prhs[0]);
 	// MatA is a set of queries
+	start = clock();
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
-	
-	// MatB and MatC are two factor matrices
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
 	Matrix MatC(mxGetM(prhs[2]),mxGetN(prhs[2]),mxGetPr(prhs[2]));
+	finish = clock();
 	// budget
 	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
-	
 	// sample number
 	const size_t NumSample = (size_t)mxGetPr(prhs[4])[0];
 	// kNN
 	const size_t knn = (size_t)mxGetPr(prhs[5])[0];
-	
 	// result values for each query
 	plhs[0] = mxCreateDoubleMatrix(knn, NumQueries, mxREAL);
 	double *knnValue = mxGetPr(plhs[0]);
-	
 	// sampling time for each query
 	plhs[1] = mxCreateDoubleMatrix(NumQueries, 1, mxREAL);	
 	double *SamplingTime = mxGetPr(plhs[1]);
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
-	finish = clock();
 	for (size_t i = 0; i < NumQueries; ++i) {
 		SamplingTime[i] = (double)(finish-start)/NumQueries;
 	}
-	mexPrintf(">> Initialization Complete!\n");
-
+	mexPrintf("Central Sampling for Queries: samples - %7.0f, budget - %7.0f, knn - %4.0f", NumSample, budget, knn);
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
-	mexPrintf(">> Start Computing weight!\n");
 	// weight for each query
 	double *weight = (double*)malloc(NumQueries*rankSize*sizeof(double));
 	memset(weight, 0,NumQueries*rankSize*sizeof(double));
@@ -74,36 +65,29 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(SumofW, 0, NumQueries*sizeof(double));
 	// is the query all zeros
 	int *isZero = (int*)malloc(NumQueries*sizeof(int));
-	memset(isZero, 0, NumQueries *sizeof(int));
-	
-	//each query's weight is q'_r = |q_r|*||b_{*r}||_1||c_{*r}||_1
+	memset(isZero, 0, NumQueries *sizeof(int));	
 	for(size_t i = 0; i < NumQueries; ++i){
 		start = clock();
-		SumofW[i] = 0;
 		for (size_t r = 0; r < rankSize; ++r){
-			// for each query do
-			// w_{ir} = |a_{ri}|*||b_{*r}||_1||c_{*r}||_1
-			double tempW = 1;
-			tempW *= abs(MatA.GetElement(i,r));
+			//each query's weight is q'_r = |q_r|*||b_{*r}||_1||c_{*r}||_1
+			double tempW;
+			tempW = abs(MatA.GetElement(i,r));
 			tempW *= MatB.SumofCol[r];
 			tempW *= MatC.SumofCol[r];
 			weight[i*rankSize + r] = tempW;
 			SumofW[i] += tempW;
 		}
-		if(SumofW[i] == 0){
+		if(SumofW[i] == 0)
 			isZero[i] = 1;
-		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 	}
-	mexPrintf(">> Computing weight complete!\n");
 	//-------------------------------
 	// Compute c_r for each query
 	//-------------------------------
-	mexPrintf(">> Start computing c_r!\n");
 	size_t *freq_r = (size_t*)malloc(NumQueries*rankSize*sizeof(size_t));
 	memset(freq_r, 0, NumQueries*rankSize*sizeof(size_t));
-	// c_r has the expectation NumSample*q'_r*/|q'|_1
+	// freq_r[r] has the expectation (NumSample*w_r)/|w|_1
 	for(size_t i = 0; i < NumQueries; ++i){
 		// if is all zero query skip it
 		if(isZero[i] == 1){
@@ -112,7 +96,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		start = clock();
 		for (size_t r = 0; r < rankSize; ++r){
 			double u = (double)rand()/(double)RAND_MAX;
-			// NumSample*q'_r*/|q'|_1
 			double c = (double)NumSample*weight[i*rankSize + r]/SumofW[i];
 			if(u < (c - floor(c)))
 				freq_r[i*rankSize + r] = (size_t)ceil(c);
@@ -126,14 +109,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	// list for sub walk
-	mexPrintf(">> Start Sampling!\n");
 	std::vector<std::vector<point2D>> subWalk(rankSize);
-	for(int i = 0; i < NumQueries; ++i){
+	for(size_t i = 0; i < NumQueries; ++i){
 		if(isZero[i] == 1){
 			continue;
 		}
 		start = clock();
-		// use map IrJc to save the sampled values
 		std::map<point3D, double> IrJc;
 		for(size_t r = 0; r < rankSize; ++r){
 			// Check the list length for each query
@@ -151,7 +132,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					MatC.row, \
 					(MatC.element + r*MatC.row), \
 					MatC.SumofCol[r]);
-				for(int p = 0; p < remain; ++p){
+				for(size_t p = 0; p < remain; ++p){
 					subWalk[r].push_back(point2D(IdxJ[p],IdxK[p]));
 				}
 				free(IdxJ);
@@ -161,8 +142,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				// repeat c_r times to sample indexes j, k
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
-				double valueSampled = 1.0;
-				valueSampled *= sgn_foo(MatA.GetElement(i,r));
+				double valueSampled;
+				valueSampled = sgn_foo(MatA.GetElement(i,r));
 				valueSampled *= sgn_foo(MatB.GetElement(idxJ,r));
 				valueSampled *= sgn_foo(MatC.GetElement(idxK,r));
 				IrJc[point3D(i,idxJ,idxK)] += valueSampled;
@@ -174,7 +155,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
 		sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
-		
 		std::vector<pidx3d> sortVec;
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
 			double true_value = MatrixColMul(tempSortedVec[t].first, MatA, MatB, MatC);
@@ -188,7 +168,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
-	mexPrintf(">> Done!\n");
 	//---------------
 	// free
 	//---------------
