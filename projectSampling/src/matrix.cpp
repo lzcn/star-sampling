@@ -84,13 +84,15 @@ pointND::pointND(size_t *p, size_t n){
 	num = n;
 }
 bool pointND::operator < (const pointND &toCmp)const{
-	for(int i = 0; i < num; ++i){
+	for(size_t i = 0; i < num; ++i){
 		if(coord[i] < toCmp.coord[i]){
 			return true;
 		}else if(coord[i] > toCmp.coord[i]){
 			return false;
 		}
 	}
+	if(coord[num-1] == toCmp.coord[num-1])
+		return false;
 }
 /*
 	class for matrix
@@ -297,12 +299,12 @@ double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
     double ans = 0;
     double *temp = (double*)malloc(rankSize*sizeof(double));
     memset(temp, 1, rankSize*sizeof(double));
-    for (size_t i = 0; i < rankSize; ++i){
-        temp[i] = vMat[0]->GetElement(i,p.coord[0]);
+    for (size_t r = 0; r < rankSize; ++r){
+        temp[r] = vMat[0]->GetElement(r,p.coord[0]);
     }
-    for (size_t i = 1; i < MatNum; ++i){
-        for(size_t j = 0; j < rankSize; ++j){
-            temp[j] *= vMat[i]->GetElement(p.coord[i],j);
+    for (size_t n = 1; n < MatNum; ++n){
+        for(size_t r = 0; r < rankSize; ++r){
+            temp[r] *= vMat[n]->GetElement(p.coord[n],r);
         }
     }
     for (size_t i = 0; i < rankSize; ++i){
@@ -462,7 +464,11 @@ int sample_index(size_t s, size_t *index, \
 	}
 	return 1;
 }
-int binary_sample(size_t s, size_t*idxI, size_t*idxR, size_t *freq, size_t m, size_t n, double*pdf, double sum_pdf){
+int binary_sample(size_t s, \
+				  size_t*idxI, size_t*idxR, \
+				  size_t *freq, \
+				  size_t m, size_t n, \
+				  double*pdf, double sum_pdf){
 	std::vector<double> rand_u;
 	for (size_t i = 0; i < s; ++i){
 		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
@@ -479,7 +485,7 @@ int binary_sample(size_t s, size_t*idxI, size_t*idxR, size_t *freq, size_t m, si
 		}
 		idxI[i] = ind % n;
 		idxR[i] = ind / n;
-		freq[idxR[i]] ++;
+		++freq[idxR[i]];
 	}
 	return 1;
 }

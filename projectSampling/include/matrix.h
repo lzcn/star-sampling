@@ -51,7 +51,7 @@ class pointND
 public:
 	pointND(size_t *p, size_t n);
 	~pointND(){};
-	bool operator < (const pointND &toCmp)const;
+	bool operator<(const pointND &toCmp)const;
 	size_t num;
 	size_t *coord;
 };
