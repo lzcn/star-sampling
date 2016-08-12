@@ -98,10 +98,12 @@ int sgn_foo(double x);
 	Euclidean distance of two cloumns
 */
 double EuclideanMetric(const point2D&, const Matrix &A, const Matrix &B);
+double EuclideanMetricRow(const point2D&, const Matrix &A, const Matrix &B);
 /*
 	Cosine similarity distance of two cloumns
 */
 double CosineMetric(const point2D&, const Matrix &A, const Matrix &B);
+double CosineMetricRow(const point2D&, const Matrix &A, const Matrix &B);
 /*
 	Inner product of two columns
 */

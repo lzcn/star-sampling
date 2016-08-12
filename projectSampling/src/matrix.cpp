@@ -162,6 +162,16 @@ double EuclideanMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	}
 	return ans;
 }
+double EuclideanMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
+	double ans = 0.0;
+	size_t rank = A.col;
+	for(size_t r = 0; r < rank; ++r){
+		double temp = (A.element[r * A.row + coord.x] - \
+					   B.element[r * B.row + coord.y]);
+		ans += temp*temp;
+	}
+	return ans;
+}
 double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	size_t row = A.row;
 	double ans = 0.0;
@@ -178,24 +188,38 @@ double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
 	ans /= (sqrt(normA)*sqrt(normB));
 	return ans;
 }
+double CosineMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
+	size_t rank = A.col;
+	double ans = 0.0;
+	double normA = 0.0;
+	double normB = 0.0;
+	for(size_t r = 0; r < rank; ++r){
+		normA += A.element[r * A.row + coord.x] * \
+				 A.element[r * A.row + coord.x];
+		normB += B.element[r * B.row + coord.y] * \
+				 B.element[r * B.row + coord.y];
+		ans += A.element[r * A.row + coord.x] * \
+			   B.element[r * B.row + coord.y];
+	}
+	ans /= (sqrt(normA)*sqrt(normB));
+	return ans;
+}
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
 	size_t col = A.col;
-	size_t row = A.row;
 	double temp = 0.0;
 	for(size_t j = 0; j < col; ++j){
-		temp += A.element[coord.x + j * row] * \
-				B.element[coord.y + j * row];
+		temp += A.element[coord.x + j * A.row] * \
+				B.element[coord.y + j * B.row];
 	}
 	return temp;
 }
 double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
-	size_t col = A.col;
-	size_t row = A.row;
+	size_t rank = A.col;
 	double temp = 0.0;
-	for(size_t j = 0; j < col; ++j){
-		temp += A.element[coord.x + j * row] * \
-				B.element[coord.y + j * row] * \
-				C.element[coord.z + j * row];
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[coord.x + r * A.row] * \
+				B.element[coord.y + r * B.row] * \
+				C.element[coord.z + r * C.row];
 	}
 	return temp;
 }
@@ -222,11 +246,11 @@ double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
 
 double MatrixColMul(const Matrix &A, const Matrix &B, \
 					size_t i, size_t j){
-	size_t row = A.row;
+	size_t rank = A.row;
 	double temp = 0.0;
-	for(size_t r = 0; r < row; ++r){
-		temp += A.element[i * row + r] * \
-				B.element[j * row + r];
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[i * rank + r] * \
+				B.element[j * rank + r];
 	}
 	return temp;
 }
@@ -235,12 +259,12 @@ double MatrixColMul(const Matrix &A, \
 					const Matrix &B, \
 					const Matrix &C, \
 					size_t i, size_t j, size_t k){
-	size_t row = A.row;
+	size_t rank = A.row;
 	double temp = 0.0;
-	for(size_t r = 0; r < row; ++r){
-		temp += A.element[i * row + r] * \
-				B.element[j * row + r] * \
-				C.element[k * row + r];
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[i * rank + r] * \
+				B.element[j * rank + r] * \
+				C.element[k * rank + r];
 	}
 	return temp;
 }
