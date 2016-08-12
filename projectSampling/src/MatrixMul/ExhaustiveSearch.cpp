@@ -1,3 +1,8 @@
+/*
+    ExhaustiveSearch(A,B,top_t,TYPE)
+    A,B same row dimension
+    TYPE:{"Euclidean","Cosine"}
+*/
 #include <list>
 #include <ctime>
 #include <cstring>
@@ -7,23 +12,12 @@
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
-    
-    //check for proper number of arguments
-    if(nrhs != 4)
-        mexErrMsgIdAndTxt( "MATLAB:revord:invalidNumInputs", "Four input required.");
-    else if(nlhs > 4) 
-        mexErrMsgIdAndTxt( "MATLAB:revord:maxlhs", "Too many output arguments.");
-    if ( mxIsChar(prhs[3]) != 1)
-        mexErrMsgIdAndTxt( "MATLAB:revord:inputNotString", "Fourth Input must be a string.");
-    srand(unsigned(time(NULL)));
-    double *duration;
     clock_t start, finish;
+    double *duration;
     double (*metric)(const point2D&, const Matrix&, const Matrix&);
-    void (*insert)(double p, std::list<double> &listTop);
     //--------------------------
     // initialization
     //--------------------------
-    const size_t rankSize = mxGetM(prhs[0]);
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
     duration = mxGetPr(plhs[1]);
     size_t NumMats = 2;
@@ -34,12 +28,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     type = mxArrayToString(prhs[3]);
     if(!strcmp(type,"Euclidean")){
         metric = EuclideanMetric;
-        insert = doInsertReverse;
-        mexPrintf("Using Ranking Function:Euclidean Metric...\n");
+        mexPrintf("Using Ranking Function:Euclidean Metric...");
     }else if(!strcmp(type,"Cosine")){
         metric = CosineMetric;
-        insert = doInsert;
-        mexPrintf("Using Ranking Function:Cosine Similarity...\n");
+        mexPrintf("Using Ranking Function:Cosine Similarity...");
     }else{
         mexPrintf("No Match Ranking Functions...\n");
         return;
@@ -64,13 +56,21 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     if(!strcmp(type,"Cosine")){
         listTop.reverse();
-    }
-    while(!index.isDone()){
-        double temp = metric(point2D(index.getIdx()[0],index.getIdx()[1]), A, B);
-        if(temp > listTop.back()){
-            insert(temp, listTop);
+        while(!index.isDone()){
+            double temp = metric(point2D(index.getIdx()[0],index.getIdx()[1]), A, B);
+            if(temp > listTop.back()){
+                doInsert(temp, listTop);
+            }
+            ++index;
         }
-        ++index;
+    }else{
+        while(!index.isDone()){
+            double temp = metric(point2D(index.getIdx()[0],index.getIdx()[1]), A, B);
+            if(temp < listTop.back()){
+                doInsertReverse(temp, listTop);
+            }
+            ++index;
+        }
     }
     finish = clock();
     duration[0] = (double)(finish - start)/CLOCKS_PER_SEC;
@@ -81,9 +81,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     plhs[0] = mxCreateDoubleMatrix(length,1,mxREAL);
     double *topValue = mxGetPr(plhs[0]);
     auto itr = listTop.begin();
-    for(int i = 0; i < length; ++i){
+    for(size_t i = 0; i < length; ++i){
         topValue[i] = *itr++;
     }
+    mexPrintf("Done!\n");
     free(max);
     mxFree(type);
 }

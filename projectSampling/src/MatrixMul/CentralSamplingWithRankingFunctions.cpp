@@ -63,12 +63,12 @@ void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs
 	// get the type of ranking functions
 	char *type = mxArrayToString(prhs[5]);
 	if(!strcmp(type,"Euclidean")){
-		metric = EuclideanMetric;
+		metric = EuclideanMetricRow;
 		score = EuclideanScore;
 		comp = EuclideanComp;
 		mexPrintf("Using Ranking Function:Euclidean Metric...\n");
 	}else if(!strcmp(type,"Cosine")){
-		metric = CosineMetric;
+		metric = CosineMetricRow;
 		score = ConsineScore;
 		comp = CosineComp;
 		mexPrintf("Using Ranking Function:Cosine Similarity...\n");
