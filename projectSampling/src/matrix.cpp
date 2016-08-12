@@ -268,8 +268,8 @@ double vectors_mul(const point3D &coord, \
 }
 
 double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
-    int MatNum = p.num;
-    int rankSize = vMat[0]->row;
+    size_t MatNum = p.num;
+    size_t rankSize = vMat[0]->row;
     double ans = 0;
     double *temp = (double*)malloc(rankSize*sizeof(double));
     memset(temp, 1, rankSize*sizeof(double));
@@ -409,16 +409,16 @@ int vose_alias(size_t s, size_t *dst, \
 }
 
 
-int sample_index(size_t S, size_t *index, \
+int sample_index(size_t s, size_t *index, \
 				 size_t *IndforI, size_t *IndforR, \
 				 size_t *freq_r, \
 				 size_t m, size_t n, \
 				 double*pdf, double sum_pdf){
 	// pdf has size (m, n) the sample 
 	// and the sampled index = k * n + i;
-	// First stage : get S uniform random numbers
+	// First stage : get s uniform random numbers
 	std::vector<double> rand_u;
-	for (size_t i = 0; i < S; ++i){
+	for (size_t i = 0; i < s; ++i){
 		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
 	}
 	// Sort the random values
@@ -427,7 +427,7 @@ int sample_index(size_t S, size_t *index, \
 	size_t ind = 0;
 	size_t range = m * n;
 	double sum_prob = pdf[0];
-	for (size_t i = 0; i < S; ++i){
+	for (size_t i = 0; i < s; ++i){
 		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
 			sum_prob += pdf[++ind];
 		}
@@ -438,7 +438,27 @@ int sample_index(size_t S, size_t *index, \
 	}
 	return 1;
 }
-
+int binary_sample(size_t s, size_t*idxI, size_t*idxR, size_t *freq, size_t m, size_t n, double*pdf, double sum_pdf){
+	std::vector<double> rand_u;
+	for (size_t i = 0; i < s; ++i){
+		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
+	}
+	// Sort the random values
+	// It will be sorted according to k then i;
+	sort(rand_u.begin(),rand_u.end());
+	size_t ind = 0;
+	size_t range = m * n;
+	double sum_prob = pdf[0];
+	for (size_t i = 0; i < s; ++i){
+		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
+			sum_prob += pdf[++ind];
+		}
+		idxI[i] = ind % n;
+		idxR[i] = ind / n;
+		freq[idxR[i]] ++;
+	}
+	return 1;
+}
 SubIndex::SubIndex(int n, size_t *max){
 	idxSize = n;
 	maxIdx = max;

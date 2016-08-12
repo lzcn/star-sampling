@@ -177,6 +177,8 @@ int sample_index(size_t S, size_t *index, \
 				 size_t *freq_k, \
 				 size_t m, size_t n, \
 				 double*pdf, double sum_pdf);
+
+int binary_sample(size_t s, size_t*i, size_t*r, size_t *freq, size_t m, size_t n, double*pdf, double sum_pdf);
 /* 
 	SubIndex is used for loop
 	data: 
@@ -186,6 +188,7 @@ int sample_index(size_t S, size_t *index, \
 	method: 
 		+ :add t to current index
 */
+
 class SubIndex{
 public:
 	SubIndex(int n, size_t *max);
