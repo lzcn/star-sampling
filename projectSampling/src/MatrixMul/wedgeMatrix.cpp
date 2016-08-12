@@ -36,9 +36,19 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
 	const size_t budget = (size_t)mxGetPr(prhs[2])[0];
 	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
-	const size_t top_t = (size_t)mxGetPr(prhs[4])[0]
+	const size_t top_t = (size_t)mxGetPr(prhs[4])[0];
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	// value
+	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
+	double *plhs_result = mxGetPr(plhs[0]);
+	// result for time
+	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
+	double *tsec = mxGetPr(plhs[1]);
+	*tsec = duration;
+	// pair
+	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Wedge Sampling:");
 	mexPrintf("- Top-%d ",top_t);
 	mexPrintf("- Samples:%d ",NumSample);
@@ -147,7 +157,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	free(IdxI);
 	free(IdxJ);
 	free(IdxR);
-	free(IdxRp);
 	free(freq_r);
 
 }

@@ -62,8 +62,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// indexes of values
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
-	
-	mexPrintf("Central Sampling: Top-%d - Samples:%d - Budget:%d",top_t,NumSample,budget);
+	mexPrintf("Starting Central Sampling:");
+	mexPrintf("- Top-%d ",top_t);
+	mexPrintf("- Samples:%d ",NumSample);
+	mexPrintf("- Budget:%d ",budget);
+	mexPrintf("......");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
@@ -129,10 +132,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			size_t idxi = IdxI[offset];
 			size_t idxj = IdxJ[offset];
 			size_t idxk = IdxK[offset];
-			double valueSampled = 1.0;
-			valueSampled *= sgn_foo(MatA.GetElement(idxi,r));
-			valueSampled *= sgn_foo(MatB.GetElement(idxj,r));
-			valueSampled *= sgn_foo(MatC.GetElement(idxk,r));
+			double valueSampled = sgn_foo(MatA.GetElement(idxi,r)) \
+								* sgn_foo(MatB.GetElement(idxj,r)) \
+								* sgn_foo(MatC.GetElement(idxk,r));
 			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
 		}
 	}
@@ -160,7 +162,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double true_value = 0;
 	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = MatrixColMul(tempSortedVec[m].first, MatA, MatB, MatC);
+		true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
 	// sort the vector according to the actual value
@@ -183,6 +185,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//k
 		plhs_pr[m + top_t + top_t] = (sortVec[m].first.z + 1);
 	}
+	mexPrintf("Done!");
 	//---------------
 	// free
 	//---------------

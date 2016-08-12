@@ -205,11 +205,11 @@ double CosineMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
 	return ans;
 }
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
-	size_t col = A.col;
+	size_t rank = A.col;
 	double temp = 0.0;
-	for(size_t j = 0; j < col; ++j){
-		temp += A.element[coord.x + j * A.row] * \
-				B.element[coord.y + j * B.row];
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[coord.x + r * A.row] * \
+				B.element[coord.y + r * B.row];
 	}
 	return temp;
 }
