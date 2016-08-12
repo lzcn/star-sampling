@@ -1,10 +1,14 @@
 /*
-    exhaustive search for three order tensor given factor matrices
-    factor matrices has the same row dimension, which is the 
-    dimension of feature vector.
-    [value, time, indexes] = exactSearchThreeOrderTrensor(A,B,C,top_t)
-    it will return the top_t value in the tensor,
-    and the time during computing
+    Exhaustive search for three factor matrices factor matrices.
+    [value, time, cordinates] = exactSearchThreeOrderTrensor(A, B, C, top_t)
+    Inputs:
+        A, B, C: factor matrices, same row dimension.
+        top_t : the top_t value to find
+    Outputs: 
+        value: size (top_t,1)
+        time:
+        coordinates: size (top_t,3)
+    
     Author : Zhi Lu
 */
 
@@ -13,11 +17,6 @@
 
 #include "mex.h"
 #include "matrix.h"
-
-/*
-    all matrices must has the same row dimension
-    [value, time, indexes] = exactSearchThreeOrderTrensor(A,B,C,top_t)
-*/
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
@@ -71,7 +70,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);  
     auto itr = listTop.begin();
     auto itr2 = listIdx.begin();
-    for(int i = 0; i < length; ++i){
+    for(size_t i = 0; i < length; ++i){
         // value
         topValue[i] = (*itr);
         // indexes
