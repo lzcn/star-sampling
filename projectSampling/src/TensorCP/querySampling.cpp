@@ -29,7 +29,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	mexPrintf(">> Initialization\n");
 	// MatA is a set of queries
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	// MatB and MatC are two factor matrices
@@ -50,28 +49,21 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[1] = mxCreateDoubleMatrix(NumQueries, 1, mxREAL);	
 	double *SamplingTime = mxGetPr(plhs[1]);
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
-	mexPrintf(">> Initialization Complete!\n");
 
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
-	mexPrintf(">> Start Computing weight!\n");
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
 	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
 	double *SumofW = (double*)malloc(MatA.col*sizeof(double));
 	memset(SumofW, 0, MatA.col*sizeof(double));
 	int *isZero = (int*)malloc(MatA.col*sizeof(int));
 	memset(isZero, 0, MatA.col*sizeof(int));
-	double tempW = 0;
-	//each query's weight is q'_r = |q_r|*||b_{*r}||_1||c_{*r}||_1
 	for(size_t i = 0; i < MatA.col; ++i){
 		start = clock();
 		SumofW[i] = 0;
 		for (size_t r = 0; r < MatA.row; ++r){
-			// for each query do
-			// w_{ri} = |a_{ri}|*||b_{*r}||_1||c_{*r}||_1
-			tempW = 1;
-			tempW *= abs(MatA.GetElement(r,i));
+			double tempW = abs(MatA.GetElement(r,i));
 			tempW *= MatB.SumofCol[r];
 			tempW *= MatC.SumofCol[r];
 			weight[i*MatA.row + r] = tempW;
@@ -83,14 +75,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 	}
-	mexPrintf(">> Computing weight complete!\n");
 	//-------------------------------
 	// Compute c_r for each query
 	//-------------------------------
-	mexPrintf(">> Start computing c_r!\n");
 	size_t *freq_r = (size_t*)malloc(MatA.row*MatA.col*sizeof(size_t));
 	memset(freq_r, 0, MatA.row*MatA.col*sizeof(size_t));
-	// c_r has the expectation NumSample*q'_r*/|q'|_1
 	for(size_t i = 0; i < MatA.col; ++i){
 		if(isZero[i] == 1){
 			continue;
@@ -98,12 +87,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		start = clock();
 		for (size_t r = 0; r < MatA.row; ++r){
 			double u = (double)rand()/(double)RAND_MAX;
-			// NumSample*q'_r*/|q'|_1
 			double c = (double)NumSample*weight[i*MatA.row + r]/SumofW[i];
 			if(u < (c - floor(c)))
-				freq_r[i*MatA.row + r] = ceil(c);
+				freq_r[i*MatA.row + r] = (size_t)ceil(c);
 			else
-				freq_r[i*MatA.row + r] = floor(c);
+				freq_r[i*MatA.row + r] = (size_t)floor(c);
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
@@ -112,7 +100,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	// list for sub walk
-	mexPrintf(">> Start Sampling!\n");
 	std::vector<std::vector<point2D> > subWalk(MatA.row);
 	size_t *idxRp = (size_t*)malloc((NumSample + MatA.row)*sizeof(size_t));
 	for(int i = 0; i < NumQueries; ++i){
@@ -133,7 +120,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for(size_t r = 0; r < MatA.row; ++r){
 			// Check the list length for each query
 			if(freq_r[i*MatA.row + r] > subWalk[r].size()){
-				int remain = freq_r[i*MatA.row + r] - subWalk[r].size();
+				size_t remain = freq_r[i*MatA.row + r] - subWalk[r].size();
 				size_t *IdxJ = (size_t*)malloc(remain*sizeof(size_t));
 				size_t *IdxK = (size_t*)malloc(remain*sizeof(size_t));
 				memset(IdxJ, 0, remain*sizeof(size_t));
@@ -153,7 +140,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				free(IdxK);
 			}
 			// use the pool of indexes to compute the sampled value
-			for(int m = 0; m < freq_r[i*MatA.row + r]; ++m){
+			for(size_t m = 0; m < freq_r[i*MatA.row + r]; ++m){
 				size_t rp = idxRp[offset];
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
