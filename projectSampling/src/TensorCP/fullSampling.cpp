@@ -166,7 +166,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
 	// compute the ture value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		double true_value = MatrixColMul(tempSortedVec[m].first, MatA, MatB, MatC);
+		double true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
 	sort(sortVec.begin(), sortVec.end(), compgt<pidx3d>);

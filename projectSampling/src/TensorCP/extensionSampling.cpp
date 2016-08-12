@@ -190,7 +190,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double true_value = 0;
 	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = MatrixColMul(tempSortedVec[m].first, MatA, MatB, MatC);
+		true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
 	// sort the vector according to the actual value

@@ -174,7 +174,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		
 		std::vector<pidx3d> sortVec;
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
-			double true_value = MatrixColMul(tempSortedVec[t].first, MatA, MatB, MatC);
+			double true_value = MatrixRowMul(tempSortedVec[t].first, MatA, MatB, MatC);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
 		}
 		sort(sortVec.begin(),sortVec.end(),compgt<pidx3d>);
