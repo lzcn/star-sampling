@@ -16,7 +16,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	start = clock();
 	// input
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
@@ -41,7 +40,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(B, 0, MatB.row*MatB.col*sizeof(double));
 	double *C = (double*)malloc(MatC.row*MatC.col*sizeof(double));
 	memset(C, 0, MatC.row*MatC.col*sizeof(double));
-	
+	start = clock();
 	for(size_t i = 0; i < MatA.row; ++i){
 		for (size_t r = 0; r < MatA.col; ++r){
 			double tempW = 1.0;
@@ -56,8 +55,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for (size_t r = 0; r < MatB.col; ++r){
 			double tempW = 1.0;
 			tempW *= abs(MatB.GetElement(j,r));
-			tempW *= MatB.SumofRow[j];
 			tempW *= MatA.SumofCol[r];
+			tempW *= MatB.SumofRow[j];
 			tempW *= MatC.SumofCol[r];
 			B[r*MatB.row + j] = tempW;
 		}
@@ -66,9 +65,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for (size_t r = 0; r < MatA.col; ++r){
 			double tempW = 1.0;
 			tempW *= abs(MatC.GetElement(k,r));
-			tempW *= MatC.SumofRow[k];
 			tempW *= MatA.SumofCol[r];
 			tempW *= MatB.SumofCol[r];
+			tempW *= MatC.SumofRow[k];
 			C[r*MatC.row + k] = tempW;
 		}
 	}
@@ -78,7 +77,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec = duration;
-	mexPrintf("%f seconds during initialization\n",duration);
 	//-------------------
 	// Sample index r
 	//-------------------
@@ -90,7 +88,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		weight[r] = Aex.SumofCol[r];
 		weight[r] *= Bex.SumofCol[r];
 		weight[r] *= Cex.SumofCol[r];
-		SumofW += weight[r]; 
+		SumofW += weight[r];
 	}
 	size_t *IdxR = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IdxR, 0, NumSample*sizeof(size_t));
@@ -122,13 +120,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f seconds during Sampling\n",duration);
 	//----------------------
 	// Compute Scores
 	//---------------------
 	start = clock();
 	// compute update value and saved in map<pair, value>
-	double valueSampled = 1.0;
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
 	for (int s = 0; s < NumSample ; ++s){
@@ -139,7 +135,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		size_t ri = IdxRi[s];
 		size_t rj = IdxRj[s];
 		size_t rk = IdxRk[s];
-		valueSampled = 1.0;
+		double valueSampled = 1.0;
 		valueSampled *= sgn_foo(MatA.GetElement(i,r));
 		valueSampled *= sgn_foo(MatB.GetElement(j,r));
 		valueSampled *= sgn_foo(MatC.GetElement(k,r));
@@ -158,37 +154,25 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f seconds during Computing\n",duration);
-
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
 	std::vector<pidx3d> tempSortedVec;
 	std::vector<pidx3d> sortVec;
-	std::map<point3D, double>::iterator mapItr;
-	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
+	for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	start = clock();
 	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
-	finish = clock();
-	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tsec += duration;
-	mexPrintf("%f seconds during pre-sorting\n",duration);
-
-	start = clock();
-	double true_value = 0;
+	// compute the ture value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
+		double true_value = MatrixColMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
 	sort(sortVec.begin(), sortVec.end(), compgt<pidx3d>);
-
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tsec += duration;
-	mexPrintf("%f seconds during computing and sorting\n",duration);
- 
+	*tsec += duration; 
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
