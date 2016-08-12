@@ -482,14 +482,16 @@ SubIndex& SubIndex::operator+(const size_t step){
 }
 SubIndex& SubIndex::operator++(){
 	curIdx[0]++;
-	for(int i = 0; i < idxSize; ++i){
-		if(curIdx[i] == maxIdx[i]){
-			curIdx[i] =0;
+	for(size_t i = 0; i < idxSize; ++i){
+		if(curIdx[i] < maxIdx[i]){
+			return *this;
+		}else{
+			curIdx[i] = 0;
 			++curIdx[i + 1];
 		}
-		if(curIdx[idxSize] == 1){
-			doneFlag = true;
-		}
+	}
+	if(curIdx[idxSize] >= 1){
+		doneFlag = true;
 	}
 	return *this;
 }
