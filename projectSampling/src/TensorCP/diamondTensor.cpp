@@ -106,7 +106,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	start = clock();
 	// Do sample S pairs (r, i)
-	sample_index(NumSample, \
+	binary_sample(NumSample, \
 				 IdxI, IdxR, \
 				 freq_r, \
 				 MatA.row, MatA.col, \
@@ -181,6 +181,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//k
 		plhs_pr[m + top_t + top_t] = (sortVec[m].first.z + 1);
 	}
+	mexPrintf("Done\n");
 	//---------------
 	// free
 	//---------------
