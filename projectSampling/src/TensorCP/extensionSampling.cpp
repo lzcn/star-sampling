@@ -61,6 +61,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// indexes of values
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
+	mexPrintf("Starting Extension Sampling:");
+	mexPrintf("- Top-%d ",top_t);
+	mexPrintf("- Samples:%d ",NumSample);
+	mexPrintf("- Budget:%d ",budget);
+	mexPrintf("......");
 	// compute the extension for matrices
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
@@ -208,6 +213,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//k
 		plhs_pr[m + top_t + top_t] = (sortVec[m].first.z + 1);
 	}
+	mexPrintf("Done!\n");
 	//---------------
 	// free
 	//---------------
