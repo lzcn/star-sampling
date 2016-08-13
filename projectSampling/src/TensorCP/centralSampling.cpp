@@ -185,7 +185,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//k
 		plhs_pr[m + top_t + top_t] = (sortVec[m].first.z + 1);
 	}
-	mexPrintf("Done!");
+	mexPrintf("Done!\n");
 	//---------------
 	// free
 	//---------------

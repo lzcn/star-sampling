@@ -29,7 +29,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
 	double *tsec = mxGetPr(plhs[1]);
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
-	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);	
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
+	mexPrintf("Starting Full Sampling:");
+	mexPrintf("- Top-%d ",top_t);
+	mexPrintf("- Samples:%d ",NumSample);
+	mexPrintf("- Budget:%d ",budget);
+	mexPrintf("......");
 	//-------------------------------------
 	// Compute A, B, C
 	//-------------------------------------
@@ -41,30 +46,27 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *C = (double*)malloc(MatC.row*MatC.col*sizeof(double));
 	memset(C, 0, MatC.row*MatC.col*sizeof(double));
 	start = clock();
-	for(size_t i = 0; i < MatA.row; ++i){
-		for (size_t r = 0; r < MatA.col; ++r){
-			double tempW = 1.0;
-			tempW *= abs(MatA.GetElement(i,r));
-			tempW *= MatA.SumofRow[i];
-			tempW *= MatB.SumofCol[r];
+	for (size_t r = 0; r < MatA.col; ++r){
+			for(size_t i = 0; i < MatA.row; ++i){
+			double tempW = abs(MatA.GetElement(i,r)) \
+			tempW *= MatA.SumofRow[i] \
+			tempW *= MatB.SumofCol[r] \
 			tempW *= MatC.SumofCol[r];
 			A[r*MatA.row + i] = tempW;
 		}
 	}
-	for(size_t j = 0; j < MatB.row; ++j){
-		for (size_t r = 0; r < MatB.col; ++r){
-			double tempW = 1.0;
-			tempW *= abs(MatB.GetElement(j,r));
+	for (size_t r = 0; r < MatB.col; ++r){
+		for(size_t j = 0; j < MatB.row; ++j){
+			double tempW = abs(MatB.GetElement(j,r));
 			tempW *= MatA.SumofCol[r];
 			tempW *= MatB.SumofRow[j];
 			tempW *= MatC.SumofCol[r];
 			B[r*MatB.row + j] = tempW;
 		}
 	}
-	for(size_t k = 0; k < MatA.row; ++k){
-		for (size_t r = 0; r < MatA.col; ++r){
-			double tempW = 1.0;
-			tempW *= abs(MatC.GetElement(k,r));
+	for (size_t r = 0; r < MatC.col; ++r){
+		for(size_t k = 0; k < MatC.row; ++k){
+			double tempW = abs(MatC.GetElement(k,r));
 			tempW *= MatA.SumofCol[r];
 			tempW *= MatB.SumofCol[r];
 			tempW *= MatC.SumofRow[k];
@@ -108,13 +110,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(IdxRj, 0, NumSample*sizeof(size_t));
 	size_t *IdxRk = (size_t*)malloc(NumSample*sizeof(size_t));
 	memset(IdxRk, 0, NumSample*sizeof(size_t));
-	for (size_t s = 0; s < NumSample; ++s){
+	for(size_t s = 0; s < NumSample; ++s){
 		size_t r = IdxR[s];
 		IdxI[s] = Aex.randRow(r);
-		IdxRi[s] = Aex.randCol(IdxI[s]);
 		IdxJ[s] = Bex.randRow(r);
-		IdxRj[s] = Bex.randCol(IdxJ[s]);
 		IdxK[s] = Cex.randRow(r);
+		IdxRi[s] = Aex.randCol(IdxI[s]);
+		IdxRj[s] = Bex.randCol(IdxJ[s]);
 		IdxRk[s] = Cex.randCol(IdxK[s]);
 	}
 	finish = clock();
@@ -127,7 +129,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
-	for (int s = 0; s < NumSample ; ++s){
+	for(size_t s = 0; s < NumSample ; ++s){
 		size_t i = IdxI[s];
 		size_t j = IdxJ[s];
 		size_t k = IdxK[s];
@@ -135,8 +137,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		size_t ri = IdxRi[s];
 		size_t rj = IdxRj[s];
 		size_t rk = IdxRk[s];
-		double valueSampled = 1.0;
-		valueSampled *= sgn_foo(MatA.GetElement(i,r));
+		double valueSampled = sgn_foo(MatA.GetElement(i,r));
 		valueSampled *= sgn_foo(MatB.GetElement(j,r));
 		valueSampled *= sgn_foo(MatC.GetElement(k,r));
 		valueSampled *= sgn_foo(MatA.GetElement(i,ri));
@@ -186,6 +187,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//k
 		plhs_pr[m + top_t + top_t] = (sortVec[m].first.z + 1);
 	}
+	mexPrintf("Done\n");
 	//---------------
 	// free
 	//---------------
