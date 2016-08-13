@@ -157,21 +157,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			size_t idxj = IdxJ[offset];
 			size_t idxk = IdxK[offset];
 			size_t idxr = r / rankSize;
-			double valueSampled = 1.0;
-			valueSampled *= sgn_foo(MatA.GetElement(idxi,idxr));
-			valueSampled *= sgn_foo(MatB.GetElement(idxj,idxr));
-			valueSampled *= sgn_foo(MatC.GetElement(idxk,idxr));
+			double valueSampled = sgn_foo(MatA.GetElement(idxi,idxr)) \
+								* sgn_foo(MatB.GetElement(idxj,idxr)) \
+								* sgn_foo(MatC.GetElement(idxk,idxr));
 			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
 		}
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
-
 	// for pre sort
 	std::vector<pidx3d> tempSortedVec;
 	// sort by actual value
@@ -187,10 +184,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	*tsec += duration;
 
 	start = clock();
-	double true_value = 0;
 	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
+		double true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
 	// sort the vector according to the actual value
@@ -198,7 +194,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
- 
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
