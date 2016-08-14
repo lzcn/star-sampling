@@ -36,7 +36,7 @@ double ConsineScore(size_t i, size_t j, size_t r, const Matrix &A, const Matrix 
 	return (sgn_foo(a*b)/(sqrt(normA)*sqrt(normB)));
 }
 
-void mexFunction (size_t nlhs, mxArray *plhs[], size_t nrhs, const mxArray *prhs[])
+void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	clock_t start,finish;
 	double duration;
