@@ -16,22 +16,23 @@ int CosineComp(const pidx2d &x, const pidx2d &y){
 }
 double EuclideanScore(size_t i, size_t j, size_t r, const Matrix &A, const Matrix &B){
 	size_t row = A.row;
-	double a = A.element[i * row + r];
-	double b = B.element[j * row + r];
+	double a = A.element[r * A.row + i];
+	double b = B.element[r * B.row + j];
 	return ((a-b)*(a-b)/abs(a*b));
 	
 }
 double ConsineScore(size_t i, size_t j, size_t r, const Matrix &A, const Matrix &B){
 	size_t row = A.row;
-	double a = A.element[i * row + r];
-	double b = B.element[j * row + r];
+	size_t rank = A.col;
+	double a = A.element[r * A.row + i];
+	double b = B.element[r * B.row + j];
 	double normA = 0.0;
 	double normB = 0.0;
-	for(size_t t = 0; t < row; ++t){
-		normA += A.element[i * row + r] * \
-				 A.element[i * row + r];
-		normB += B.element[j * row + r] * \
-				 B.element[j * row + r];
+	for(size_t t = 0; t < rank; ++t){
+		normA += A.element[t * A.row + i] * \
+				 A.element[t * A.row + i];
+		normB += B.element[t * B.row + j] * \
+				 B.element[t * B.row + j];
 	}
 	return (sgn_foo(a*b)/(sqrt(normA)*sqrt(normB)));
 }
