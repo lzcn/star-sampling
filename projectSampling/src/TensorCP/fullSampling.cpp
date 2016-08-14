@@ -32,8 +32,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Full Sampling:");
 	mexPrintf("- Top-%d ",top_t);
-	mexPrintf("- Samples:%d ",NumSample);
-	mexPrintf("- Budget:%d ",budget);
+	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
+	mexPrintf("- Budget:1e%d ",(int)log10(budget));
 	mexPrintf("......");
 	//-------------------------------------
 	// Compute A, B, C

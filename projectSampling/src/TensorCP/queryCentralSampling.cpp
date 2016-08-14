@@ -50,8 +50,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
 	mexPrintf("Central Sampling for Queries");
 	mexPrintf("- Top-%d ",knn);
-	mexPrintf("- Samples:%d ",NumSample);
-	mexPrintf("- Budget:%d ",budget);
+	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
+	mexPrintf("- Budget:1e%d ",(int)log10(budget));
 	mexPrintf("......");
 	//-------------------------------------
 	// Compute weight
