@@ -5,107 +5,36 @@
 % budget: the meaning of budget(i,j): 
 %    the budget for top_t(j) under samplie numbers samples[i]
 % turn: run how many turns
-function TRIAL001(data_path, out_dir, ...
+function TRIAL001(paths, dataName, out_dir, ...
                 budget, samples, top_t, ...
                 turn, draw)
 
     % set variables
-    % if draw picture for accuracy and time
     Variables.draw = draw;
-    % the full time  exhaustive search cots
     Variables.fullTime = 0;
-    % dataName for data set
     Variables.dataName = '';
     Variables.topValue = [];
     Variables.top_t = top_t;
-    Variables.varSize = [size(samples,2),size(Variables.top_t,2)];
     Variables.samples = samples;
     Variables.budget = budget;
     Variables.turn = turn;
     Variables.out_dir = out_dir;
-    %% ml-10m
-    Variables.dataName = 'ml-10m';
-    ml_10m_path = fullfile(data_path,'MovieLens','ml-10m');
-    load(fullfile(ml_10m_path,'User.Mat'));
-    load(fullfile(ml_10m_path,'Movie.Mat'));
-    load(fullfile(ml_10m_path,'Tag.Mat'));
-    load(fullfile(ml_10m_path,'topValue.Mat'));
-    load(fullfile(ml_10m_path,'fullTime.Mat'));
-    
-    Variables.A = User;
-    Variables.B = Movie;
-    Variables.C = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    
-    oneDataSet(Variables);
-    %% ml-20m
-    Variables.dataName = 'ml-20m';
-    ml_20m_path = fullfile(data_path,'MovieLens','ml-20m');
-    load(fullfile(ml_20m_path,'User.Mat'));
-    load(fullfile(ml_20m_path,'Movie.Mat'));
-    load(fullfile(ml_20m_path,'Tag.Mat'));
-    load(fullfile(ml_20m_path,'topValue.Mat'));
-    load(fullfile(ml_20m_path,'fullTime.Mat'));
- 
-    Variables.A = User;
-    Variables.B = Movie;
-    Variables.C = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    
-    oneDataSet(Variables);
-
-    %% ml-2k
-    Variables.dataName = 'ml-2k';
-    ml_2k_path = fullfile(data_path, 'hetrec2011-movielens-2k-v2');
-    load(fullfile(ml_2k_path,'User.Mat'));
-    load(fullfile(ml_2k_path,'Movie.Mat'));
-    load(fullfile(ml_2k_path,'Tag.Mat'));
-    load(fullfile(ml_2k_path,'topValue.Mat'));
-    load(fullfile(ml_2k_path,'fullTime.Mat'));
-
-    Variables.A = User;
-    Variables.B = Movie;
-    Variables.C = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;   
-
-    oneDataSet(Variables);
-    %% lastfm 
-    Variables.dataName = 'lastfm';
-    lastfm_path = fullfile(data_path, 'hetrec2011-lastfm-2k');
-    load(fullfile(lastfm_path,'User.Mat'));
-    load(fullfile(lastfm_path,'Artist.Mat'));
-    load(fullfile(lastfm_path,'Tag.Mat'));
-    load(fullfile(lastfm_path,'topValue.Mat'));
-    load(fullfile(lastfm_path,'fullTime.Mat'));
- 
-    Variables.A = User;
-    Variables.B = Artist;
-    Variables.C = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-     
-    oneDataSet(Variables);
-     
-    %% delicious
-    Variables.dataName = 'delicious';
-    delicious_path = fullfile(data_path, 'hetrec2011-delicious-2k');
-    load(fullfile(delicious_path,'User.Mat'));
-    load(fullfile(delicious_path,'Url.Mat'));
-    load(fullfile(delicious_path,'Tag.Mat'));
-    load(fullfile(delicious_path,'topValue.Mat'));
-    load(fullfile(delicious_path,'fullTime.Mat'));
- 
-    Variables.A = User;
-    Variables.B = Url;
-    Variables.C = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    
-    oneDataSet(Variables);
-
+    for n = 1:length(paths)
+        path = paths{n};
+        % load data
+        Variables.dataName = dataName{n};
+        load(fullfile(path,'User.Mat'));
+        load(fullfile(path,'Item.Mat'));
+        load(fullfile(path,'Tag.Mat'));
+        load(fullfile(path,'topValue.Mat'));
+        load(fullfile(path,'fullTime.Mat'));
+        Variables.A = User;
+        Variables.B = Item;
+        Variables.C = Tag;
+        Variables.topValue = topValue;
+        Variables.fullTime = fullTime;
+        oneDataSet(Variables);
+    end
 end
 
 % V.recall(i,j): the recall for finding top_t[j] under samples[i]
