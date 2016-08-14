@@ -48,9 +48,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	for (size_t r = 0; r < MatA.col; ++r){
 			for(size_t i = 0; i < MatA.row; ++i){
-			double tempW = abs(MatA.GetElement(i,r)) \
-			tempW *= MatA.SumofRow[i] \
-			tempW *= MatB.SumofCol[r] \
+			double tempW = abs(MatA.GetElement(i,r));
+			tempW *= MatA.SumofRow[i];
+			tempW *= MatB.SumofCol[r];
 			tempW *= MatC.SumofCol[r];
 			A[r*MatA.row + i] = tempW;
 		}
