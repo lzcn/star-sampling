@@ -141,7 +141,7 @@ function [ diamond, central, extension ] = oneSampling(Variables)
                 t = Variables.top_t(j);
                 % top-t value
                 value = Variables.topValue(t);
-                [dValue, dTime, ~] = diamondTensor(A',B,C,tp,s,t);
+                [dValue, dTime, ~] = diamondSampling(A',B,C,tp,s,t);
                 [cValue, cTime, ~] = centralSampling(A,B,C,tp,s,t);
                 [eValue, eTime, ~] = extensionSampling(A,B,C,tp,s,t);
                 diamondTemp.recall(i,j) = sum(dValue(1:t) >= value)/t;
