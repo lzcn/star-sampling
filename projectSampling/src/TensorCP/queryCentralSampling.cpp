@@ -53,54 +53,38 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (size_t i = 0; i < NumQueries; ++i) {
 		SamplingTime[i] = (double)(finish-start)/NumQueries;
 	}
-	mexPrintf("Central Sampling for Queries: samples - %7.0f, budget - %7.0f, knn - %4.0f", NumSample, budget, knn);
+	mexPrintf("Central Sampling for Queries");
+	mexPrintf("- Top-%d ",knn);
+	mexPrintf("- Samples:%d ",NumSample);
+	mexPrintf("- Budget:%d ",budget);
+	mexPrintf("......");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
 	// weight for each query
-	double *weight = (double*)malloc(NumQueries*rankSize*sizeof(double));
-	memset(weight, 0,NumQueries*rankSize*sizeof(double));
-	// sum of weight for each query
-	double *SumofW = (double*)malloc(NumQueries*sizeof(double));
-	memset(SumofW, 0, NumQueries*sizeof(double));
-	// is the query all zeros
-	int *isZero = (int*)malloc(NumQueries*sizeof(int));
-	memset(isZero, 0, NumQueries *sizeof(int));	
-	for(size_t i = 0; i < NumQueries; ++i){
-		start = clock();
-		for (size_t r = 0; r < rankSize; ++r){
-			//each query's weight is q'_r = |q_r|*||b_{*r}||_1||c_{*r}||_1
-			double tempW;
-			tempW = abs(MatA.GetElement(i,r));
-			tempW *= MatB.SumofCol[r];
-			tempW *= MatC.SumofCol[r];
-			weight[i*rankSize + r] = tempW;
-			SumofW[i] += tempW;
-		}
-		if(SumofW[i] == 0)
-			isZero[i] = 1;
-		finish = clock();
-		SamplingTime[i] += (double)(finish-start);
-	}
-	//-------------------------------
-	// Compute c_r for each query
-	//-------------------------------
-	size_t *freq_r = (size_t*)malloc(NumQueries*rankSize*sizeof(size_t));
-	memset(freq_r, 0, NumQueries*rankSize*sizeof(size_t));
+	double *weight = (double*)malloc(rankSize*sizeof(double));
+	memset(weight, 0,rankSize*sizeof(double));
+	size_t *freq_r = (size_t*)malloc(rankSize*sizeof(size_t));
+	memset(freq_r, 0, rankSize*sizeof(size_t));
 	// freq_r[r] has the expectation (NumSample*w_r)/|w|_1
 	for(size_t i = 0; i < NumQueries; ++i){
-		// if is all zero query skip it
-		if(isZero[i] == 1){
-			continue;
-		}
+		double SumofW = 0.0;
 		start = clock();
 		for (size_t r = 0; r < rankSize; ++r){
+			weight[r] = abs(MatA.GetElement(i,r));
+			weight[r] *= MatB.SumofCol[r];
+			weight[r] *= MatC.SumofCol[r];
+			SumofW += weight[r];
+		}
+		if(SumofW == 0)
+			continue;
+		for (size_t r = 0; r < rankSize; ++r){
 			double u = (double)rand()/(double)RAND_MAX;
-			double c = (double)NumSample*weight[i*rankSize + r]/SumofW[i];
+			double c = (double)NumSample*weight[r]/SumofW;
 			if(u < (c - floor(c)))
-				freq_r[i*rankSize + r] = (size_t)ceil(c);
+				freq_r[r] = (size_t)ceil(c);
 			else
-				freq_r[i*rankSize + r] = (size_t)floor(c);
+				freq_r[r] = (size_t)floor(c);
 		}
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
@@ -111,15 +95,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// list for sub walk
 	std::vector<std::vector<point2D>> subWalk(rankSize);
 	for(size_t i = 0; i < NumQueries; ++i){
-		if(isZero[i] == 1){
-			continue;
-		}
 		start = clock();
 		std::map<point3D, double> IrJc;
 		for(size_t r = 0; r < rankSize; ++r){
 			// Check the list length for each query
-			if(freq_r[i*rankSize + r] > subWalk[r].size()){
-				size_t remain = freq_r[i*rankSize + r] - subWalk[r].size();
+			if(freq_r[r] > subWalk[r].size()){
+				size_t remain = freq_r[r] - subWalk[r].size();
 				size_t *IdxJ = (size_t*)malloc(remain*sizeof(size_t));
 				size_t *IdxK = (size_t*)malloc(remain*sizeof(size_t));
 				memset(IdxJ, 0, remain*sizeof(size_t));
@@ -138,7 +119,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				free(IdxJ);
 				free(IdxK);
 			}
-			for(size_t m = 0; m < freq_r[i*rankSize + r]; ++m){
+			for(size_t m = 0; m < freq_r[r]; ++m){
 				// repeat c_r times to sample indexes j, k
 				size_t idxJ = (subWalk[r])[m].x;
 				size_t idxK = (subWalk[r])[m].y;
@@ -168,11 +149,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
+	mexPrintf("Done!");
 	//---------------
 	// free
 	//---------------
 	free(weight);
-	free(isZero);
 	free(freq_r);
-	free(SumofW);
 }
