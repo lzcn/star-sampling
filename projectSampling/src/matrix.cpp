@@ -1,5 +1,6 @@
 #include <cstdio>
-#include "../include/matrix.h"
+#include <cmath>
+#include "matrix.h"
 
 /*
 	class for point2D
@@ -78,18 +79,20 @@ bool point3D::operator > (const point3D &toCmp)const{
 /*
 	class for pointND
 */
-pointND::pointND(size_t *p, int n){
+pointND::pointND(size_t *p, size_t n){
 	coord = p;
 	num = n;
 }
 bool pointND::operator < (const pointND &toCmp)const{
-	for(int i = 0; i < num; ++i){
+	for(size_t i = 0; i < num; ++i){
 		if(coord[i] < toCmp.coord[i]){
 			return true;
 		}else if(coord[i] > toCmp.coord[i]){
 			return false;
 		}
 	}
+	if(coord[num-1] == toCmp.coord[num-1])
+		return false;
 }
 /*
 	class for matrix
@@ -100,18 +103,20 @@ Matrix::Matrix(size_t r, size_t c, double*pr){
 	element = pr;
 	SumofCol = (double*)malloc(col*sizeof(double));
 	memset(SumofCol, 0, col*sizeof(double));
+	SumofRow = (double*)malloc(row*sizeof(double));
+	memset(SumofRow, 0, row*sizeof(double));
 	//get the absolute sum of each columns
-	double temp = 0.0;
 	for(size_t i = 0; i < col; ++i){
-		temp = 0.0;
 		for(size_t j = 0; j < row; ++j){
-			temp += abs(element[i*row + j]);
-		}
-		SumofCol[i] = temp;
-		}
+			SumofCol[i] += abs(element[i*row + j]);
+			SumofRow[j] += abs(element[i*row + j]);
+		}	
 	}
+}
+
 Matrix::~Matrix(){
 	free(SumofCol);
+	free(SumofRow);
 }
 
 double Matrix::GetElement(size_t i, size_t j){
@@ -134,22 +139,120 @@ size_t Matrix::randRow(size_t n){
 	}
 	return (row-1);
 }
-
+size_t Matrix::randCol(size_t m){
+	double x,temp;
+	x = SumofRow[m]*((double)rand()/(double)RAND_MAX);
+	temp = 0;
+	for (size_t j = 0; j < col; ++j){
+		temp += abs(element[m + j*row]);
+		if(x <= temp){ 
+			return j;
+		}
+	}
+	return (col-1);
+}
 int sgn_foo(double x){
-	return x<0? -1:1;
+	return (x < 0 ? -1:1);
+}
+double EuclideanMetric(const point2D &coord, const Matrix &A, const Matrix &B){
+	double ans = 0.0;
+	size_t row = A.row;
+	for(size_t i = 0; i < row; ++i){
+		double temp = (A.element[coord.x * row + i] - \
+					   B.element[coord.y * row + i]);
+		ans += temp*temp;
+	}
+	return ans;
+}
+double EuclideanMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
+	double ans = 0.0;
+	size_t rank = A.col;
+	for(size_t r = 0; r < rank; ++r){
+		double temp = (A.element[r * A.row + coord.x] - \
+					   B.element[r * B.row + coord.y]);
+		ans += temp*temp;
+	}
+	return ans;
+}
+double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
+	size_t row = A.row;
+	double ans = 0.0;
+	double normA = 0.0;
+	double normB = 0.0;
+	for(size_t i = 0; i < row; ++i){
+		normA += A.element[coord.x * row + i] * \
+				 A.element[coord.x * row + i];
+		normB += B.element[coord.y * row + i] * \
+				 B.element[coord.y * row + i];
+		ans += A.element[coord.x * row + i] * \
+			   B.element[coord.y * row + i];
+	}
+	ans /= (sqrt(normA)*sqrt(normB));
+	return ans;
+}
+double CosineMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
+	size_t rank = A.col;
+	double ans = 0.0;
+	double normA = 0.0;
+	double normB = 0.0;
+	for(size_t r = 0; r < rank; ++r){
+		normA += A.element[r * A.row + coord.x] * \
+				 A.element[r * A.row + coord.x];
+		normB += B.element[r * B.row + coord.y] * \
+				 B.element[r * B.row + coord.y];
+		ans += A.element[r * A.row + coord.x] * \
+			   B.element[r * B.row + coord.y];
+	}
+	ans /= (sqrt(normA)*sqrt(normB));
+	return ans;
+}
+double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
+	size_t rank = A.col;
+	double temp = 0.0;
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[coord.x + r * A.row] * \
+				B.element[coord.y + r * B.row];
+	}
+	return temp;
+}
+double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
+	size_t rank = A.col;
+	double temp = 0.0;
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[coord.x + r * A.row] * \
+				B.element[coord.y + r * B.row] * \
+				C.element[coord.z + r * C.row];
+	}
+	return temp;
+}
+double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t r = 0; r < row; ++r){
+		temp += A.element[coord.x * row + r] * \
+				B.element[coord.y * row + r];
+	}
+	return temp;
+}
+
+double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
+	size_t row = A.row;
+	double temp = 0.0;
+	for(size_t r = 0; r < row; ++r){
+		temp += A.element[coord.x * row + r] * \
+				B.element[coord.y * row + r] * \
+				C.element[coord.z * row + r];
+	}
+	return temp;
 }
 
 double MatrixColMul(const Matrix &A, const Matrix &B, \
-					size_t m, size_t n){
-	if(A.row != B.row){
-		printf("<TrackBack:MatrixColMul>row size doesn't match\n");
-		return 0;
-	}
-	size_t row = A.row;
+					size_t i, size_t j){
+	size_t rank = A.row;
 	double temp = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		temp += A.element[m * row + i] * \
-				B.element[n * row + i];
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[i * rank + r] * \
+				B.element[j * rank + r];
 	}
 	return temp;
 }
@@ -157,17 +260,13 @@ double MatrixColMul(const Matrix &A, const Matrix &B, \
 double MatrixColMul(const Matrix &A, \
 					const Matrix &B, \
 					const Matrix &C, \
-					size_t m, size_t n, size_t p){
-		if(A.row != B.row || B.row != C.row){
-		printf("<TrackBack:MatrixColMul>row size doesn't match\n");
-		return 0;
-	}
-	size_t row = A.row;
+					size_t i, size_t j, size_t k){
+	size_t rank = A.row;
 	double temp = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		temp += A.element[m * row + i] * \
-				B.element[n * row + i] * \
-				C.element[p * row + i];
+	for(size_t r = 0; r < rank; ++r){
+		temp += A.element[i * rank + r] * \
+				B.element[j * rank + r] * \
+				C.element[k * rank + r];
 	}
 	return temp;
 }
@@ -175,9 +274,9 @@ double vectors_mul(const point2D &coord, \
 				   Matrix &A, \
 				   Matrix &B){
 	double ans = 0;
-    for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetElement(k,coord.x) * \
-        	   B.GetElement(coord.y,k);
+    for (size_t r = 0; r < A.row; ++r){
+        ans += A.GetElement(r,coord.x) * \
+        	   B.GetElement(coord.y,r);
     }
     return ans;
 }
@@ -186,26 +285,26 @@ double vectors_mul(const point3D &coord, \
 				   Matrix &B, \
 				   Matrix &C){
 	double ans = 0;
-    for (size_t k = 0; k < A.row; ++k){
-        ans += A.GetElement(k,coord.x) * \
-        	   B.GetElement(coord.y,k) * \
-        	   C.GetElement(coord.z,k);
+    for (size_t r = 0; r < A.row; ++r){
+        ans += A.GetElement(r,coord.x) * \
+        	   B.GetElement(coord.y,r) * \
+        	   C.GetElement(coord.z,r);
     }
     return ans;
 }
 
 double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
-    int MatNum = p.num;
-    int rankSize = vMat[0]->row;
+    size_t MatNum = p.num;
+    size_t rankSize = vMat[0]->row;
     double ans = 0;
     double *temp = (double*)malloc(rankSize*sizeof(double));
     memset(temp, 1, rankSize*sizeof(double));
-    for (size_t i = 0; i < rankSize; ++i){
-        temp[i] = vMat[0]->GetElement(i,p.coord[0]);
+    for (size_t r = 0; r < rankSize; ++r){
+        temp[r] = vMat[0]->GetElement(r,p.coord[0]);
     }
-    for (size_t i = 1; i < MatNum; ++i){
-        for(size_t j = 0; j < rankSize; ++j){
-            temp[j] *= vMat[i]->GetElement(p.coord[i],j);
+    for (size_t n = 1; n < MatNum; ++n){
+        for(size_t r = 0; r < rankSize; ++r){
+            temp[r] *= vMat[n]->GetElement(p.coord[n],r);
         }
     }
     for (size_t i = 0; i < rankSize; ++i){
@@ -215,7 +314,22 @@ double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat){
     return ans;
 }
 
-
+void doInsertReverse(double p, std::list<double> &listTop){
+    std::list<double>::iterator itr = listTop.begin();
+    if(p < listTop.front()){
+        listTop.push_front(p);
+        listTop.pop_back();
+        return;
+    }
+    itr++;
+    for(;itr != listTop.end(); ++itr){
+        if(p < (*itr)){
+            listTop.insert(itr,p);
+            listTop.pop_back(); 
+            return;
+        }
+    }
+}
 void doInsert(double p, std::list<double> &listTop){
     std::list<double>::iterator itr = listTop.begin();
     if(p > listTop.front()){
@@ -321,16 +435,16 @@ int vose_alias(size_t s, size_t *dst, \
 }
 
 
-int sample_index(size_t S, size_t *index, \
-				 size_t *IndforI, size_t *IndforK, \
-				 size_t *freq_k, \
+int sample_index(size_t s, size_t *index, \
+				 size_t *IndforI, size_t *IndforR, \
+				 size_t *freq_r, \
 				 size_t m, size_t n, \
 				 double*pdf, double sum_pdf){
 	// pdf has size (m, n) the sample 
 	// and the sampled index = k * n + i;
-	// First stage : get S uniform random numbers
+	// First stage : get s uniform random numbers
 	std::vector<double> rand_u;
-	for (size_t i = 0; i < S; ++i){
+	for (size_t i = 0; i < s; ++i){
 		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
 	}
 	// Sort the random values
@@ -339,18 +453,42 @@ int sample_index(size_t S, size_t *index, \
 	size_t ind = 0;
 	size_t range = m * n;
 	double sum_prob = pdf[0];
-	for (size_t i = 0; i < S; ++i){
+	for (size_t i = 0; i < s; ++i){
 		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
 			sum_prob += pdf[++ind];
 		}
 		index[i] = ind;
 		IndforI[i] = ind % n;
-		IndforK[i] = ind / n;
-		freq_k[IndforK[i]] ++;
+		IndforR[i] = ind / n;
+		freq_r[IndforR[i]] ++;
 	}
 	return 1;
 }
-
+int binary_sample(size_t s, \
+				  size_t*idxI, size_t*idxR, \
+				  size_t *freq, \
+				  size_t m, size_t n, \
+				  double*pdf, double sum_pdf){
+	std::vector<double> rand_u;
+	for (size_t i = 0; i < s; ++i){
+		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
+	}
+	// Sort the random values
+	// It will be sorted according to k then i;
+	sort(rand_u.begin(),rand_u.end());
+	size_t ind = 0;
+	size_t range = m * n;
+	double sum_prob = pdf[0];
+	for (size_t i = 0; i < s; ++i){
+		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
+			sum_prob += pdf[++ind];
+		}
+		idxI[i] = ind % n;
+		idxR[i] = ind / n;
+		++freq[idxR[i]];
+	}
+	return 1;
+}
 SubIndex::SubIndex(int n, size_t *max){
 	idxSize = n;
 	maxIdx = max;
@@ -394,14 +532,16 @@ SubIndex& SubIndex::operator+(const size_t step){
 }
 SubIndex& SubIndex::operator++(){
 	curIdx[0]++;
-	for(int i = 0; i < idxSize; ++i){
-		if(curIdx[i] == maxIdx[i]){
-			curIdx[i] =0;
+	for(size_t i = 0; i < idxSize; ++i){
+		if(curIdx[i] < maxIdx[i]){
+			return *this;
+		}else{
+			curIdx[i] = 0;
 			++curIdx[i + 1];
 		}
-		if(curIdx[idxSize] == 1){
-			doneFlag = true;
-		}
+	}
+	if(curIdx[idxSize] >= 1){
+		doneFlag = true;
 	}
 	return *this;
 }

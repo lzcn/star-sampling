@@ -12,14 +12,7 @@
 #include <ctime>
 
 #include "mex.h"
-#include "../../include/matrix.h"
-
-
-typedef std::pair<point2D,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-	return x.second > y.second;
-}
+#include "matrix.h"
 /*
 	diamond sampling for matrix
 	A's size: Rank x M
@@ -38,166 +31,138 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
-	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
-	double *tsec = mxGetPr(plhs[1]);
-	const size_t budget = (size_t)mxGetPr(prhs[2])[0];
-	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
-	const size_t top_t = (size_t)mxGetPr(prhs[4])[0];
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	// get the budget
+	const size_t budget = (size_t)mxGetPr(prhs[2])[0];
+	// get the  number of samples
+	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
+	// get the top_t
+	const size_t top_t = (size_t)mxGetPr(prhs[4])[0];
+	// value
+	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
+	double *plhs_result = mxGetPr(plhs[0]);
+	// result for time
+	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
+	double *tsec = mxGetPr(plhs[1]);
 	*tsec = duration;
-	mexPrintf(">> %f seconds during initialization\n",duration);
-
+	// pair
+	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
+	mexPrintf("Starting Diamond Sampling:");
+	mexPrintf("- Top-%d ",top_t);
+	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
+	mexPrintf("- Budget:1e%d ",(int)log10(budget));
+	mexPrintf("......");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
-
-	start = clock();
 	double SumofW = 0;
 	//weight has the same size of A
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
 	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
-	double tempW = 0;
-	// weight[k * MatA.col + i] : i-th column k-th row
-	for (size_t k = 0; k < MatA.row; ++k){
+	start = clock();
+	for (size_t r = 0; r < MatA.row; ++r){
 		for(size_t i = 0; i < MatA.col; ++i){
-			//w_{ki} = |a_{ki}|*||a_{*i}||_1*||b_{*k}||_1
-			tempW = 1;
-			tempW *= abs(MatA.GetElement(k,i));
-			tempW *= MatA.SumofCol[i];
-			tempW *= MatB.SumofCol[k];
-			weight[k*MatA.col + i] = tempW;
+			double tempW = abs(MatA.GetElement(r,i)) * MatA.SumofCol[i] * MatB.SumofCol[r];
+			weight[r*MatA.col + i] = tempW;
 			SumofW += tempW;
 		}
 	}
-
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	printf(">> %f seconds during computing weight\n",duration);
-
 	//-------------------------
 	// Do Sampling
 	//-------------------------
-
 	start = clock();
-	// sampled index  for weight
-	size_t *WeightInd = (size_t *)malloc(NumSample*sizeof(size_t));
-	memset(WeightInd, 0, NumSample*sizeof(size_t));
-	// sampled k, i, j, k'
-	size_t *IndforK = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IndforK, 0, NumSample*sizeof(size_t));	
-	size_t *IndforI = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IndforI, 0, NumSample*sizeof(size_t));
-	size_t *IndforJ = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IndforJ, 0, NumSample*sizeof(size_t));
-	size_t *IndforKp = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IndforKp, 0, NumSample*sizeof(size_t));
-	// sampled k's frequency 
-	size_t *freq_k = (size_t*)malloc(MatA.row*sizeof(size_t));
-	memset(freq_k, 0, MatA.row*sizeof(size_t));
-	// Do sample S pairs (k, i) ,
-	sample_index(NumSample, WeightInd, \
-				 IndforI, IndforK, \
-				 freq_k, \
+	// sampled r, i, j, r'
+	size_t *IdxR = (size_t*)malloc(NumSample*sizeof(size_t));
+	memset(IdxR, 0, NumSample*sizeof(size_t));	
+	size_t *IdxI = (size_t*)malloc(NumSample*sizeof(size_t));
+	memset(IdxI, 0, NumSample*sizeof(size_t));
+	size_t *IdxJ = (size_t*)malloc(NumSample*sizeof(size_t));
+	memset(IdxJ, 0, NumSample*sizeof(size_t));
+	size_t *IdxRp = (size_t*)malloc(NumSample*sizeof(size_t));
+	memset(IdxRp, 0, NumSample*sizeof(size_t));
+	// sampled r's frequency 
+	size_t *freq_r = (size_t*)malloc(MatA.row*sizeof(size_t));
+	memset(freq_r, 0, MatA.row*sizeof(size_t));
+	// sample pairs (i,r) ,
+	binary_sample(NumSample, \
+				 IdxI, IdxR, \
+				 freq_r, \
 				 MatA.row, MatA.col, \
 				 weight, SumofW);
-	// sample k';
-	for (int s = 0; s < NumSample; ++s){
-		IndforKp[s] = MatA.randRow(IndforI[s]);
-	}
 	// sample j;
-	size_t offset = 0;
-	for (int k = 0; k < MatA.row; ++k){
-		vose_alias( freq_k[k], (IndforJ + offset), \
+	for (size_t r = 0,offset = 0; r < MatA.row; ++r){
+		vose_alias( freq_r[r], (IdxJ + offset), \
 					MatB.row, \
-					(MatB.element + k*MatB.row), \
-					MatB.SumofCol[k]);
-		offset += freq_k[k];
+					(MatB.element + r*MatB.row), \
+					MatB.SumofCol[r]);
+		offset += freq_r[r];
 	}
-	// compute update value and saved in map<pair, value>
-	double valueSampled = 1.0;
-	size_t indi,indj,indk,indkp;
+	// sample rp and  get score
 	std::map<point2D, double> IrJc;
-	for (int s = 0; s < NumSample ; ++s){
-		indk = IndforK[s];
-		indkp = IndforKp[s];
-		indi = IndforI[s];
-		indj = IndforJ[s];
-		valueSampled = 1.0;
-		valueSampled *= sgn_foo(MatA.GetElement(indk,indi));
-		valueSampled *= sgn_foo(MatB.GetElement(indj,indk));
-		valueSampled *= sgn_foo(MatA.GetElement(indkp,indi));
-		valueSampled *= MatB.GetElement(indj,indkp);
+	for (size_t s = 0; s < NumSample ; ++s){
+		size_t r = IdxR[s];
+		size_t i = IdxI[s];
+		size_t j = IdxJ[s];
+		size_t rp = MatA.randRow(i);
+		double valueSampled = sgn_foo(MatA.GetElement(r,i)) \
+		 					* sgn_foo(MatB.GetElement(j,r)) \
+							* sgn_foo(MatA.GetElement(rp,i)) \
+							* MatB.GetElement(j,rp);
 		// Update the element in coordinate
-		IrJc[point2D(indi,indj)] += valueSampled;
+		IrJc[point2D(i,j)] += valueSampled;
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	printf(">> %f seconds during sampling\n",duration);
-
+	
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
-
-	std::vector<indValue> sortVec;
-	std::vector<indValue> tempSortedVec;
+	std::vector<pidx2d> sortVec;
+	std::vector<pidx2d> tempSortedVec;
 	std::map<point2D, double>::iterator mapItr;
 	// sort the sampled value
 	for (mapItr = IrJc.begin(); mapItr != IrJc.end() ; ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	start = clock();
-	sort(tempSortedVec.begin(), tempSortedVec.end(), cmp);
+	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx2d>);
 	finish = clock();
 	*tsec += duration;
-	mexPrintf("%f seconds during pre-sorting\n",duration);
 	// compute the actual of top-t'(budget)
-	double true_value = 0;
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB);
+		double true_value = vectors_mul(tempSortedVec[m].first, MatA, MatB);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
 	}
-	sort(sortVec.begin(), sortVec.end(), cmp);
+	sort(sortVec.begin(), sortVec.end(), compgt<pidx2d>);
 	finish = clock();
  	duration = (double)(finish-start) / CLOCKS_PER_SEC;
- 	*tsec += duration;
- 	mexPrintf("%f seconds during computing and sorting\n",duration);
-	
+ 	*tsec += duration;	
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
-	start = clock();
-	size_t phls_row = sortVec.size();
-	// pair
-	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
-	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
-	// value
-	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
-	double *plhs_result = mxGetPr(plhs[0]);
 	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
 		//i
 		plhs_pr[m] = (sortVec[m].first.x + 1);
 		//j
-		plhs_pr[m + phls_row] = (sortVec[m].first.y + 1);
+		plhs_pr[m + top_t] = (sortVec[m].first.y + 1);
 	}
-
-	finish = clock();
-	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	printf("%f seconds during converting \n",duration);
-	
+	mexPrintf("Done!\n");
 	//---------------
 	// free
 	//---------------
 	free(weight);
-	free(WeightInd);
-	free(IndforI);
-	free(IndforJ);
-	free(IndforK);
-	free(IndforKp);
-	free(freq_k);
+	free(IdxI);
+	free(IdxJ);
+	free(IdxR);
+	free(IdxRp);
+	free(freq_r);
 
 }

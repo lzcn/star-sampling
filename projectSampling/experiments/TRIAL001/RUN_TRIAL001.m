@@ -1,25 +1,38 @@
-%% maximum budget
-out_dir = './BUDGETMAXIMUM';
-if(~isdir(out_dir))
-    mkdir(out_dir);
-end
-samples = power(10,3:7);
-budget = power(10,3:7);
-TRIAL001(data_path,out_dir,samples,budget,1);
-%% 1k budget
-out_dir = './BUDGET1K';
-if(~isdir(out_dir))
-    mkdir(out_dir);
-end
-samples = power(10,3:7);
-budget = 1e3*ones(size(samples));
-TRIAL001(data_path,out_dir,samples,budget,20);
+paths =   { '../../data/hetrec2011-delicious-2k', ...
+            '../../data/hetrec2011-lastfm-2k', ...
+            '../../data/hetrec2011-movielens-2k-v2', ...
+            '../../data/MovieLens/ml-10m', ...
+            '../../data/MovieLens/ml-20m'};
+            
+dataName ={ 'delicious',...
+            'lastfm', ...
+            'ml-2k', ...
+            'ml-10m', ...
+            'ml-20m'};
 
-%% 10k budget
-out_dir = './BUDGET10K';
+%% maximum budget
+out_dir = './max';
+if(~isdir(out_dir))
+    mkdir(out_dir);
+end
+samples = power(10,3:7);
+top_t = power(10,0:3);
+budget = zeros(length(samples),length(top_t));
+for t = 1:length(top_t)
+    budget(:,t) = power(10,3:7);
+end
+turn = 2;
+TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,false);
+%% 1k budget
+out_dir = './budget';
 if(~isdir(out_dir))
     mkdir(out_dir);
 end
 samples = power(10,4:7);
-budget = 1e4*ones(size(samples));
-TRIAL001(data_path,out_dir,samples,budget,20);
+top_t = power(10,0:3);
+budget = zeros(length(samples),length(top_t));
+for t = 1:length(top_t)
+    budget(:,t) = 10*top_t(t);
+end
+turn = 5;
+TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,false);

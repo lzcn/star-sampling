@@ -1,9 +1,21 @@
-out_dir = 'result';
-if(~idsir(out_dir))
+paths =   { '../../data/hetrec2011-delicious-2k', ...
+            '../../data/hetrec2011-lastfm-2k', ...
+            '../../data/hetrec2011-movielens-2k-v2', ...
+            '../../data/MovieLens/ml-10m', ...
+            '../../data/MovieLens/ml-20m'};
+            
+dataName ={ 'delicious',...
+            'lastfm', ...
+            'ml-2k', ...
+            'ml-10m', ...
+            'ml-20m'};
+
+out_dir = './querySampling';
+if(~isdir(out_dir))
     mkdir(out_dir); 
 end
-samples = power(10,3:6);
-budget = 1e3;
+samples = power(10,3:5);
+budget = power(10,3:5);
 knn = 100;
 turn = 10;
-TRIAL002(data_path, out_dir, samples, budget, knn, turn);
+TRIAL002(paths, dataName, out_dir, samples, budget, knn, turn);

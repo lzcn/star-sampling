@@ -1,217 +1,158 @@
-function TRIAL001(data_path, out_dir, samples, budget, turn)
+% data_path: directory data set in.
+% out_dir: out put directory
+% samples: eg: power(10,:0,6)
+% top_t: eg: power(10,:0,3)
+% budget: the meaning of budget(i,j): 
+%    the budget for top_t(j) under samplie numbers samples[i]
+% turn: run how many turns
+function TRIAL001(paths, dataName, out_dir, ...
+                budget, samples, top_t, ...
+                turn, draw)
 
-    % set data path
-    ml_10m_path = fullfile(data_path,'MovieLens','ml-10m');
-    ml_20m_path = fullfile(data_path,'MovieLens','ml-20m');
-    ml_2k_path = fullfile(data_path, 'hetrec2011-movielens-2k-v2');
-    lastfm_path = fullfile(data_path, 'hetrec2011-lastfm-2k');
-    delicious_path = fullfile(data_path, 'hetrec2011-delicious-2k');
-    randData_path = fullfile(data_path, 'random');
-    
     % set variables
+    Variables.draw = draw;
     Variables.fullTime = 0;
+    Variables.dataName = '';
     Variables.topValue = [];
-    Variables.topIndexes = [];
-    Variables.top_t = power(10,0:3); 
-    Variables.varSize = [size(samples,2),size(Variables.top_t,2)];
+    Variables.top_t = top_t;
     Variables.samples = samples;
     Variables.budget = budget;
     Variables.turn = turn;
     Variables.out_dir = out_dir;
-    %% ml-10m
-    Variables.dataName = 'ml-10m';
-
-    load(fullfile(ml_10m_path,'User.Mat'));
-    load(fullfile(ml_10m_path,'Movie.Mat'));
-    load(fullfile(ml_10m_path,'Tag.Mat'));
-    load(fullfile(ml_10m_path,'topValue.Mat'));
-    load(fullfile(ml_10m_path,'fullTime.Mat'));
-    load(fullfile(ml_10m_path,'topIndexes.Mat'));
-    
-    Variables.MatA = User;
-    Variables.MatB = Movie;
-    Variables.MatC = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
-    
-    oneDataSet(Variables);
-    %% ml-20m
-    Variables.dataName = 'ml-20m';
- 
-    load(fullfile(ml_20m_path,'User.Mat'));
-    load(fullfile(ml_20m_path,'Movie.Mat'));
-    load(fullfile(ml_20m_path,'Tag.Mat'));
-    load(fullfile(ml_20m_path,'topValue.Mat'));
-    load(fullfile(ml_20m_path,'fullTime.Mat'));
-    load(fullfile(ml_20m_path,'topIndexes.Mat'));
- 
-    Variables.MatA = User;
-    Variables.MatB = Movie;
-    Variables.MatC = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
-    
-    oneDataSet(Variables);
-
-    %% ml-2k
-    Variables.dataName = 'ml-2k';
-
-    load(fullfile(ml_2k_path,'User.Mat'));
-    load(fullfile(ml_2k_path,'Movie.Mat'));
-    load(fullfile(ml_2k_path,'Tag.Mat'));
-    load(fullfile(ml_2k_path,'topValue.Mat'));
-    load(fullfile(ml_2k_path,'fullTime.Mat'));
-    load(fullfile(ml_2k_path,'topIndexes.Mat'));
-
-    Variables.MatA = User;
-    Variables.MatB = Movie;
-    Variables.MatC = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;   
-
-    oneDataSet(Variables);
-    %% lastfm 
-    Variables.dataName = 'lastfm';
-
-    load(fullfile(lastfm_path,'User.Mat'));
-    load(fullfile(lastfm_path,'Artist.Mat'));
-    load(fullfile(lastfm_path,'Tag.Mat'));
-    load(fullfile(lastfm_path,'topValue.Mat'));
-    load(fullfile(lastfm_path,'fullTime.Mat'));
-    load(fullfile(lastfm_path,'topIndexes.Mat'));
- 
-    Variables.MatA = User;
-    Variables.MatB = Artist;
-    Variables.MatC = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
-     
-    oneDataSet(Variables);
-     
-    %% delicious
-    Variables.dataName = 'delicious';
- 
-    load(fullfile(delicious_path,'User.Mat'));
-    load(fullfile(delicious_path,'Url.Mat'));
-    load(fullfile(delicious_path,'Tag.Mat'));
-    load(fullfile(delicious_path,'topValue.Mat'));
-    load(fullfile(delicious_path,'fullTime.Mat'));
-    load(fullfile(delicious_path,'topIndexes.Mat'));
- 
-    Variables.MatA = User;
-    Variables.MatB = Url;
-    Variables.MatC = Tag;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
-    
-    oneDataSet(Variables);
-
-    %% random data
-    Variables.dataName = 'random';
-    
-    load(fullfile(randData_path, 'MatA.Mat'));
-    load(fullfile(randData_path, 'MatB.Mat'));
-    load(fullfile(randData_path, 'MAtC.Mat'));
-    load(fullfile(randData_path, 'topValue.Mat'));
-    load(fullfile(randData_path, 'fullTime.Mat'));
-    load(fullfile(randData_path, 'topIndexes.Mat'));
-    Variables.MatA = MatA;
-    Variables.MatB = MatB;
-    Variables.MatC = MatC;
-    Variables.topValue = topValue;
-    Variables.fullTime = fullTime;
-    Variables.topIndexes = topIndexes;
-    
-    oneDataSet(Variables);
-
-end
-function [ diamond, equality, extension ] = initVar(Variables)
-    diamond.recall = zeros(Variables.varSize);
-    diamond.times = zeros(size(Variables.samples));
-    equality.recall = zeros(Variables.varSize);
-    equality.times = zeros(size(Variables.samples));
-    extension.recall = zeros(Variables.varSize);
-    extension.times = zeros(size(Variables.samples));
+    for n = 1:length(paths)
+        path = paths{n};
+        % load data
+        Variables.dataName = dataName{n};
+        load(fullfile(path,'User.Mat'));
+        load(fullfile(path,'Item.Mat'));
+        load(fullfile(path,'Tag.Mat'));
+        load(fullfile(path,'topValue.Mat'));
+        load(fullfile(path,'fullTime.Mat'));
+        Variables.A = User;
+        Variables.B = Item;
+        Variables.C = Tag;
+        Variables.topValue = topValue;
+        Variables.fullTime = fullTime;
+        oneDataSet(Variables);
+    end
 end
 
-function [ diamond, equality, extension ] = oneSampling(Variables)
-    [ diamond, equality, extension ] = initVar(Variables);
-    MatA = Variables.MatA;
-    MatB = Variables.MatB;
-    MatC = Variables.MatC;
-    for s = 1:Variables.turn
-        [ diamondTemp, equalityTemp, extensionTemp ] = initVar(Variables);
-        for i = 1:length(Variables.samples)
-            for t = 1:length(Variables.top_t)
-                  top_t = Variables.top_t(t);
-                  budget = Variables.budget(i);
-                  sample = Variables.samples(i);
-                  
-                  [value, time, ~] = diamondTensor(MatA', MatB, MatC, budget, sample, top_t);
-                  diamondTemp.recall(i,t) = sum(value(1:top_t) >= Variables.topValue(top_t))/top_t;
-                  diamondTemp.times(i) = time;
-                  
-                  [value, time, ~] = equalitySampling(MatA, MatB, MatC, budget, sample, top_t);
-                  equalityTemp.recall(i,t) = sum(value(1:top_t) >= Variables.topValue(top_t))/top_t;
-                  equalityTemp.times(i) = time;
-                  
-                  [value, time, ~] = extensionSampling(MatA, MatB, MatC, budget, sample, top_t);
-                  extensionTemp.recall(i,t) = sum(value(1:top_t) >= Variables.topValue(top_t))/top_t;
-                  extensionTemp.times(i) = time;
+% V.recall(i,j): the recall for finding top_t[j] under samples[i]
+% V.recall(:,j): recall-samples for finding top_t[j]
+% V.times(i,j):  the time cots for finding top_t[j] under samples[i]
+% V.times(:,j):  time-samples for finding top_t[j]
+
+function [ diamond, full, central, extension ] = initVar(Variables)
+    varSize = [length(Variables.samples),length(Variables.top_t)];
+    diamond.recall   = zeros(varSize);
+    diamond.times    = zeros(varSize);
+    full.recall   = zeros(varSize);
+    full.times    = zeros(varSize);
+    central.recall   = zeros(varSize);
+    central.times    = zeros(varSize);
+    extension.recall = zeros(varSize);
+    extension.times  = zeros(varSize);
+end
+
+function [ diamond, full, central, extension ] = oneSampling(Variables)
+    % initialization for veriables
+    [ diamond, full, central, extension ] = initVar(Variables);
+    % the matrices
+    A = Variables.A;
+    B = Variables.B;
+    C = Variables.C;
+    for TurnNum = 1:Variables.turn
+        [ diamondTemp, fullTemp, centralTemp, extensionTemp ] = initVar(Variables);
+        for i = 1 : length(Variables.samples)
+            s = Variables.samples(i);
+            for j = 1 : length(Variables.top_t)
+                % budget
+                tp = Variables.budget(i,j);
+                % top-t
+                t = Variables.top_t(j);
+                % top-t value
+                value = Variables.topValue(t);
+                [fValue, fTime, ~] = fullSampling(A,B,C,tp,s,t);
+                fullTemp.recall(i,j) = sum(fValue(1:t) >= value)/t;
+                fullTemp.times(i,j) = fTime;
+%                 [dValue, dTime, ~] = diamondSampling(A',B,C,tp,s,t);
+%                 [cValue, cTime, ~] = centralSampling(A,B,C,tp,s,t);
+%                 [eValue, eTime, ~] = extensionSampling(A,B,C,tp,s,t);
+%                 diamondTemp.recall(i,j) = sum(dValue(1:t) >= value)/t;
+%                 centralTemp.recall(i,j) = sum(cValue(1:t) >= value)/t;
+%                 extensionTemp.recall(i,j) = sum(eValue(1:t) >= value)/t;
+%                 extensionTemp.times(i,j) = eTime;
+%                 diamondTemp.times(i,j) = dTime;
+%                 centralTemp.times(i,j) = cTime;
             end
         end
-        diamond.recall = diamond.recall + diamondTemp.recall;
-        diamond.times = diamond.times + diamondTemp.times;
-        
-        equality.recall = equality.recall + equalityTemp.recall;
-        equality.times = equality.times + equalityTemp.times;
-        
-        extension.recall = extension.recall + extensionTemp.recall;
-        extension.times = extension.times + extensionTemp.times;
+        full.recall = full.recall + fullTemp.recall;
+        full.times = full.times + fullTemp.times;
+%         diamond.recall = diamond.recall + diamondTemp.recall;
+%         diamond.times = diamond.times + diamondTemp.times;
+%         central.recall = central.recall + centralTemp.recall;
+%         central.times = central.times + centralTemp.times;
+%         extension.recall = extension.recall + extensionTemp.recall;
+%         extension.times = extension.times + extensionTemp.times;
     end
-    diamond.recall = diamond.recall/Variables.turn;
-    diamond.times = diamond.times/Variables.turn;
-    
-    equality.recall = equality.recall/Variables.turn;
-    equality.times = equality.times/Variables.turn;
-    
-    extension.recall = extension.recall/Variables.turn;
-    extension.times = extension.times/Variables.turn;
-
+    % save the result
+    out_dir = fullfile(Variables.out_dir,Variables.dataName);
+    if ~isdir(out_dir)
+        mkdir(out_dir);
+    end
+    full.recall = full.recall/Variables.turn;
+    full.times = full.times/Variables.turn;
+    full_recall = full.recall;
+    full_times = full.times;
+    save(fullfile(out_dir,'full_recall.mat'),'full_recall');
+    save(fullfile(out_dir,'full_times.mat'),'full_times');
+%     diamond.recall = diamond.recall/Variables.turn;
+%     diamond.times = diamond.times/Variables.turn;
+%     diamond_recall = diamond.recall;
+%     diamond_times = diamond.times;
+%     save(fullfile(out_dir,'diamond_recall.mat'),'diamond_recall');
+%     save(fullfile(out_dir,'diamond_times.mat'),'diamond_times');
+%     
+%     central.recall = central.recall/Variables.turn;
+%     central.times = central.times/Variables.turn;
+%     central_recall = central.recall;
+%     central_times = central.times;
+%     save(fullfile(out_dir,'central_recall.mat'),'central_recall');
+%     save(fullfile(out_dir,'central_times.mat'),'central_times');
+%     
+%     extension.recall = extension.recall/Variables.turn;
+%     extension.times = extension.times/Variables.turn;
+%     extension_recall = extension.recall;
+%     extension_times = extension.times;
+%     save(fullfile(out_dir,'extension_recall.mat'),'extension_recall');
+%     save(fullfile(out_dir,'extension_times.mat'),'extension_times');
 end
 
-function drawTimeFig(Variables, diamond, equality, extension)
+function drawTimeFig(Variables, diamond, central, extension)
     samples = Variables.samples;
     fullTime = Variables.fullTime;
     titlename = Variables.titlename;
     out_dir = Variables.out_dir;
-    h = figure; hold on;title(titlename); 
+    h = figure; hold on; title(titlename); 
     xlabel('log_{10}Samples'); 
     ylabel('log_{10}T(sec)');
-    
     plot(log10(samples),log10(fullTime*ones(size(samples))),'b','LineWidth',2);
-    plot(log10(samples),log10(diamond.times),'r','LineWidth',2); 
-    plot(log10(samples),log10(equality.times),'--g','LineWidth',2);
-    plot(log10(samples),log10(extension.times),'--c','LineWidth',2);
-    
-    legend('exhaustive','diamond','equality','extension',4);
+    plot(log10(samples),log10(diamond.times(:,end)),'r','LineWidth',2); 
+    plot(log10(samples),log10(central.times(:,end)),'--g','LineWidth',2);
+    plot(log10(samples),log10(extension.times(:,end)),'--c','LineWidth',2);
+    legend('exhaustive','diamond','central','extension',4);
     saveas(h,fullfile(out_dir,[titlename,'.pdf']));
     close(h);
 end
 
-function drawRecallFig(Variables, diamond, equality, extension)
+function drawRecallFig(Variables, diamond, central, extension)
     samples = Variables.samples;
     titlename = Variables.titlename;
     out_dir = Variables.out_dir;
-    % draw recall-samples diamond vs equality
-    h = figure; hold on; title([titlename,'-diamond-equality']);
+    % draw recall-samples diamond vs central
+    h = figure; hold on; title([titlename,'-diamond-central']);
     xlabel('log_{10}Samples'); 
-    ylabel('recall');
+    ylabel('Accuracy');
     axis([log10(samples(1)) log10(samples(end)) 0 1.1]);
     c = ['r','b','k','g', 'c'];
     desc = cell(size(Variables.top_t,2)*2, 1);
@@ -219,11 +160,11 @@ function drawRecallFig(Variables, diamond, equality, extension)
         top_t = Variables.top_t(i);
         plot(log10(samples),diamond.recall(:,i),c(i),'LineWidth',2);
         desc{2*i-1} = ['diamond:t=',num2str(top_t)];
-        plot(log10(samples),equality.recall(:,i),['--',c(i)],'LineWidth',2); 
-        desc{ 2*i } = ['equality:t=',num2str(top_t)];
+        plot(log10(samples),central.recall(:,i),['--',c(i)],'LineWidth',2); 
+        desc{ 2*i } = ['central:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['diamond-equality-',titlename,'.pdf']));
+    saveas(h,fullfile(out_dir,['diamond-central-',titlename,'.pdf']));
     close(h);
     % draw recall-samples diamond vs extension
     h = figure; hold on; title([titlename,'-diamond-extension']);
@@ -242,8 +183,8 @@ function drawRecallFig(Variables, diamond, equality, extension)
     legend(desc,4);  
     saveas(h,fullfile(out_dir,['diamond-extension-',titlename,'.pdf']));
     close(h);
-    % draw recall-samples extension vs equality
-    h = figure; hold on; title([titlename,'-extension-equality']);
+    % draw recall-samples extension vs central
+    h = figure; hold on; title([titlename,'-extension-central']);
     xlabel('log_{10}Samples'); 
     ylabel('recall');
     axis([log10(samples(1)) log10(samples(end)) 0 1.1]);
@@ -253,22 +194,21 @@ function drawRecallFig(Variables, diamond, equality, extension)
         top_t = Variables.top_t(i);
         plot(log10(samples),extension.recall(:,i),c(i),'LineWidth',2); 
         desc{2*i-1} = ['extension:t=',num2str(top_t)];
-        plot(log10(samples),equality.recall(:,i),['--',c(i)],'LineWidth',2); 
-        desc{ 2*i } = ['equality:t=',num2str(top_t)];
+        plot(log10(samples),central.recall(:,i),['--',c(i)],'LineWidth',2); 
+        desc{ 2*i } = ['central:t=',num2str(top_t)];
     end
     legend(desc,4);  
-    saveas(h,fullfile(out_dir,['extension-equality-', titlename,'.pdf']));
+    saveas(h,fullfile(out_dir,['extension-central-', titlename,'.pdf']));
     close(h);
 end
 
 function oneDataSet(Variables)
-    [ diamond, equality, extension ] = oneSampling(Variables);
-    
-    dataName = Variables.dataName;
-    Variables.titlename = ['time-samples-',dataName];
-    drawTimeFig(Variables, diamond, equality, extension);
-    
-    Variables.titlename = ['recall-samples-',dataName];
-    drawRecallFig(Variables, diamond, equality, extension);
-
+    [ diamond, full, central, extension ] = oneSampling(Variables);
+    if Variables.draw
+        dataName = Variables.dataName;
+        Variables.titlename = ['time-samples-',dataName];
+        drawTimeFig(Variables, diamond, central, extension);
+        Variables.titlename = ['recall-samples-',dataName];
+        drawRecallFig(Variables, diamond, central, extension);
+    end
 end

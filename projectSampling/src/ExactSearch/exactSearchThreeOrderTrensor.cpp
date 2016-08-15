@@ -1,10 +1,14 @@
 /*
-    exhaustive search for three order tensor given factor matrices
-    factor matrices has the same row dimension, which is the 
-    dimension of feature vector.
-    [value, time, indexes] = exactSearchThreeOrderTrensor(A,B,C,top_t)
-    it will return the top_t value in the tensor,
-    and the time during computing
+    Exhaustive search for three factor matrices factor matrices.
+    [value, time, cordinates] = exactSearchThreeOrderTrensor(A, B, C, top_t)
+    Inputs:
+        A, B, C: factor matrices, same row dimension.
+        top_t : the top_t value to find
+    Outputs: 
+        value: size (top_t,1)
+        time:
+        coordinates: size (top_t,3)
+    
     Author : Zhi Lu
 */
 
@@ -14,23 +18,11 @@
 #include "mex.h"
 #include "matrix.h"
 
-typedef std::pair<point3D,double> indValue;
-
-int cmp(const indValue &x,const indValue&y){
-    return (x.second > y.second);
-}
-
-/*
-    all matrices must has the same row dimension
-    [value, time, indexes] = exactSearchThreeOrderTrensor(A,B,C,top_t)
-*/
-
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
 
     clock_t start, finish;
     double *duration;
-    const int rank_size = mxGetM(prhs[0]);
     plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
     duration = mxGetPr(plhs[1]);
     Matrix A(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
@@ -39,7 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     std::list<double> listTop;
     std::list<point3D> listIdx;
-    std::vector<indValue> tempVec;
+    std::vector<pidx3d> tempVec;
 
     const int top_t = mxGetPr(prhs[3])[0];
     double temp = 0.0;
@@ -54,7 +46,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         tempVec.push_back(std::make_pair(point3D(index.getIdx()[0],index.getIdx()[1],index.getIdx()[2]),temp));
         ++count;
     }
-    sort(tempVec.begin(),tempVec.end(),cmp);
+    sort(tempVec.begin(),tempVec.end(),compgt<pidx3d>);
     for(auto itr = tempVec.begin(); itr != tempVec.end(); ++itr){
         listTop.push_back(itr->second);
         listIdx.push_back(itr->first);
@@ -78,7 +70,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);  
     auto itr = listTop.begin();
     auto itr2 = listIdx.begin();
-    for(int i = 0; i < length; ++i){
+    for(size_t i = 0; i < length; ++i){
         // value
         topValue[i] = (*itr);
         // indexes

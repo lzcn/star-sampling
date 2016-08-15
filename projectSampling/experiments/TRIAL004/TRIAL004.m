@@ -100,20 +100,17 @@ end
 
 
 function [ Recall_v, Recall ] = oneSampling(samples, budget, A, B, C, topValue, turn)
-
     top_t = 100;
-
     [ Recall_v, Recall ] = initVar(budget);
 
     for s = 1:turn
         [recall_v_temp,recall_temp] = initVar(budget);
         for i = 1 : length(budget)
-            [value, ~, ~] = equalitySampling(A, B, C, budget(i),samples,top_t);
+            [value, ~, ~] = centralSampling(A, B, C, budget(i),samples,top_t);
             recall_temp(i) = sum(value(1:top_t) >= topValue(top_t))/top_t;
-            [value_v, ~, ~] = diamondTensor(A', B, C, budget(i),samples,top_t);
+            [value_v, ~, ~] = diamondSampling(A', B, C, budget(i),samples,top_t);
             recall_v_temp(i) = sum(value_v(1:top_t) >= topValue(top_t))/top_t;
         end
-        
         Recall = Recall + recall_temp;
         Recall_v = Recall_v + recall_v_temp;
     end
@@ -130,7 +127,7 @@ function drawRecallFig(titlename, out_dir, budget, recall)
     for i = 1:size(recall,2)
         plot(log10(budget),recall(:,i),c(i),'LineWidth',2);
     end
-    legend('diamond','equality_v_1','equality_v_2','equality_v_3','equality_v_4','extension',4);  
+    legend('diamond','central_v_1','central_v_2','central_v_3','central_v_4','extension',4);  
     saveas(h,fullfile(out_dir,[titlename,'.png'])); 
 
 end
