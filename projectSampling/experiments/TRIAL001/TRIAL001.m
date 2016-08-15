@@ -42,25 +42,27 @@ end
 % V.times(i,j):  the time cots for finding top_t[j] under samples[i]
 % V.times(:,j):  time-samples for finding top_t[j]
 
-function [ diamond, central, extension ] = initVar(Variables)
+function [ diamond, full, central, extension ] = initVar(Variables)
     varSize = [length(Variables.samples),length(Variables.top_t)];
     diamond.recall   = zeros(varSize);
     diamond.times    = zeros(varSize);
+    full.recall   = zeros(varSize);
+    full.times    = zeros(varSize);
     central.recall   = zeros(varSize);
     central.times    = zeros(varSize);
     extension.recall = zeros(varSize);
     extension.times  = zeros(varSize);
 end
 
-function [ diamond, central, extension ] = oneSampling(Variables)
+function [ diamond, full, central, extension ] = oneSampling(Variables)
     % initialization for veriables
-    [ diamond, central, extension ] = initVar(Variables);
+    [ diamond, full, central, extension ] = initVar(Variables);
     % the matrices
     A = Variables.A;
     B = Variables.B;
     C = Variables.C;
     for TurnNum = 1:Variables.turn
-        [ diamondTemp, centralTemp, extensionTemp ] = initVar(Variables);
+        [ diamondTemp, fullTemp, centralTemp, extensionTemp ] = initVar(Variables);
         for i = 1 : length(Variables.samples)
             s = Variables.samples(i);
             for j = 1 : length(Variables.top_t)
@@ -70,49 +72,60 @@ function [ diamond, central, extension ] = oneSampling(Variables)
                 t = Variables.top_t(j);
                 % top-t value
                 value = Variables.topValue(t);
-                [dValue, dTime, ~] = diamondSampling(A',B,C,tp,s,t);
-                [cValue, cTime, ~] = centralSampling(A,B,C,tp,s,t);
-                [eValue, eTime, ~] = extensionSampling(A,B,C,tp,s,t);
-                diamondTemp.recall(i,j) = sum(dValue(1:t) >= value)/t;
-                centralTemp.recall(i,j) = sum(cValue(1:t) >= value)/t;
-                extensionTemp.recall(i,j) = sum(eValue(1:t) >= value)/t;
-                extensionTemp.times(i,j) = eTime;
-                diamondTemp.times(i,j) = dTime;
-                centralTemp.times(i,j) = cTime;
+                [fValue, fTime, ~] = fullSampling(A,B,C,tp,s,t);
+                fullTemp.recall(i,j) = sum(fValue(1:t) >= value)/t;
+                fullTemp.times(i,j) = fTime;
+%                 [dValue, dTime, ~] = diamondSampling(A',B,C,tp,s,t);
+%                 [cValue, cTime, ~] = centralSampling(A,B,C,tp,s,t);
+%                 [eValue, eTime, ~] = extensionSampling(A,B,C,tp,s,t);
+%                 diamondTemp.recall(i,j) = sum(dValue(1:t) >= value)/t;
+%                 centralTemp.recall(i,j) = sum(cValue(1:t) >= value)/t;
+%                 extensionTemp.recall(i,j) = sum(eValue(1:t) >= value)/t;
+%                 extensionTemp.times(i,j) = eTime;
+%                 diamondTemp.times(i,j) = dTime;
+%                 centralTemp.times(i,j) = cTime;
             end
         end
-        diamond.recall = diamond.recall + diamondTemp.recall;
-        diamond.times = diamond.times + diamondTemp.times;
-        central.recall = central.recall + centralTemp.recall;
-        central.times = central.times + centralTemp.times;
-        extension.recall = extension.recall + extensionTemp.recall;
-        extension.times = extension.times + extensionTemp.times;
+        full.recall = full.recall + fullTemp.recall;
+        full.times = full.times + fullTemp.times;
+%         diamond.recall = diamond.recall + diamondTemp.recall;
+%         diamond.times = diamond.times + diamondTemp.times;
+%         central.recall = central.recall + centralTemp.recall;
+%         central.times = central.times + centralTemp.times;
+%         extension.recall = extension.recall + extensionTemp.recall;
+%         extension.times = extension.times + extensionTemp.times;
     end
     % save the result
     out_dir = fullfile(Variables.out_dir,Variables.dataName);
     if ~isdir(out_dir)
         mkdir(out_dir);
     end
-    diamond.recall = diamond.recall/Variables.turn;
-    diamond.times = diamond.times/Variables.turn;
-    diamond_recall = diamond.recall;
-    diamond_times = diamond.times;
-    save(fullfile(out_dir,'diamond_recall.mat'),'diamond_recall');
-    save(fullfile(out_dir,'diamond_times.mat'),'diamond_times');
-    
-    central.recall = central.recall/Variables.turn;
-    central.times = central.times/Variables.turn;
-    central_recall = central.recall;
-    central_times = central.times;
-    save(fullfile(out_dir,'central_recall.mat'),'central_recall');
-    save(fullfile(out_dir,'central_times.mat'),'central_times');
-    
-    extension.recall = extension.recall/Variables.turn;
-    extension.times = extension.times/Variables.turn;
-    extension_recall = extension.recall;
-    extension_times = extension.times;
-    save(fullfile(out_dir,'extension_recall.mat'),'extension_recall');
-    save(fullfile(out_dir,'extension_times.mat'),'extension_times');
+    full.recall = full.recall/Variables.turn;
+    full.times = full.times/Variables.turn;
+    full_recall = full.recall;
+    full_times = full.times;
+    save(fullfile(out_dir,'full_recall.mat'),'full_recall');
+    save(fullfile(out_dir,'full_times.mat'),'full_times');
+%     diamond.recall = diamond.recall/Variables.turn;
+%     diamond.times = diamond.times/Variables.turn;
+%     diamond_recall = diamond.recall;
+%     diamond_times = diamond.times;
+%     save(fullfile(out_dir,'diamond_recall.mat'),'diamond_recall');
+%     save(fullfile(out_dir,'diamond_times.mat'),'diamond_times');
+%     
+%     central.recall = central.recall/Variables.turn;
+%     central.times = central.times/Variables.turn;
+%     central_recall = central.recall;
+%     central_times = central.times;
+%     save(fullfile(out_dir,'central_recall.mat'),'central_recall');
+%     save(fullfile(out_dir,'central_times.mat'),'central_times');
+%     
+%     extension.recall = extension.recall/Variables.turn;
+%     extension.times = extension.times/Variables.turn;
+%     extension_recall = extension.recall;
+%     extension_times = extension.times;
+%     save(fullfile(out_dir,'extension_recall.mat'),'extension_recall');
+%     save(fullfile(out_dir,'extension_times.mat'),'extension_times');
 end
 
 function drawTimeFig(Variables, diamond, central, extension)
@@ -190,7 +203,7 @@ function drawRecallFig(Variables, diamond, central, extension)
 end
 
 function oneDataSet(Variables)
-    [ diamond, central, extension ] = oneSampling(Variables);
+    [ diamond, full, central, extension ] = oneSampling(Variables);
     if Variables.draw
         dataName = Variables.dataName;
         Variables.titlename = ['time-samples-',dataName];

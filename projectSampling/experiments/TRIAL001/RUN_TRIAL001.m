@@ -21,8 +21,8 @@ budget = zeros(length(samples),length(top_t));
 for t = 1:length(top_t)
     budget(:,t) = power(10,3:7);
 end
-turn = 20;
-TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,true);
+turn = 2;
+TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,false);
 %% 1k budget
 out_dir = './budget';
 if(~isdir(out_dir))
@@ -34,5 +34,5 @@ budget = zeros(length(samples),length(top_t));
 for t = 1:length(top_t)
     budget(:,t) = 10*top_t(t);
 end
-turn = 20;
-TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,true);
+turn = 5;
+TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,false);
