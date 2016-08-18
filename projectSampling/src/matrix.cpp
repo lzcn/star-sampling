@@ -452,10 +452,10 @@ int sample_index(size_t s, size_t *index, \
 	sort(rand_u.begin(),rand_u.end());
 	size_t ind = 0;
 	size_t range = m * n;
-	double sum_prob = pdf[0];
+	double sum_prob = abs(pdf[0]);
 	for (size_t i = 0; i < s; ++i){
 		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
-			sum_prob += pdf[++ind];
+			sum_prob += abs(pdf[++ind]);
 		}
 		index[i] = ind;
 		IndforI[i] = ind % n;
@@ -478,10 +478,10 @@ int binary_sample(size_t s, \
 	sort(rand_u.begin(),rand_u.end());
 	size_t ind = 0;
 	size_t range = m * n;
-	double sum_prob = pdf[0];
+	double sum_prob = abs(pdf[0]);
 	for (size_t i = 0; i < s; ++i){
 		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
-			sum_prob += pdf[++ind];
+			sum_prob += abs(pdf[++ind]);
 		}
 		idxI[i] = ind % n;
 		idxR[i] = ind / n;
