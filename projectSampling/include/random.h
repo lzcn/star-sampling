@@ -32,9 +32,9 @@ double rnd::gamrnd(double alpha) {
 	if (alpha < 1.0) {
 		double u;
 		do {
-			u = randu();
+			u = rnd::randu();
 		} while (u == 0.0);
-		return gamrnd(alpha + 1.0) * pow(u, 1.0 / alpha);
+		return rnd::gamrnd(alpha + 1.0) * pow(u, 1.0 / alpha);
 	} else {
 		// Marsaglia and Tsang: A Simple Method for Generating Gamma Variables
 		double d,c,x,v,u;
@@ -42,21 +42,21 @@ double rnd::gamrnd(double alpha) {
 		c = 1.0 / std::sqrt(9.0 * d);
 		do {
 			do {
-				x = randn();
+				x = rnd::randn();
 				v = 1.0 + c*x;
 			} while (v <= 0.0);
 			v = v * v * v;
-			u = randu();
+			u = rnd::randu();
 		} while ( 
 			(u >= (1.0 - 0.0331 * (x*x) * (x*x)))
-			 && (log(u) >= (0.5 * x * x + d * (1.0 - v + std::log(v))))
+			 && (std::log(u) >= (0.5 * x * x + d * (1.0 - v + std::log(v))))
 			 );
 		return d*v;
 	}
 }
 
 double rnd::gamrnd(double alpha, double beta){
-	return (gamrnd(alpha) / beta);
+	return (rnd::gamrnd(alpha) / beta);
 }
 
 double rnd::randn(){
@@ -64,9 +64,9 @@ double rnd::randn(){
 	double u,v, x, y, Q;
 	do {
 		do {
-			u = randu();
+			u = rnd::randu();
 		} while (u == 0.0); 
-		v = 1.7156 * (randu() - 0.5);
+		v = 1.7156 * (rnd::randu() - 0.5);
 		x = u - 0.449871;
 		y = std::abs(v) + 0.386595;
 		Q = x*x + y*(0.19600*y-0.25472*x);
@@ -84,15 +84,15 @@ double rnd::randn(double mean, double stdev) {
 }
 
 double rnd::randu() {
-	return randn()/((double)RAND_MAX + 1);
+	return rand()/((double)RAND_MAX + 1);
 }
 
 double rnd::exprnd() {
-	return -std::log(1-randu());
+	return -std::log(1-rnd::randu());
 }
 
 bool rnd::binornd(double p) {
-	return (randu() < p);
+	return (rnd::randu() < p);
 }
 
 int rnd::alias(size_t s, size_t *dst, size_t n, double *pdf,double sum){

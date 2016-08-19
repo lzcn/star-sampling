@@ -88,18 +88,18 @@ DMatrix::DMatrix(size_t r_dim, size_t c_dim, double *ptr){
     SELFINITVALUE = false;
 }
 void DMatrix::init(uint TYPE, double mean, double stdev){
-    if(!value){
-        printf("Matrix already initialized\n");
-        return ;
+    if(value == nullptr){
+        value = (double*)malloc(col*row*sizeof(double));
+        SELFINITVALUE = true;
     }
     switch (TYPE) {
         case INIT_RAND_N:
-            for(size_t i; i < col*row; ++i)
+            for(size_t i = 0; i < col*row; ++i){
                 // normal distribution with \mu = mean,\sigma^2 = stdev
                 value[i] = rnd::randn(mean, stdev);
-            break;
+            }break;
         case INIT_RAND_U:
-            for(size_t i; i < col*row; ++i)
+            for(size_t i = 0; i < col*row; ++i)
                 value[i] = rnd::randu();
             break;
         case INIT_ALL_ONES:
@@ -110,7 +110,6 @@ void DMatrix::init(uint TYPE, double mean, double stdev){
             break;
         default: break;
     }
-    SELFINITVALUE = true;
 }
 double& DMatrix::operator()(size_t i, size_t j){ 
     //assert((i >= row) && (j >= col));
@@ -157,7 +156,7 @@ DVector::DVector(size_t v_dim){
 DVector::DVector(size_t v_dim, double *ptr){
     dim = v_dim;
     value = ptr;
-    SELFINITVALUE = true;
+    SELFINITVALUE = false;
 }
 double& DVector::operator()(size_t n){ 
     //assert((i >= row) && (j >= col));
@@ -168,18 +167,18 @@ double DVector::operator()(size_t n) const {
 }
 
 void DVector::init(uint TYPE, double mean, double stdev){
-    if(!value){
-        printf("Vector already initialized\n");
-        return ;
+    if(value == nullptr){
+        value = (double*)malloc(dim*sizeof(double));
+        SELFINITVALUE = true;
     }
     switch (TYPE) {
         case INIT_RAND_N:
-            for(size_t i; i < dim; ++i)
+            for(size_t i = 0; i < dim; ++i)
                 // normal distribution with \mu = mean,\sigma^2 = stdev
                 value[i] = rnd::randn(mean, stdev);
             break;
         case INIT_RAND_U:
-            for(size_t i; i < dim; ++i)
+            for(size_t i = 0; i < dim; ++i)
                 value[i] = rnd::randu();
             break;
         case INIT_ALL_ONES:
@@ -190,7 +189,6 @@ void DVector::init(uint TYPE, double mean, double stdev){
             break;
         default: break;
     }
-    SELFINITVALUE = true;
 }
 
 DVector::~DVector(){

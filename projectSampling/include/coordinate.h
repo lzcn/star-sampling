@@ -169,6 +169,8 @@ bool pointND::operator < (const pointND &toCmp)const{
 	}
 	if(coord[num-1] == toCmp.coord[num-1])
 		return false;
+	else 
+		return true;
 }
 ////////////////
 // SubIndex
