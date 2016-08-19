@@ -5,7 +5,21 @@
 #include "coordinate.h"
 #include "random.h"
 #include "mex.h"
-
+double diff_y_pred(DMatrix &U,DMatrix &I,DMatrix &T,size_t u,size_t i,size_t pos,size_t neg){
+	size_t rank = U.col;
+	double ans = 0.0;
+	for(size_t r = 0; r < rank; ++r){
+		ans += U(u,r)*I(i,r)*(T(pos,r)-T(neg,r));
+	}
+	return ans;
+}
+double Frobenius(DMatrix &A){
+	double ans = 0.0;
+	for(size_t i = 0; i < A.col*A.row; i++){
+		ans += A.value[i]*A.value[i];
+	}
+	return sqrt(ans);
+}
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {	
     //--------------------------------------------
@@ -18,7 +32,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (size_t i = 0; i < NumofEntry; ++i){
 		userid[i] = (size_t)mxGetPr(prhs[0])[i];
 		itemid[i] = (size_t)mxGetPr(prhs[1])[i];
-		tagid[i]  = (size_t)mxGetPr(prhs[1])[i];
+		tagid[i]  = (size_t)mxGetPr(prhs[2])[i];
 	}
     // record the data to a map, and count user,item,tag
 	std::map<point3D, bool> UserItemTag;
@@ -32,11 +46,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         TagCount[ tagid[i] ] += 1;
 	}
 	// do delete
-	for(;;){
+	for(bool changed = false;changed;){
 		std::map<point3D,bool> temp;
         temp = UserItemTag;
 		mexPrintf("Current length of tuple:%d\n", temp.size());
-		bool changed = false;
 		for(auto itr = temp.begin(); itr != temp.end(); ++itr){
 			if(UserCount[itr->first.x] < 5 || ItemCount[itr->first.y] < 5 || TagCount[itr->first.z] < 5){
 				// delete the tuple
@@ -50,8 +63,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 		}
 		// if element changed in the loop, then complete
-		if(changed) continue;
-		else break;
 	}
     // comprese the range of user, item, tag from 0 to the size;
 	// compression map
@@ -77,14 +88,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for(auto itr = TagMap.begin(); itr != TagMap.end(); ++itr){
 		itr->second = offset++;
 	}
-    // map to save <posts, postTag>
-    typedef std::map<size_t,bool> posTag;
+    // map to save <posts, posTag>
+	typedef std::vector<size_t> posTag;
     std::map<point2D, posTag> Posts;
 	for(auto itr = UserItemTag.begin(); itr != UserItemTag.end(); ++itr){
         size_t user = UserMap[itr->first.x];
         size_t item = ItemMap[itr->first.y];
         size_t tag  = TagMap[itr->first.z];
-        Posts[point2D(user,item)][tag] = true;
+        Posts[point2D(user,item)].push_back(tag);
 	}
     //////////////////////////////
     // SGD for factorization
@@ -97,60 +108,77 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     double mean = 0.25;
     double stdev = 1e-4;
     double lambda = 1e-6;
-    // learning rate
     double alpha = 0.1;
     size_t maxiter = 1000;
-    DMatrix MatUser(userSize,factorSize);
+	//plhs[0] = mxCreateDoubleMatrix(userSize, factorSize, mxREAL);
+	//plhs[1] = mxCreateDoubleMatrix(itemSize, factorSize, mxREAL);
+	//plhs[2] = mxCreateDoubleMatrix(tagSize,  factorSize, mxREAL);
+    DMatrix MatUser(userSize, factorSize);
     MatUser.init(INIT_RAND_N,mean,stdev);
-    DMatrix MatItem(itemSize,factorSize);
-    MatItem.init(INIT_RAND_N,mean,stdev);
-    DMatrix MatTag(tagSize,factorSize);
-    MatTag.init(INIT_RAND_N,mean,stdev);
+	return;
+    DMatrix MatItem(itemSize, factorSize);
+    MatItem.init(INIT_RAND_N, mean, stdev);
+    DMatrix MatTag(tagSize, factorSize);
+    MatTag.init(INIT_RAND_N, mean, stdev);
+	// SGD method to update factor matrices
     for(size_t l = 0; l < maxiter;++l){
+		double AUC = 0.0;
         for(auto itr = Posts.begin();itr != Posts.end(); ++itr){
-            // update factor matrices
-            std::map<size_t,bool> ptag = itr->second;
             size_t u = itr->first.x;
             size_t i = itr->first.y;
-            double z = 1/(double)(ptag.size()*(tagSize-ptag.size()));
+			posTag ptagVec = itr->second;
+            double z = 1/(double)(ptagVec.size()*(tagSize-ptagVec.size()));
             // update user and item matrices
             for(size_t r = 0; r < factorSize; ++r){
                 double gradu = 0.0, gradi = 0.0;
                 // compute the gradient
-                for(auto itrtag = ptag.begin(); itrtag != ptag.begin();++itrtag){
-                    size_t tpos = itrtag->first;
-                    for(size_t tneg = 0; tneg < tagSize; ++tneg){
-                        if(ptag.find(tneg))
+				// gradu = z * \sum_{t+} \sum_{t-} \sum_{r} 
+				// w_{t+,t-} * U(u,r) * I(i,r) * (T(t+,r)-T(t-,r))
+                for(auto itrtag = ptagVec.begin(); itrtag != ptagVec.begin();++itrtag){
+					// loop in tag positive
+                    size_t tag_pos = *itrtag;
+                    for(size_t tag_neg = 0; tag_neg < tagSize; ++tag_neg){
+                        if(ptagVec.end() != std::find(ptagVec.begin(),ptagVec.end(),tag_neg))
                             continue;
-                        double diff_y_pred = y_pred(u,i,tpos) - y_pred(u,i,tneg);
-                        double wtptn = sigmoid(diff_y_pred)(1-sigmoid(diff_y_pred));
+						// loop in tag negative
+						// compute w_{t+,t-} = s(y_diff)(1- s(y_diff))
+                        double y = diff_y_pred(MatUser,MatItem,MatTag,u,i,tag_pos,tag_neg);
+						double logfun = sigmoid(y);
+                        double wtptn = logfun*(1-logfun);
+						AUC += logfun;
                         for(size_t f = 0;f < factorSize; ++f){
-                            gradu += wtptn*MatItem(i,f)*(MatTag(tpos,f)-MatTag(tneg,f));
-                            gradi += wtptn*MatUser(u,f)*(MatTag(tpos,f)-MatTag(tneg,f));
+                            gradu += wtptn*MatItem(i,f)*(MatTag(tag_pos,f)-MatTag(tag_neg,f));
+                            gradi += wtptn*MatUser(u,f)*(MatTag(tag_pos,f)-MatTag(tag_neg,f));
                         }
                     }
                 }
+				// use grad to update
                 MatUser(u,r) += alpha*(z*gradu - lambda*MatUser(u,r));
                 MatItem(i,r) += alpha*(z*gradi - lambda*MatItem(i,r));
+
             }
             // update tag matrix
             for(size_t t = 0; t < tagSize; ++t){
                 for(size_t r = 0; r < factorSize; ++r){
                     double gradt = 0.0;
-                    if(ptag.find(t)){
-                        for(size_t tneg = 0; tneg < tagSize; ++tneg){
-                            if(ptag.find(tneg))
-                            continue;
-                            double diff_y_pred = y_pred(u,i,t) - y_pred(u,i,tneg);
-                            double wtptn = sigmoid(diff_y_pred)(1-sigmoid(diff_y_pred));
+					// if positive tag
+                    if(ptagVec.end() != std::find(ptagVec.begin(),ptagVec.end(),t)){
+						// loop in negative tag
+                        for(size_t tag_neg = 0; tag_neg < tagSize; ++tag_neg){
+                            if(ptagVec.end() != std::find(ptagVec.begin(),ptagVec.end(),tag_neg))
+								continue;
+                            double y = diff_y_pred(MatUser,MatItem,MatTag,u,i,t,tag_neg);
+                            double wtptn = sigmoid(y)*(1.0-sigmoid(y));
                             for(size_t f = 0;f < factorSize; ++f){
-                                gradt += wtptn*MatUser(u,f)*MatItem(tpos,f);
+                                gradt += wtptn*MatUser(u,f)*MatItem(i,f);
                             }
                         }
+						gradt = -1.0 * gradt;
                     }else{
-                        for(auto itrtag_pos = ptag.begin(); itrtag_pos != ptag.begin();++itrtag_pos){
-                            double diff_y_pred = y_pred(u,i,itrtag_pos->second) - y_pred(u,i,t);
-                            double wtptn = sigmoid(diff_y_pred)(1-sigmoid(diff_y_pred));
+						// if negative tag loop in positive tag
+                        for(auto itrtag_pos = ptagVec.begin(); itrtag_pos != ptagVec.begin();++itrtag_pos){
+							double y = diff_y_pred(MatUser,MatItem,MatTag,u,i,*itrtag_pos,t);
+                            double wtptn = sigmoid(y)*(1.0-sigmoid(y));
                             for(size_t f = 0;f < factorSize; ++f){
                                 gradt += wtptn*MatUser(u,f)*MatItem(i,f);
                             }
@@ -160,6 +188,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 }
             }
         }
+		if(0 == (l / 20)){
+			double regularTerm = 0.0;
+			regularTerm += Frobenius(MatUser);
+			regularTerm += Frobenius(MatItem);
+			regularTerm += Frobenius(MatTag);
+			regularTerm *= lambda;
+			mexPrintf("Iter:%d,ObjectFuntcionValue:%f\n",l,AUC-regularTerm);
+		}
     }
 	//--------------
 	// free

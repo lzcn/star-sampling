@@ -86,6 +86,7 @@ public:
 	~Matrix();
 	double GetElement(size_t i, size_t j);
 	double GetColSum(size_t column);
+	double operator()(size_t i, size_t j) const { return element[j*row +i]; }
 	// return m with probability abs(M_{m,n})/SumofCol(n)
 	size_t randRow(size_t n);
 	// return n with probability abs(M_{m,n})/SumofRow(m)
