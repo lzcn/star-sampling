@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cassert>
+#include "util.h"
 
 namespace rnd{
 	// normal distribution
@@ -143,8 +144,8 @@ int rnd::alias(size_t s, size_t *dst, size_t n, double *pdf,double sum){
 	double u;
 	size_t fair_die;
 	for (size_t i = 0; i < s; ++i ){
-		fair_die = randn() % n;
-		u = sum*(double)randn()/(double)RAND_MAX;
+		fair_die = rand() % n;
+		u = sum*(double)rand()/(double)RAND_MAX;
 		if (table_prob[fair_die] >= u){
 			*(dst + i) = fair_die;
 		}else{

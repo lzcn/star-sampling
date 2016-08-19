@@ -62,4 +62,4 @@ void doInsert(double p, std::list<double> &listTop){
     }
 }
 
-#endif /*__UTIL_H__*
+#endif /*__UTIL_H__*/
