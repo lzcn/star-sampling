@@ -108,12 +108,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     uint userSize = UserMap.size();
     uint itemSize = ItemMap.size();
     uint tagSize = TagMap.size();
-    uint factorSize = 8;
+    uint factorSize = 64;
     double mean = 0.25;
     double stdev = 0.1;
     double lambda = 1e-6;
     double alpha = 0.1;
-    uint maxiter = 20;
+    uint maxiter = 1000;
 	mexPrintf("SGD for factorization ......\n");mexEvalString("drawnow");
 	// postive tag index for each post
 	uint *t_pos_Ind = (uint*)malloc(Posts.size()*tagSize*sizeof(uint));
