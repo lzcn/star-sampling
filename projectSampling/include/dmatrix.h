@@ -16,16 +16,6 @@ const uint INIT_ALL_ONES = 5;
 class DMatrix;
 class DVector;
 
-struct SEntry {
-    uint id;
-    double value;
-};
-	
-struct SVector {
-	SEntry *data;
-	uint size;
-};
-
 class DMatrix{
 public:    
     DMatrix();

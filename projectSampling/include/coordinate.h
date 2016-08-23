@@ -69,7 +69,6 @@ public:
 	~SubIndex();
 	bool isDone(){return doneFlag;};
 	bool reset();
-	SubIndex& operator+(const size_t step);
 	SubIndex& operator++();
 	const size_t *getIdx(){return curIdx;};
 private:
@@ -190,31 +189,6 @@ bool SubIndex::reset(){
 	doneFlag = false;
 	memset(curIdx, 0, (idxSize + 1)*sizeof(size_t));
 	return true;
-}
-SubIndex& SubIndex::operator+(const size_t step){
-	size_t a, b;
-	a = step;
-	b= 0;
-	size_t *temp = (size_t *)malloc(idxSize*sizeof(size_t));
-	memset(temp, 0, idxSize*sizeof(size_t));
-	for(size_t i = 0; i< idxSize;++i){
-		b = a % maxIdx[i];
-		a = a / maxIdx[i];
-		temp[i] = b;
-		curIdx[i] += b;
-		while(curIdx[i] >= maxIdx[i]){
-			curIdx[i] -= maxIdx[i];
-			++curIdx[i + 1];
-		}
-		if(a > 0){
-			curIdx[idxSize] += a;
-		}
-		if(curIdx[idxSize] > 0){
-			doneFlag = true;
-		}
-		free(temp);
-		return *this;
-	}
 }
 SubIndex& SubIndex::operator++(){
 	curIdx[0]++;
