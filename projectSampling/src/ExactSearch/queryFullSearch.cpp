@@ -3,6 +3,7 @@
 
 #include "mex.h"
 #include "matrix.h"
+#include "utilmex.h"
 
 /*
     all matrices must has the same row dimension
@@ -31,13 +32,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //---------------------
     // Start full search
     //---------------------
-    mexPrintf("Starting Exhaustive Search for Queries......");
+    mexPrintf("Starting Exhaustive Search for Queries......");mexEvalString("drawnow");
     size_t *maxIdx = (size_t*)malloc(NumMat * sizeof(size_t));
     maxIdx[0] = mxGetN(prhs[1]);
     maxIdx[1] = mxGetN(prhs[2]);
     SubIndex index(NumMat, maxIdx);
+    progressbar(0);
     start = clock();
     for (size_t i = 0; i < NumQueries; ++i){
+        clearprogressbar();
+        progressbar(i/NumQueries);
         index.reset();
         std::list<double> listTop;
         for(size_t count = 0; count < knn && !index.isDone(); ++index){
@@ -63,6 +67,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     finish = clock();
     duration[0] = (double)(finish-start)/(NumQueries*CLOCKS_PER_SEC);
-    mexPrintf("Done!\n");
+    progressbar(1);
     free(maxIdx);
 }
