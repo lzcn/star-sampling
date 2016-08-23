@@ -32,7 +32,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //---------------------
     // Start full search
     //---------------------
-    mexPrintf("Starting Exhaustive Search for Queries......");mexEvalString("drawnow");
+    mexPrintf("Starting Exhaustive Search for Queries......\n");mexEvalString("drawnow");
     size_t *maxIdx = (size_t*)malloc(NumMat * sizeof(size_t));
     maxIdx[0] = mxGetN(prhs[1]);
     maxIdx[1] = mxGetN(prhs[2]);
