@@ -41,7 +41,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     start = clock();
     for (size_t i = 0; i < NumQueries; ++i){
         clearprogressbar();
-        progressbar(i/NumQueries);
+        progressbar((double)i/NumQueries);
         index.reset();
         std::list<double> listTop;
         for(size_t count = 0; count < knn && !index.isDone(); ++index){
