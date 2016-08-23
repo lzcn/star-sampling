@@ -157,6 +157,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// w(t+,t-) = s(y(u,i,t+,t-))[1- s(y(u,i,t+,t-))]
 	double *wtptn = (double*)malloc(tagSize*tagSize*sizeof(double));
 	memset(wtptn, 0, tagSize*tagSize*sizeof(double));
+	double AUC_pre = 0.0;
     for(uint l = 0; l < maxiter;++l){
 		//for (u,i) in Posts do
 		start = clock();
@@ -234,6 +235,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
         }
 		mexPrintf("Iter:%d,ObjectFuntcionValue:%f, TimeDuration:%f\n",l,AUC,timeDuration(start));mexEvalString("drawnow");
+		if((abs(AUC - AUC_pre)/AUC) < 1e-4) break;
+		AUC_pre = AUC;
     }
 	///////////////////
 	// Conveter
