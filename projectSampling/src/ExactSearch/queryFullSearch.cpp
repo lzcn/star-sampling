@@ -67,6 +67,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     finish = clock();
     duration[0] = (double)(finish-start)/(NumQueries*CLOCKS_PER_SEC);
+    clearprogressbar();
     progressbar(1);
+    mexPrintf("\n");
     free(maxIdx);
 }
