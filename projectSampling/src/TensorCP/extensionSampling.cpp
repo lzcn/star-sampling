@@ -65,7 +65,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mexPrintf("- Top-%d ",top_t);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");
+	mexPrintf("......");mexEvalString("drawnow");
 	// compute the extension for matrices
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
