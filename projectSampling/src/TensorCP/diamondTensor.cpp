@@ -24,12 +24,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//  get the number of samples
 	const size_t budget = mxGetPr(prhs[nrhs-3])[0];
 	const size_t NumSample = mxGetPr(prhs[nrhs-2])[0];
-	const size_t top_t = mxGetPr(prhs[nrhs-1])[0];
-	const size_t NumMat = (nrhs - 3);
+	const uint top_t = mxGetPr(prhs[nrhs-1])[0];
+	const uint NumMat = (nrhs - 3);
 	// vector to save factor matrices
 	std::vector<Matrix*> Mats;
 	start = clock();
-	for (size_t i = 0; i < NumMat; ++i){
+	for (uint i = 0; i < NumMat; ++i){
 		Mats.push_back(new Matrix(mxGetM(prhs[i]),mxGetN(prhs[i]),mxGetPr(prhs[i])));
 	}
 	finish = clock();
@@ -48,31 +48,31 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mexPrintf("- Top-%d ",top_t);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");
+	mexPrintf("......");mexEvalString("drawnow");
 	//--------------------
 	// Compute the weight
 	//--------------------
 	start = clock();
-	size_t rankSize = mxGetM(prhs[0]);
-	size_t numCol = mxGetN(prhs[0]);
+	uint rankSize = mxGetM(prhs[0]);
+	uint numCol = mxGetN(prhs[0]);
 	// Get the weight matrix
 	double SumofW = 0;
 	double *weight = (double*)malloc(rankSize*numCol*sizeof(double));
 	memset(weight, 0, rankSize*numCol*sizeof(double));
 	start = clock();
-	for (size_t r = 0; r < rankSize; ++r){
-		for(size_t i = 0; i < numCol; ++i){
+	for (uint r = 0; r < rankSize; ++r){
+		for(uint i = 0; i < numCol; ++i){
 			double tempW = abs(Mats[0]->GetElement(r,i));
 			tempW *= Mats[0]->SumofCol[i];
-			for (size_t n = 1; n < NumMat; ++n){
+			for (uint n = 1; n < NumMat; ++n){
 				tempW *= Mats[n]->SumofCol[r];
 			}
 			weight[r*numCol + i] = tempW;
 			SumofW += tempW;
 		}
 	}
-	for (size_t r = 0; r < rankSize; ++r){
-		for(size_t i = 0; i < numCol; ++i){
+	for (uint r = 0; r < rankSize; ++r){
+		for(uint i = 0; i < numCol; ++i){
 			weight[r*numCol + i] /= SumofW;
 		}
 	}
@@ -86,26 +86,26 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// map to save the sampling results
 	std::map<pointND,double> IrJc;
 	// sampled index for vertexes
-	std::vector<size_t*> idxes(NumMat);
-	for(size_t i = 0; i < NumMat; ++i){
-		idxes[i] = (size_t*)malloc(NumSample*sizeof(size_t));
-		memset(idxes[i], 0, NumSample*sizeof(size_t));
+	std::vector<uint*> idxes(NumMat);
+	for(uint i = 0; i < NumMat; ++i){
+		idxes[i] = (uint*)malloc(NumSample*sizeof(uint));
+		memset(idxes[i], 0, NumSample*sizeof(uint));
 	}
-	size_t *IdxR = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IdxR, 0, NumSample*sizeof(size_t));	
+	uint *IdxR = (uint*)malloc(NumSample*sizeof(uint));
+	memset(IdxR, 0, NumSample*sizeof(uint));	
 	// freqency of r
 	size_t *freq_r = (size_t*)malloc(rankSize*sizeof(size_t));
 	memset(freq_r, 0, rankSize*sizeof(size_t));
 	// sample pairs
-	binary_sample(NumSample, \
+	sort_sample(NumSample, \
 				 idxes[0], IdxR, \
 				 freq_r, \
 				 rankSize, numCol, \
 				 weight, 1.0);
 	// sample sub-paths
-	for(size_t n = 1; n < NumMat; ++n){
-		size_t offset = 0;	
-		for (size_t r = 0; r < rankSize; ++r){
+	for(uint n = 1; n < NumMat; ++n){
+		uint offset = 0;	
+		for (uint r = 0; r < rankSize; ++r){
 			vose_alias( freq_r[r], (idxes[n] + offset), \
 						Mats[n]->row, \
 						(Mats[n]->element + r*Mats[n]->row), \
@@ -114,17 +114,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}
 	}
 	// sample r' and compute socres
-	std::vector<size_t*> coordinates(NumSample);
+	std::vector<uint*> coordinates(NumSample);
 	for (size_t s = 0; s < NumSample; ++s){
-		coordinates[s] = (size_t*)malloc(NumMat*sizeof(size_t));
-		memset(coordinates[s], 0, NumMat*sizeof(size_t));
-		size_t r = IdxR[s];
-		size_t rp = Mats[0]->randRow(idxes[0][s]);
+		coordinates[s] = (uint*)malloc(NumMat*sizeof(uint));
+		memset(coordinates[s], 0, NumMat*sizeof(uint));
+		uint r = IdxR[s];
+		uint rp = Mats[0]->randRow(idxes[0][s]);
 		double valueSampled = 1.0;
 		valueSampled *= sgn_foo(Mats[0]->GetElement(r,idxes[0][s]));
 		valueSampled *= sgn_foo(Mats[0]->GetElement(rp,idxes[0][s]));
 		coordinates[s][0] = idxes[0][s];
-		for(size_t n = 1; n < NumMat; ++n){
+		for(uint n = 1; n < NumMat; ++n){
 			coordinates[s][n] = idxes[n][s];
 			valueSampled *= sgn_foo(Mats[n]->GetElement(idxes[n][s],r)) \
 							* Mats[n]->GetElement(idxes[n][s],rp);
@@ -156,7 +156,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
-		for(size_t n = 0; n < NumMat; ++n){
+		for(uint n = 0; n < NumMat; ++n){
 			plhs_pr[m + n * top_t] = sortVec[m].first.coord[n] + 1;
 		}
 	}

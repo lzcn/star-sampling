@@ -38,7 +38,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// get the  number of samples
 	const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
 	// get the top_t
-	const size_t top_t = (size_t)mxGetPr(prhs[4])[0];
+	const uint top_t = (uint)mxGetPr(prhs[4])[0];
 	// value
 	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
 	double *plhs_result = mxGetPr(plhs[0]);
@@ -62,8 +62,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *weight = (double*)malloc(MatA.row*MatA.col*sizeof(double));
 	memset(weight, 0, MatA.row*MatA.col*sizeof(double));
 	start = clock();
-	for (size_t r = 0; r < MatA.row; ++r){
-		for(size_t i = 0; i < MatA.col; ++i){
+	for (uint r = 0; r < MatA.row; ++r){
+		for(uint i = 0; i < MatA.col; ++i){
 			double tempW = abs(MatA.GetElement(r,i)) * MatA.SumofCol[i] * MatB.SumofCol[r];
 			weight[r*MatA.col + i] = tempW;
 			SumofW += tempW;
@@ -77,25 +77,25 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------
 	start = clock();
 	// sampled r, i, j, r'
-	size_t *IdxR = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IdxR, 0, NumSample*sizeof(size_t));	
-	size_t *IdxI = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IdxI, 0, NumSample*sizeof(size_t));
-	size_t *IdxJ = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IdxJ, 0, NumSample*sizeof(size_t));
-	size_t *IdxRp = (size_t*)malloc(NumSample*sizeof(size_t));
-	memset(IdxRp, 0, NumSample*sizeof(size_t));
+	uint *IdxR = (uint*)malloc(NumSample*sizeof(uint));
+	memset(IdxR, 0, NumSample*sizeof(uint));	
+	uint *IdxI = (uint*)malloc(NumSample*sizeof(uint));
+	memset(IdxI, 0, NumSample*sizeof(uint));
+	uint *IdxJ = (uint*)malloc(NumSample*sizeof(uint));
+	memset(IdxJ, 0, NumSample*sizeof(uint));
+	uint *IdxRp = (uint*)malloc(NumSample*sizeof(uint));
+	memset(IdxRp, 0, NumSample*sizeof(uint));
 	// sampled r's frequency 
 	size_t *freq_r = (size_t*)malloc(MatA.row*sizeof(size_t));
 	memset(freq_r, 0, MatA.row*sizeof(size_t));
 	// sample pairs (i,r) ,
-	binary_sample(NumSample, \
+	sort_sample(NumSample, \
 				 IdxI, IdxR, \
 				 freq_r, \
 				 MatA.row, MatA.col, \
 				 weight, SumofW);
 	// sample j;
-	for (size_t r = 0,offset = 0; r < MatA.row; ++r){
+	for (uint r = 0,offset = 0; r < MatA.row; ++r){
 		vose_alias( freq_r[r], (IdxJ + offset), \
 					MatB.row, \
 					(MatB.element + r*MatB.row), \
@@ -105,10 +105,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// sample rp and  get score
 	std::map<point2D, double> IrJc;
 	for (size_t s = 0; s < NumSample ; ++s){
-		size_t r = IdxR[s];
-		size_t i = IdxI[s];
-		size_t j = IdxJ[s];
-		size_t rp = MatA.randRow(i);
+		uint r = IdxR[s];
+		uint i = IdxI[s];
+		uint j = IdxJ[s];
+		uint rp = MatA.randRow(i);
 		double valueSampled = sgn_foo(MatA.GetElement(r,i)) \
 		 					* sgn_foo(MatB.GetElement(j,r)) \
 							* sgn_foo(MatA.GetElement(rp,i)) \
@@ -146,7 +146,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
-	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
+	for(uint m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
 		//i

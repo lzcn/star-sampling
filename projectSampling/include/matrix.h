@@ -1,210 +1,126 @@
 #ifndef __MATRIX_H__
 #define __MATRIX_H__
 
-
 #include <vector>
 #include <list>
 #include <map>
 #include <algorithm>
 
-/*
-	class for point2D
-	(x,y)
-*/
-class point2D
-{
-public:
-	point2D(size_t i, size_t j);
-	~point2D(){};
-	bool operator<(const point2D &toCmp)const;
-	bool operator==(const point2D &toCmp)const;
-	bool operator>(const point2D &toCmp)const;
-	size_t x;
-	size_t y;
-};
+typedef unsigned int uint;
 
-/*
-	class for point3D
-	(x,y,z)
-*/
-class point3D
-{
-public:
-	point3D(size_t i, size_t j, size_t k);
-	~point3D(){};
-	bool operator<(const point3D &toCmp)const;
-	bool operator==(const point3D &toCmp)const;
-	bool operator>(const point3D &toCmp)const;
-	size_t x;
-	size_t y;
-	size_t z;
-};
+const uint MATRIX_NONE_SUM = 0;
+const uint MATRIX_COL_SUM  = 1;
+const uint MATRIX_ROW_SUM  = 2;
+const uint MATRIX_FULL_SUM = 3;
+////////////////////////////////
+//	      DECALARATIONS	      //
+////////////////////////////////
 
-/*
-
-	class for pointND
-	coord: coordinate
-	num: length of coordinate
-*/
-class pointND
-{
-public:
-	pointND(size_t *p, size_t n);
-	~pointND(){};
-	bool operator<(const pointND &toCmp)const;
-	size_t num;
-	size_t *coord;
-};
-typedef std::pair<point2D,double> pidx2d;
-typedef std::pair<point3D,double> pidx3d;
-typedef std::pair<pointND,double> pidxNd;
-template <typename Tpair>
-int compgt(const Tpair &v1,const Tpair &v2){
-	return (v1.second > v2.second);
-}
-/*
-	class for Matrix: column major order
-			that is a matrix A will be stored in 
-			continuous memory as :
-			a[0][0] a[1][0] a[2][0] ... a[0][1] a[1][1] ...
-	element: the elements of matrix
-			GetElement(m,n) = element[n * row + m]
-	SumofCol: the absolute sum of every column
-	SumofRow: the absolute sum of every row
-	ranRow(n): given a column index, sample the row index
-	ranCol(n): given a row index, sample the column index
-*/
-
-class Matrix{
-public:
-	size_t row;
-	size_t col;
-	double* element;
-	double* SumofCol;
-	double* SumofRow;
-	Matrix(size_t r, size_t c, double*pr);
-	~Matrix();
-	double GetElement(size_t i, size_t j);
-	double GetColSum(size_t column);
-	// return m with probability abs(M_{m,n})/SumofCol(n)
-	size_t randRow(size_t n);
-	// return n with probability abs(M_{m,n})/SumofRow(m)
-	size_t randCol(size_t m);
-};
-
-// sign functions
+int sgn(double x);
 int sgn_foo(double x);
-/*
-	Euclidean distance of two cloumns
-*/
-double EuclideanMetric(const point2D&, const Matrix &A, const Matrix &B);
-double EuclideanMetricRow(const point2D&, const Matrix &A, const Matrix &B);
-/*
-	Cosine similarity distance of two cloumns
-*/
-double CosineMetric(const point2D&, const Matrix &A, const Matrix &B);
-double CosineMetricRow(const point2D&, const Matrix &A, const Matrix &B);
-/*
-	Inner product of two columns
-*/
-double MatrixColMul(const Matrix &A, const Matrix &B, \
-					size_t m, size_t n);
-double MatrixColMul(const Matrix &A, \
-					const Matrix &B, \
-					const Matrix &C, \
-					size_t m, size_t n, size_t p);
-double MatrixColMul(const point2D &coord, \
-				   Matrix &A, \
-				   Matrix &B);
-double MatrixColMul(const point3D &coord, \
-				   Matrix &A, \
-				   Matrix &B, \
-				   Matrix &C);
-/*
-	Inner product of two rows
-*/
-double MatrixRowMul(const point2D &coord, \
-				   Matrix &A, \
-				   Matrix &B);
-double MatrixRowMul(const point3D &coord, \
-				   Matrix &A, \
-				   Matrix &B, \
-				   Matrix &C);
+class point2D;
+class point3D;
+class pointND;
+class SubIndex;
 
-double vectors_mul(const point2D &coord, \
-				   Matrix &A, \
-				   Matrix &B);
-double vectors_mul(const point3D &coord, \
-				   Matrix &A, \
-				   Matrix &B, \
-				   Matrix &C);
-
-double vectors_mul(const pointND &p, std::vector<Matrix*> &vMat);
-/*
-	list is sorted in ascending order;
-	insert p to the list;
-	length: size of list;
-*/
 void doInsertReverse(double p, std::list<double> &listTop);
 void doInsert(double p, std::list<double> &listTop);
 void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<point3D> &listIdx);
 
-/* 
-	Vose's alias method for sample;
-	It is used for the situation when 
-		L is not much bigger than S;
-	A method with constant time per sample.
-*/
-int vose_alias(size_t s, size_t *dst, \
-			   size_t n, double *pdf,double sum_pdf);
+typedef std::pair<point2D,double> pidx2d;
+typedef std::pair<point3D,double> pidx3d;
+typedef std::pair<pointND,double> pidxNd;
 
-/* 
-	Sample the pair(k, i)
-	Suppose the size of weight/ pdf is (m, n);
-	It requires the weight/ pdf to be stored like that
-		weight[index] = weight[k * n + i]:
-	S: number of samples needed to be sampled;
-	index:  the result which index = k * col + i,
-		so that it is sorted according to k then i;
-		and it will be convenience for the next stage;
-	freq_k: will return the number of each k has been sampled;
-	m and n : the shape of weight;
-		the dimension of feature vector.
-	sum_pdf: the sum of the pdf, which is not one, for the decease
-		of computation cost.
-*/
+template <typename Tpair> 
+uint compgt(const Tpair &v1,const Tpair &v2){ return (v1.second > v2.second); }
+template <typename Tpair>
+uint complt(const Tpair &v1,const Tpair &v2){ return (v1.second < v2.second); }
 
-int sample_index(size_t S, size_t *index, \
-				 size_t *IndforI, size_t *IndforK, \
-				 size_t *freq_k, \
-				 size_t m, size_t n, \
-				 double*pdf, double sum_pdf);
+class Matrix;
+double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B);
+double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
+double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B);
+double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
+double MatrixColMul(const Matrix &A, const Matrix &B, uint i, uint j);
+double MatrixColMul(const Matrix &A, const Matrix &B, const Matrix &C, uint i, uint j, uint k);
+double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat);
+double vectors_mul(const point2D &coord, Matrix &A, Matrix &B);
+double vectors_mul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
+void sort_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
+void sort_sample(size_t s, uint*dst, uint n, double*p, double sum);
+void vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf);
+////////////////////////////////
+//	     IMPLEMENTATIONS      //
+////////////////////////////////
+class point2D
+{
+public:
+	point2D(uint i, uint j);
+	~point2D(){};
+	bool operator<(const point2D &toCmp)const;
+	bool operator==(const point2D &toCmp)const;
+	bool operator>(const point2D &toCmp)const;
+	uint x;
+	uint y;
+};
 
-int binary_sample(size_t s, size_t*i, size_t*r, size_t *freq, size_t m, size_t n, double*pdf, double sum_pdf);
-/* 
-	SubIndex is used for loop
-	data: 
-		index_cur: indicate the current index for 
-		index_max: each element is the number vector
-				of correspongding maxtirx
-	method: 
-		+ :add t to current index
-*/
+class point3D
+{
+public:
+	point3D(uint i, uint j, uint k);
+	~point3D(){};
+	bool operator<(const point3D &toCmp)const;
+	bool operator==(const point3D &toCmp)const;
+	bool operator>(const point3D &toCmp)const;
+	uint x;
+	uint y;
+	uint z;
+};
+
+class pointND
+{
+public:
+	pointND(uint *p, uint n);
+	~pointND(){};
+	bool operator<(const pointND &toCmp)const;
+	uint num;
+	uint *coord;
+};
+
+class Matrix{
+public:
+	uint row;
+	uint col;
+	double* element;
+	double* SumofCol;
+	double* SumofRow;
+	Matrix(uint r, uint c, double*pr);
+	Matrix(uint r, uint c, double*pr, uint TYPE);
+	~Matrix();
+	double GetElement(uint i, uint j);
+	double GetColSum(uint column);
+	double& operator()(uint i, uint j) const { return element[j*row +i]; }
+	// return m with probability abs(M_{m,n})/SumofCol(n)
+	uint randRow(uint n);
+	// return n with probability abs(M_{m,n})/SumofRow(m)
+	uint randCol(uint m);
+private:
+	uint _SUMTYPE;
+};
 
 class SubIndex{
 public:
-	SubIndex(int n, size_t *max);
+	SubIndex(uint n, uint *max);
 	~SubIndex();
 	bool isDone(){return doneFlag;};
 	bool reset();
-	SubIndex& operator+(const size_t step);
 	SubIndex& operator++();
-	const size_t *getIdx(){return curIdx;};
+	const uint *getIdx(){return curIdx;};
 private:
-	int idxSize;
+	uint idxSize;
 	bool doneFlag;
-	size_t *curIdx;
-	const size_t *maxIdx;
+	uint *curIdx;
+	const uint *maxIdx;
 };
 
 #endif

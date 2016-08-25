@@ -28,9 +28,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Initialization
 	//--------------------
 	// number of queries
-	const size_t NumQueries = mxGetM(prhs[0]);
+	const uint NumQueries = mxGetM(prhs[0]);
 	// rank size
-	const size_t rankSize = mxGetN(prhs[0]);
+	const uint rankSize = mxGetN(prhs[0]);
 	// MatA is a set of queries
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]));
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]));
@@ -40,7 +40,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// sample number
 	const size_t NumSample = (size_t)mxGetPr(prhs[4])[0];
 	// kNN
-	const size_t knn = (size_t)mxGetPr(prhs[5])[0];
+	const uint knn = (uint)mxGetPr(prhs[5])[0];
 	// result values for each query
 	plhs[0] = mxCreateDoubleMatrix(knn, NumQueries, mxREAL);
 	double *knnValue = mxGetPr(plhs[0]);
@@ -52,7 +52,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mexPrintf("- Top-%d ",knn);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");
+	mexPrintf("......");mexEvalString("drawnow");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
@@ -66,10 +66,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------
 	// list for sub walk
 	std::vector<std::vector<point2D> > subWalk(rankSize);
-	for(size_t i = 0; i < NumQueries; ++i){
+	for(uint i = 0; i < NumQueries; ++i){
 		start = clock();
 		double SumofW = 0.0;
-		for (size_t r = 0; r < rankSize; ++r){
+		for (uint r = 0; r < rankSize; ++r){
 			weight[r] = abs(MatA.GetElement(i,r));
 			weight[r] *= MatB.SumofCol[r];
 			weight[r] *= MatC.SumofCol[r];
@@ -81,7 +81,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			continue;
 		start = clock();
 		std::map<point3D, double> IrJc;
-		for (size_t r = 0; r < rankSize; ++r){
+		for (uint r = 0; r < rankSize; ++r){
 			double u = (double)rand()/(double)RAND_MAX;
 			double c = (double)NumSample*weight[r]/SumofW;
 			if(u < (c - floor(c)))
@@ -89,14 +89,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			else
 				freq_r[r] = (size_t)floor(c);
 		}
-		for(size_t r = 0; r < rankSize; ++r){
+		for(uint r = 0; r < rankSize; ++r){
 			// Check the list length for each query
 			if(freq_r[r] > subWalk[r].size()){
 				size_t remain = freq_r[r] - subWalk[r].size();
-				size_t *IdxJ = (size_t*)malloc(remain*sizeof(size_t));
-				size_t *IdxK = (size_t*)malloc(remain*sizeof(size_t));
-				memset(IdxJ, 0, remain*sizeof(size_t));
-				memset(IdxK, 0, remain*sizeof(size_t));
+				uint *IdxJ = (uint*)malloc(remain*sizeof(uint));
+				uint *IdxK = (uint*)malloc(remain*sizeof(uint));
+				memset(IdxJ, 0, remain*sizeof(uint));
+				memset(IdxK, 0, remain*sizeof(uint));
 				vose_alias(remain, IdxJ, \
 					MatB.row, \
 					(MatB.element + r*MatB.row), \
@@ -105,7 +105,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					MatC.row, \
 					(MatC.element + r*MatC.row), \
 					MatC.SumofCol[r]);
-				for(size_t p = 0; p < remain; ++p){
+				for(uint p = 0; p < remain; ++p){
 					subWalk[r].push_back(point2D(IdxJ[p],IdxK[p]));
 				}
 				free(IdxJ);
@@ -113,8 +113,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 			for(size_t m = 0; m < freq_r[r]; ++m){
 				// repeat c_r times to sample indexes j, k
-				size_t idxJ = (subWalk[r])[m].x;
-				size_t idxK = (subWalk[r])[m].y;
+				uint idxJ = (subWalk[r])[m].x;
+				uint idxK = (subWalk[r])[m].y;
 				double valueSampled;
 				valueSampled = sgn_foo(MatA.GetElement(i,r));
 				valueSampled *= sgn_foo(MatB.GetElement(idxJ,r));
@@ -134,7 +134,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		start = clock();
 		sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
 		std::vector<pidx3d> sortVec;
-		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
+		for(uint t = 0; t < tempSortedVec.size() && t < budget; ++t){
 			double true_value = MatrixRowMul(tempSortedVec[t].first, MatA, MatB, MatC);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
 		}
@@ -142,7 +142,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		finish = clock();
 		SamplingTime[i] += (double)(finish-start);
 		SamplingTime[i] /= (double)CLOCKS_PER_SEC;
-		for(size_t s = 0; s < sortVec.size() && s < knn; ++s){
+		for(uint s = 0; s < sortVec.size() && s < knn; ++s){
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
