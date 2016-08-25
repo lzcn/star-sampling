@@ -15,24 +15,24 @@ out_dir = './max';
 if(~isdir(out_dir))
     mkdir(out_dir);
 end
-samples = power(10,3:7);
+samples = power(10,3:8);
 top_t = power(10,0:3);
 budget = zeros(length(samples),length(top_t));
 for t = 1:length(top_t)
-    budget(:,t) = power(10,3:7);
+    budget(:,t) = samples;
 end
-turn = 2;
-TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,false);
+turn = 10;
+TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,true);
 %% 1k budget
 out_dir = './budget';
 if(~isdir(out_dir))
     mkdir(out_dir);
 end
-samples = power(10,4:7);
+samples = power(10,4:8);
 top_t = power(10,0:3);
 budget = zeros(length(samples),length(top_t));
 for t = 1:length(top_t)
     budget(:,t) = 10*top_t(t);
 end
-turn = 5;
-TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,false);
+turn = 20;
+TRIAL001(paths,dataName,out_dir,budget,samples,top_t,turn,true);
