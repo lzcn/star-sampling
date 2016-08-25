@@ -37,8 +37,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	size_t rankSize = mxGetN(prhs[0]);
-	size_t rankSizeExt = rankSize * rankSize;
+	uint rankSize = mxGetN(prhs[0]);
+	uint rankSizeExt = rankSize * rankSize;
 	// original matrices
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
@@ -47,11 +47,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	Matrix MatB(mxGetM(prhs[1]), rankSize, B);
 	Matrix MatC(mxGetM(prhs[2]), rankSize, C);
 	// the budget
-	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
+	const uint budget = (uint)mxGetPr(prhs[3])[0];
 	// number of samples
-	const size_t NumSample = (size_t)mxGetPr(prhs[4])[0];
+	const uint NumSample = (uint)mxGetPr(prhs[4])[0];
 	// find the top-t largest value
-	const size_t top_t = (size_t)mxGetPr(prhs[5])[0];
+	const uint top_t = (uint)mxGetPr(prhs[5])[0];
 	// result of sampling
 	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
 	double *plhs_result = mxGetPr(plhs[0]);
@@ -75,18 +75,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(Cex, 0, mxGetM(prhs[2])*rankSizeExt*sizeof(double));
 	// compute the extension matrices
 	start = clock();
-	for (size_t m = 0; m < rankSize; ++m){
-		for (size_t n = 0; n < rankSize; ++n){
+	for (uint m = 0; m < rankSize; ++m){
+		for (uint n = 0; n < rankSize; ++n){
 			// extension for matrix A
-			for(size_t i = 0; i < mxGetM(prhs[0]); ++i){
+			for(uint i = 0; i < mxGetM(prhs[0]); ++i){
 				Aex[(m*rankSize + n) * MatA.row + i] = A[m * MatA.row + i] * A[n * MatA.row + i];
 			}
 			// extension for matrix B
-			for(size_t j = 0; j < mxGetM(prhs[1]); ++j){
+			for(uint j = 0; j < mxGetM(prhs[1]); ++j){
 				Bex[(m*rankSize + n) * MatB.row + j] = B[m * MatB.row + j] * B[n * MatB.row + j];
 			}
 			// extension for matrix C
-			for(size_t k = 0; k < mxGetM(prhs[2]); ++k){
+			for(uint k = 0; k < mxGetM(prhs[2]); ++k){
 				Cex[(m*rankSize + n) * MatC.row + k] = C[m * MatC.row + k] * C[n * MatC.row + k];
 			}
 		}
@@ -105,7 +105,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *weight = (double*)malloc(rankSizeExt*sizeof(double));
 	memset(weight, 0, rankSizeExt*sizeof(double));
 	start = clock();
-	for (size_t r = 0; r < rankSizeExt; ++r){
+	for (uint r = 0; r < rankSizeExt; ++r){
 		weight[r] = MatAex.SumofCol[r];
 		weight[r] *= MatBex.SumofCol[r];
 		weight[r] *= MatCex.SumofCol[r];
@@ -118,24 +118,24 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	start = clock();
-	size_t *freq_r = (size_t *)malloc(rankSizeExt*sizeof(size_t));
-	memset( freq_r, 0, rankSizeExt*sizeof(size_t));
-	for (size_t r = 0; r < rankSizeExt; ++r){
+	uint *freq_r = (uint *)malloc(rankSizeExt*sizeof(uint));
+	memset( freq_r, 0, rankSizeExt*sizeof(uint));
+	for (uint r = 0; r < rankSizeExt; ++r){
 		double u = (double)rand()/(double)RAND_MAX;
 		double c = (double)NumSample*weight[r]/SumofW;
 		if(u < (c - floor(c)))
-			freq_r[r] = (size_t)ceil(c);
+			freq_r[r] = (uint)ceil(c);
 		else
-			freq_r[r] = (size_t)floor(c);
+			freq_r[r] = (uint)floor(c);
 	}
-	size_t *IdxI = (size_t*)malloc((NumSample + rankSizeExt)*sizeof(size_t));
-	memset(IdxI, 0, (NumSample + rankSizeExt)*sizeof(size_t));
-	size_t *IdxJ = (size_t*)malloc((NumSample + rankSizeExt)*sizeof(size_t));
-	memset(IdxJ, 0, (NumSample + rankSizeExt)*sizeof(size_t));
-	size_t *IdxK = (size_t*)malloc((NumSample + rankSizeExt)*sizeof(size_t));
-	memset(IdxK, 0, (NumSample + rankSizeExt)*sizeof(size_t));
+	uint *IdxI = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
+	memset(IdxI, 0, (NumSample + rankSizeExt)*sizeof(uint));
+	uint *IdxJ = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
+	memset(IdxJ, 0, (NumSample + rankSizeExt)*sizeof(uint));
+	uint *IdxK = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
+	memset(IdxK, 0, (NumSample + rankSizeExt)*sizeof(uint));
 	// sample indexes
-	for (size_t r = 0,offset = 0; r < rankSizeExt; ++r){
+	for (uint r = 0,offset = 0; r < rankSizeExt; ++r){
 		// sample i
 		vose_alias( freq_r[r], (IdxI + offset), \
 					MatAex.row, \
@@ -156,12 +156,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
-	for(size_t r = 0,offset = 0; r < rankSizeExt; ++r){
-		for(size_t s = 0; s < freq_r[r]; ++s,++offset){
-			size_t idxi = IdxI[offset];
-			size_t idxj = IdxJ[offset];
-			size_t idxk = IdxK[offset];
-			size_t idxr = r / rankSize;
+	for(uint r = 0,offset = 0; r < rankSizeExt; ++r){
+		for(uint s = 0; s < freq_r[r]; ++s,++offset){
+			uint idxi = IdxI[offset];
+			uint idxj = IdxJ[offset];
+			uint idxk = IdxK[offset];
+			uint idxr = r / rankSize;
 			double valueSampled = sgn_foo(MatA.GetElement(idxi,idxr)) \
 								* sgn_foo(MatB.GetElement(idxj,idxr)) \
 								* sgn_foo(MatC.GetElement(idxk,idxr));
@@ -190,7 +190,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	start = clock();
 	// compute the top-t' (budget) actual value
-	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
+	for(uint m = 0; m < tempSortedVec.size() && m < budget; ++m){
 		double true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
@@ -203,7 +203,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Converting to Matlab
 	//--------------------------------
 	// value
-	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
+	for(uint m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
 		plhs_result[m] = sortVec[m].second;
 		//i

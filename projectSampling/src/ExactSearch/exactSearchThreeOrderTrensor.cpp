@@ -37,7 +37,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     const int top_t = mxGetPr(prhs[3])[0];
     double temp = 0.0;
-    size_t *max = (size_t*)malloc(3*sizeof(size_t));
+    uint *max = (uint*)malloc(3*sizeof(uint));
     for (int i = 0; i < 3; ++i){
         max[i] = mxGetN(prhs[i]);
     }
@@ -45,7 +45,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     progressbar(0);
     start = clock();
     SubIndex index(3,max);
-    for(size_t count = 0; count < top_t && !index.isDone(); ++index){
+    for(uint count = 0; count < top_t && !index.isDone(); ++index){
         temp = MatrixColMul(A,B,C,index.getIdx()[0],index.getIdx()[1],index.getIdx()[2]);
         tempVec.push_back(std::make_pair(point3D(index.getIdx()[0],index.getIdx()[1],index.getIdx()[2]),temp));
         ++count;
@@ -75,14 +75,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //---------------------------------
     // convert result to Matlab format
     //---------------------------------
-    size_t length = listTop.size();
+    uint length = listTop.size();
     plhs[0] = mxCreateDoubleMatrix(length,1,mxREAL);
     double *topValue = mxGetPr(plhs[0]);
     plhs[2] = mxCreateNumericMatrix(length, 3, mxUINT64_CLASS, mxREAL);
     uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);  
     auto itr = listTop.begin();
     auto itr2 = listIdx.begin();
-    for(size_t i = 0; i < length; ++i){
+    for(uint i = 0; i < length; ++i){
         // value
         topValue[i] = (*itr);
         // indexes

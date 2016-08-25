@@ -16,11 +16,11 @@
 #include "mex.h"
 #include "matrix.h"
 
-double ColMul(const size_t *curIdx, double **p, size_t rank, size_t numMat){
+double ColMul(const uint *curIdx, double **p, uint rank, uint numMat){
     double ans = 0.0;
-    for(size_t r = 0; r < rank; ++r){
+    for(uint r = 0; r < rank; ++r){
         double temp = 1.0;
-        for(size_t i = 0; i < numMat; ++i){
+        for(uint i = 0; i < numMat; ++i){
             temp *= p[i][curIdx[i] * rank + r];
         }
         ans += temp;
@@ -39,13 +39,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // initialization
     //---------------------
     double duration;
-    const size_t rank = mxGetM(prhs[0]);
-    const size_t numMat = nrhs - 1;
-    const size_t top_t = (size_t)mxGetPr(prhs[nrhs-1])[0];
-    size_t *max = (size_t *)malloc(numMat*sizeof(size_t));
-    memset(max, 0, numMat*sizeof(size_t));
+    const uint rank = (uint)mxGetM(prhs[0]);
+    const uint numMat = nrhs - 1;
+    const uint top_t = (uint)mxGetPr(prhs[nrhs-1])[0];
+    uint *max = (uint *)malloc(numMat*sizeof(uint));
+    memset(max, 0, numMat*sizeof(uint));
     double **Mats = (double**)malloc(numMat*sizeof(double*));
-    for(size_t i = 0; i < numMat; ++i){
+    for(uint i = 0; i < numMat; ++i){
         Mats[i] = mxGetPr(prhs[i]);
         max[i] = mxGetN(prhs[i]);
     }
@@ -57,7 +57,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     start = clock();
     SubIndex index(numMat, max);
     // compute top_t values as the initial list
-    for(size_t count = 0; count < top_t && !index.isDone(); ++index,++count){
+    for(uint count = 0; count < top_t && !index.isDone(); ++index,++count){
         double tempValue = ColMul(index.getIdx(),Mats,rank,numMat);
         listTop.push_back(tempValue);
     }
@@ -82,7 +82,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mxGetPr(plhs[1])[0] = duration;
     double *topValue = mxGetPr(plhs[0]);
     std::list<double>::iterator itr = listTop.begin();
-    for(size_t i = 0; i < listTop.size(); ++i){
+    for(uint i = 0; i < listTop.size(); ++i){
         topValue[i] = *itr++;
     }
     //-------------------

@@ -89,9 +89,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		u = (double)rand()/(double)RAND_MAX;
 		c = (double)NumSample*weight[r]/SumofW;
 		if(u < (c - floor(c)))
-			freq_r[r] = ceil(c);
+			freq_r[r] = (size_t)ceil(c);
 		else
-			freq_r[r] = floor(c);
+			freq_r[r] = (size_t)floor(c);
 	}
 	size_t *IdxI = (size_t*)malloc((NumSample + rankSize)*sizeof(size_t));
 	memset(IdxI, 0, (NumSample + rankSize)*sizeof(size_t));
