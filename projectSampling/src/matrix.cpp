@@ -210,58 +210,7 @@ uint Matrix::randCol(uint m){
 uint sgn_foo(double x){
 	return (x < 0 ? -1:1);
 }
-double EuclideanMetric(const point2D &coord, const Matrix &A, const Matrix &B){
-	double ans = 0.0;
-	uint row = A.row;
-	for(uint i = 0; i < row; ++i){
-		double temp = (A.element[coord.x * row + i] - \
-					   B.element[coord.y * row + i]);
-		ans += temp*temp;
-	}
-	return ans;
-}
-double EuclideanMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
-	double ans = 0.0;
-	uint rank = A.col;
-	for(uint r = 0; r < rank; ++r){
-		double temp = (A.element[r * A.row + coord.x] - \
-					   B.element[r * B.row + coord.y]);
-		ans += temp*temp;
-	}
-	return ans;
-}
-double CosineMetric(const point2D &coord, const Matrix &A, const Matrix &B){
-	uint row = A.row;
-	double ans = 0.0;
-	double normA = 0.0;
-	double normB = 0.0;
-	for(uint i = 0; i < row; ++i){
-		normA += A.element[coord.x * row + i] * \
-				 A.element[coord.x * row + i];
-		normB += B.element[coord.y * row + i] * \
-				 B.element[coord.y * row + i];
-		ans += A.element[coord.x * row + i] * \
-			   B.element[coord.y * row + i];
-	}
-	ans /= (sqrt(normA)*sqrt(normB));
-	return ans;
-}
-double CosineMetricRow(const point2D &coord, const Matrix &A, const Matrix &B){
-	uint rank = A.col;
-	double ans = 0.0;
-	double normA = 0.0;
-	double normB = 0.0;
-	for(uint r = 0; r < rank; ++r){
-		normA += A.element[r * A.row + coord.x] * \
-				 A.element[r * A.row + coord.x];
-		normB += B.element[r * B.row + coord.y] * \
-				 B.element[r * B.row + coord.y];
-		ans += A.element[r * A.row + coord.x] * \
-			   B.element[r * B.row + coord.y];
-	}
-	ans /= (sqrt(normA)*sqrt(normB));
-	return ans;
-}
+
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
 	uint rank = A.col;
 	double temp = 0.0;
