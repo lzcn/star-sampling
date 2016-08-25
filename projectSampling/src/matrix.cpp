@@ -103,6 +103,7 @@ Matrix::Matrix(uint r, uint c, double*pr){
 	row = r;
 	col = c;
 	element = pr;
+	_SUMTYPE = MATRIX_FULL_SUM;
 	SumofCol = (double*)malloc(col*sizeof(double));
 	memset(SumofCol, 0, col*sizeof(double));
 	SumofRow = (double*)malloc(row*sizeof(double));
@@ -114,7 +115,6 @@ Matrix::Matrix(uint r, uint c, double*pr){
 			SumofRow[j] += abs(element[i*row + j]);
 		}	
 	}
-	_SUMTYPE = MATRIX_FULL_SUM;
 }
 Matrix::Matrix(uint r, uint c, double*pr, uint TYPE){
 	row = r;
@@ -373,7 +373,7 @@ void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<po
         }
     }	
 }
-uint vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf){
+void vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf){
 	double *scaled_prob = new double[n];
 	double *table_prob = new double[n];
 	uint *table_alias = new uint[n];
@@ -435,14 +435,25 @@ uint vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf){
 	delete []scaled_prob;
 	delete []table_small;
 	delete []table_large;
-	return 1;
 }
 
 
-
-uint sort_sample(size_t s, \
-				  uint*idxI, uint*idxR, \
-				  size_t *freq, \
+void sort_sample(size_t s, uint*dst, uint n, double*p, double sum){
+	std::vector<double> rand_u;
+	for (size_t i = 0; i < s; ++i){
+		rand_u.push_back(sum*((double)rand()/(double)RAND_MAX));
+	}
+	sort(rand_u.begin(),rand_u.end());
+	uint ind = 0;
+	double prob_accum = abs(p[0]);
+	for (size_t i = 0; i < s; ++i){
+		while((rand_u[i] >= prob_accum) && (ind < (n-1))){
+			prob_accum += abs(p[++ind]);
+		}
+		dst[i] = ind;
+	}
+}
+void sort_sample(size_t s, uint*idxI, uint*idxR, size_t *freq,
 				  uint m, uint n, \
 				  double*pdf, double sum_pdf){
 	std::vector<double> rand_u;
@@ -463,7 +474,6 @@ uint sort_sample(size_t s, \
 		idxR[i] = ind / n;
 		++freq[idxR[i]];
 	}
-	return 1;
 }
 SubIndex::SubIndex(uint n, uint *max){
 	idxSize = n;
@@ -481,31 +491,7 @@ bool SubIndex::reset(){
 	memset(curIdx, 0, (idxSize + 1)*sizeof(uint));
 	return true;
 }
-SubIndex& SubIndex::operator+(const uint step){
-	uint a, b;
-	a = step;
-	b= 0;
-	uint *temp = (uint *)malloc(idxSize*sizeof(uint));
-	memset(temp, 0, idxSize*sizeof(uint));
-	for(uint i = 0; i< idxSize;++i){
-		b = a % maxIdx[i];
-		a = a / maxIdx[i];
-		temp[i] = b;
-		curIdx[i] += b;
-		while(curIdx[i] >= maxIdx[i]){
-			curIdx[i] -= maxIdx[i];
-			++curIdx[i + 1];
-		}
-		if(a > 0){
-			curIdx[idxSize] += a;
-		}
-		if(curIdx[idxSize] > 0){
-			doneFlag = true;
-		}
-		free(temp);
-		return *this;
-	}
-}
+
 SubIndex& SubIndex::operator++(){
 	curIdx[0]++;
 	for(uint i = 0; i < idxSize; ++i){

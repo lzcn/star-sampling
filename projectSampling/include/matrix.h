@@ -44,10 +44,11 @@ double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
 double MatrixColMul(const Matrix &A, const Matrix &B, uint i, uint j);
 double MatrixColMul(const Matrix &A, const Matrix &B, const Matrix &C, uint i, uint j, uint k);
 double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat);
-uint sort_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
 double vectors_mul(const point2D &coord, Matrix &A, Matrix &B);
 double vectors_mul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
-uint vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf);
+void sort_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
+void sort_sample(size_t s, uint*dst, uint n, double*p, double sum);
+void vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf);
 ////////////////////////////////
 //	     IMPLEMENTATIONS      //
 ////////////////////////////////
@@ -113,7 +114,6 @@ public:
 	~SubIndex();
 	bool isDone(){return doneFlag;};
 	bool reset();
-	SubIndex& operator+(const uint step);
 	SubIndex& operator++();
 	const uint *getIdx(){return curIdx;};
 private:
