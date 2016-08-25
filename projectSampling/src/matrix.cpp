@@ -490,36 +490,8 @@ uint vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf){
 }
 
 
-uint sample_index(size_t s, uint *index, \
-				 uint *IndforI, uint *IndforR, \
-				 size_t *freq_r, \
-				 uint m, uint n, \
-				 double*pdf, double sum_pdf){
-	// pdf has size (m, n) the sample 
-	// and the sampled index = k * n + i;
-	// First stage : get s uniform random numbers
-	std::vector<double> rand_u;
-	for (size_t i = 0; i < s; ++i){
-		rand_u.push_back(sum_pdf*((double)rand()/(double)RAND_MAX));
-	}
-	// Sort the random values
-	// It will be sorted according to k then i;
-	sort(rand_u.begin(),rand_u.end());
-	uint ind = 0;
-	uint range = m * n;
-	double sum_prob = abs(pdf[0]);
-	for (size_t i = 0; i < s; ++i){
-		while((rand_u[i] >= sum_prob) && (ind < (range-1))){
-			sum_prob += abs(pdf[++ind]);
-		}
-		index[i] = ind;
-		IndforI[i] = ind % n;
-		IndforR[i] = ind / n;
-		freq_r[IndforR[i]] ++;
-	}
-	return 1;
-}
-uint binary_sample(size_t s, \
+
+uint sort_sample(size_t s, \
 				  uint*idxI, uint*idxR, \
 				  size_t *freq, \
 				  uint m, uint n, \

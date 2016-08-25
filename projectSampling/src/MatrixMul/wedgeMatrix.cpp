@@ -87,7 +87,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t *freq_r = (size_t*)malloc(MatA.row*sizeof(size_t));
 	memset(freq_r, 0, MatA.row*sizeof(size_t));
 	// sample pairs (i,r) ,
-	binary_sample(NumSample, \
+	sort_sample(NumSample, \
 				 IdxI, IdxR, \
 				 freq_r, \
 				 MatA.row, MatA.col, \

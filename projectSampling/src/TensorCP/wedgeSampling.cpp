@@ -83,7 +83,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	start = clock();
 	// Do sample S pairs (r, i)
-	binary_sample(NumSample, \
+	sort_sample(NumSample, \
 				 IdxI, IdxR, \
 				 freq_r, \
 				 MatA.row, MatA.col, \

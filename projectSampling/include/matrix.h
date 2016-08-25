@@ -182,13 +182,8 @@ uint vose_alias(size_t s, uint *dst, \
 		of computation cost.
 */
 
-uint sample_index(size_t S, uint *index, \
-				 uint *IndforI, uint *IndforK, \
-				 size_t *freq_r, \
-				 uint m, uint n, \
-				 double*pdf, double sum_pdf);
 
-uint binary_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
+uint sort_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
 /* 
 	SubIndex is used for loop
 	data: 
