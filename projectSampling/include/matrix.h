@@ -16,8 +16,8 @@ const uint MATRIX_FULL_SUM = 3;
 //	      DECALARATIONS	      //
 ////////////////////////////////
 
-uint sgn_foo(double x);
-
+int sgn(double x);
+int sgn_foo(double x);
 class point2D;
 class point3D;
 class pointND;

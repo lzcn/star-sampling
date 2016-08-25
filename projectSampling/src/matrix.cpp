@@ -2,6 +2,9 @@
 #include <cmath>
 #include "matrix.h"
 
+
+int sgn(double x){ return (x < 0 ? -1:1); }
+int sgn_foo(double x){ return (x < 0 ? -1:1); }
 /*
 	class for point2D
 */
@@ -207,9 +210,7 @@ uint Matrix::randCol(uint m){
 	}
 	return (col-1);
 }
-uint sgn_foo(double x){
-	return (x < 0 ? -1:1);
-}
+
 
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
 	uint rank = A.col;
