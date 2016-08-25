@@ -1,17 +1,22 @@
+\def\year{2017}\relax
+%File: formatting-instruction.tex
 \documentclass[letterpaper]{article}
-\usepackage{aaai}
+\usepackage{aaai17}
 \usepackage{times}
 \usepackage{helvet}
 \usepackage{courier}
+\frenchspacing
 \setlength{\pdfpagewidth}{8.5in}
 \setlength{\pdfpageheight}{11in}
+\pdfinfo{
+/Title (Insert Your Title Here)
+/Author (Put All Your Authors Here, Separated by Commas)}
+\setcounter{secnumdepth}{0}
 %
 \usepackage{amsfonts}
-
 %
 \usepackage{mathrsfs}
 \usepackage{amsthm,amsmath,amsfonts,amssymb}
-
 \usepackage{bm}
 \usepackage[mathscr]{eucal}
 \usepackage{stmaryrd}
@@ -20,15 +25,13 @@
 \usepackage{graphicx}
 \usepackage{subfigure}
 % for algorithm
-\usepackage[ruled]{algorithm}
+\usepackage{algorithm}
 \usepackage{algpseudocode}
-
 % hyperref
 \usepackage[colorlinks,linkcolor=blue, filecolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
 \usepackage{url}
 \newcommand{\Sca}[3]{{#1}^{(#2)}_{i_#2#3}}%Scalar with superscript and subscript
 \newcommand{\Scah}[3]{h^{(#1,#2)}_{#3}(\V{x}_{i_#1})}
-
 %% -------
 %% Tensor
 %% -------
@@ -82,7 +85,7 @@
 \newcommand{\AlgLines}[3]{\hyperref[alg:#1]{lines~\ref*{line:#2}--\ref*{line:#3} of Algorithm~\ref*{alg:#1}}}
 
 \newcommand{\Coord}{(i_1,i_2,\ldots,i_N)}
-
+\newcommand{\WreightR}{\Nrocl{1}{r}\ldots\Nrocl{N}{r}}
 
 
 \newtheorem{definition}{Definition}
@@ -98,38 +101,42 @@
 
 \section{Introduction}
 
-In fashion recommendation system, it is an essential task to find the most relevant items given a specific user. Similar application can also be found in information retrieval. If we consider all users as a set of feature vectors, and items are also represented by vectors with the same dimension. Then this problem can be abstracted to matrix multiplication tasks when we define the relevance as the inner product of two vectors, which known as maximum inner-product search(MIPS). An application of MIPS is the  matrix-factorization framework in recommender system\cite{KoYe09}. However, we may have more than one categories of items, that is, we have more than one item matrices and relevance of user to a suit of items may defined by another way. And the tensor factorization models was used for multi-items recommendation\cite{Rendle10} and outfit recommendation\cite{HuYiLa15}. Those problem can be summarized into the top-t retrial problem:
+In recommendation system,
+it is an essential task to find the most relevant items when a specific user is given.
+Since the item size is always in vast scale, it demands a fast retrial algorithm.
+Generally, all users as trained to a set of feature vectors,
+and items are also in to the joint latent space of same dimensionality.
+The most widely used technique in the modern is the factorization framework,
+like the matrix factorization framework in recommender system\cite{KoYe09}.
+Matrix factorization is a way to map both users and items to the latent space
+that modeling the user-item interaction with the inner products.
+For multi-items recommendation system, the factorization model is tensoer based.
+Take the personalized tag recommendation system for example,
+many facotrization models have been used to tackle the interaction
+between the tag and post (the user-item pair),
+like Higher-Order-Singular-Value-Decomposition(HOSVD) model\cite{SyNa08},
+Tucker Decomposition (TD) model\cite{Rendle_RTF} and
+Pairwise-Interaction-Tensor-Factorization(PITF) model\cite{Rendle_PITF}.
+Meantime, fashion outfit recommendation\cite{HuYiLa15} also utilizes the factorization model to
+map user and $N$ categories of items into the latent sapce.
+
+In those works, after factor matrices have been trained,
+finding the top-$t$ mostly related tuples is still a time-consuming task.
+We study those tensor factorization models and
+proposed a sampling-based origthm to estimate the top-$t$ reated targerts.
+The tensor factorization is CP decomposition,
+since the PITF is a special case of the CP decomposition 
+and TD factorization take much higer computations that used less in recommendation tasks.
+We generalzie our algorithm to all-tuples application 
+in which given a particular user or post is the degeneration.
+The problem we summarized is called the top-t retrial problem:
 
 \begin{definition}\label{def:DefinitionTopt}
-(top-t Retrial.) Suppose $S_1,S_2,..S_N$ are set for $N$ different kind of items(tags). $\V{t}_{i_1},\V{t}_{i_2},...,\V{t}_{i_N}$ are items in each set that are all represented by same dimension vector. And there is a ranking function $f(\V{t}_{i_1},\V{t}_{i_2},...,\V{t}_{i_N})$: find the $t$ tuples $(i_1,i_2,...,i_N)$ that have the largest or lowest ranking function value of all.
+(top-t Retrial.) Suppose $S_1,S_2,..S_N$ are $N$ different categories. $\V{t}_{i_1},\V{t}_{i_2},...,\V{t}_{i_N}$ are instances in each category that are all represented in the same dimensionality. With the interaction function $f(\V{t}_{i_1},\V{t}_{i_2},...,\V{t}_{i_N})$, find $t$ tuples $(i_1,i_2,...,i_N)$ that have the largest value over all.
 \end{definition}
 
-For two sets case, there are three ranking functions that used widely, Euclidean distance, cosine similarity and inner-product. And when we fix one of item, say ${i_1}$, this is the single query retrial problem.
-\subsection{Notations}
 
-The item matrix that consists of a mount of feature vectors with the same dimension is represented as
-$\M{A} =[\V{a}_{1},\V{a}_{2},\cdots,\V{a}_{R}]\in R^{L\times R}$. Without loss of generality, we use $R$ to represent the dimension of a feature vector, and $L$ as the number of items in one category. In one category situation, when we evaluate the relevance of an item to a user by the inner-product which is $\M{A}(i,:)\V{u}=(a_{i1},a_{i2},\ldots,a_{iR})\cdot\V{u}$, it equals to find the max value in $\V{q} = \M{a}\V{u}$.
-
-To be more general, we consider a set of matrices
-$\M{A}^{(n)},n = 1,...,N$ consisting of item vectors, and the ranking function
-$x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}$,
-which degenerate into inner-product when $N=2$.
-By this definition, the recommendation for one user is an exceptional case when we consider one of matrix as a single vector.
-For convenience, we call $\V{i} = \Coord$ the coordinate or multi-index. The hypothesis of relevance criterion is reasonable and used widely in recommendation system for multi-category. If we rearrange the actual values as a $N$-way tensor, these items matrices would be the CP decomposition of this tensor.
-
-We use the some definition vector and matrix norm refereed in \cite{BaPiKoSe15}.
-Suppose $\V{v}\in R^n$ is a vector and $\M{M}\in R^{m\times n}$ is a matrix.
-The norm $\norm{*}{1}$ operation is defined as followed:
-\[
-    \norm{\V{v}}{1} = \sum_{i=1}^{n}|v_i|
-    \ \  and \ \
-    \norm{\M{M}}{1} = \sum_{i=1}^{m}\sum_{j=1}^{n}|m_{ij}|
-\]
-
-We also use different letters to represent the tensor, matrix, etc.
-And some frequently used notations are listed in ~\Table{Notation}.
-
-\subsection{Tensor decomposition}
+\subsection{CP decomposition}
 
 Consider a $N$-order tensor, $\T{X}$ with size $L_1\times L_2\times\ldots\times L_N$,
 the CP decomposition\cite{KoBa09} of this tensor is
@@ -138,35 +145,27 @@ the CP decomposition\cite{KoBa09} of this tensor is
 \T{X}= \KT{ \Mn{A}{1},\dots,\Mn{A}{N}} =
 \sum_{r=1}^{R}\VnC{A}{1}{r} \circ \cdots \circ \VnC{A}{N}{r}
 \end{equation}
-
 where
+\[
+    \M{A}^{(n)} =
+    \begin{bmatrix}
+        \VnC{a}{n}{1},\VnC{a}{n}{2},\cdots,\VnC{a}{n}{r}
+    \end{bmatrix}  \in R^{L_n\times R}
+\]
+is called factor matrix, and the column size $R$ represents the rank of this tenors,
+which is also the dimensionality of latent space.
+The vector $\VnC{a}{n}{r}$ represents the $r$-th column of matrix $\Mn{A}{n}$.
 
-\begin{gather*}\label{eq:ColumnVectorsForm}
-\M{A}^{(1)} =
-\begin{bmatrix}\VnC{a}{1}{1},\VnC{a}{1}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_1\times R}\\
-\M{A}^{(2)} =
-\begin{bmatrix}\VnC{a}{2}{1},\VnC{a}{2}{2},\cdots,\VnC{a}{2}{r}\end{bmatrix}\in R^{L_2\times R}\\
-\vdots\\
-\M{A}^{(N)} =
-\begin{bmatrix}\VnC{a}{N}{1},\VnC{a}{N}{2},\cdots,\VnC{a}{1}{r}\end{bmatrix}\in R^{L_N\times R}\\
-\end{gather*}
-
-In ~\Eqn{CPDecomposition}, $\M{A}^{(n)}$ is the factor matrix,
-and the column size $R$ represents the rank of this tenors,
-which is also the dimension of feature vector.
-The vector $\VnC{a}{n}{r}$ is the $r$-th column of matrix $\Mn{A}{n}$.
-
-The element in $\T{X}$ satisfies the following equation:
+When factor matrices are trained, 
+the element in $\T{X}$ indicates the relation of a combination of instances, which is:
 
 \begin{equation}\label{eq:ValueInTensor}
 x_\V{i} = \sum_{r=1}^{R}\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}
 \end{equation}
+$\V{i}$ is a shorthand for multi-index $\Coord$.
 
-The indexes vector $\V{i}$ is a shorthand for multi-index $\Coord$.
-And the value in tensor is what we need to find when we have those factor matrices.
-It is a time-consuming task to compute all value of each element.
-In following sections, we will introduce the diamond sampling\cite{BaPiKoSe15} for approximating matrix multiplication tasks which is an improvement of wedge sampling\cite{Cohen97}.
-Then we extend this method to handle the tensor factorization models.
+Our work is inspired by \cite{BaPiKoSe15} for MAD task,
+which is an improvement of wedge sampling\cite{Cohen97}.
 
 \begin{table}[t]
   \label{table:Notation}
@@ -189,109 +188,124 @@ Then we extend this method to handle the tensor factorization models.
 
 
 
-\section{Related work}
 
-There are many splendid work on finding the max dot-product of two sets of vectors called MAD search\cite{BaPiKoSe15} and MIPS(Maximum Inner Product Search)\cite{Cohen97,Ram12}.
-We analysis those similar work based on the probabilistic method, which can be called sampling. The main idea of those method is to sample the indexes or coordinate $\V{i}$ that is proportional to the value of this coordinate $x_{\V{i}}$.
+\subsection{Notations}
+
+We use the some definition of vector and matrix norm refereed in \cite{BaPiKoSe15}.
+Suppose $\V{v}\in R^n$ is a vector and $\M{M}\in R^{m\times n}$ is a matrix.
+The norm $\norm{*}{1}$ operation is defined as:
+\[
+    \norm{\V{v}}{1} = \sum_{i=1}^{n}|v_i|
+    \ \  {\rm and} \ \
+    \norm{\M{M}}{1} = \sum_{i=1}^{m}\sum_{j=1}^{n}|m_{ij}|
+\]
+And some frequently used notations are listed in ~\Table{Notation}.
+
+
+\section{Related work}
+There is work on finding the max all-pairs of dot-product(MAD)\cite{BaPiKoSe15} and
+MIPS(Maximum Inner Product Search)\cite{Cohen97,Ram12}.
+Howere finding the top-$t$ tuples based on CP model is not well studied.
+We study those similar work based on the probabilistic method called sampling. 
+The main idea of those methods is to sample the mutil-indexes or coordinate $\V{i}$ that is proportional to the value of this coordinate $x_{\V{i}}$.
 The most representative work are diamond sampling and wedge sampling. In following section we will exten the diamond sampling method to deal with $N$ factor matrices.
 
+\section{Graph Presentation of Factor Matrices}
 
-\section{Diamond Sampling Algorithm}
+Before the analysis of our algorithm, we introduce the graph presentation of factor matrices.
+Firstly, consider a matrix $\M{A}$ with size $M \times N$, 
+it is presentated as a weighted bipartite graph shown in ~\Fig{GraphMatrix}. 
+The left partition has $M$ nodes and the right has $N$ nodes. 
+The weight of path $(m,n)$ is $a_{mn}$.
+Since the $N$ factor matrices $\Mn{A}{1},\dots,\Mn{A}{N}$ 
+in ~\Eqn{CPDecomposition} have the same factor dimensionality. 
+We use only one partition called core partition to represent the latent space of each matrix.
+So those $N$ factor matrices can be represented by a weighted $(N+1)$-partite graph $G_{T}$
+which shown in ~\Fig{GraphMatrices}.
 
-The diamond sampling is a way to sample the index-pair $(i,j)$ proportional to $c^2_{i,j}$ in matrix multiplication $\M{C} = \M{A}\M{B}^T$.
-This method consider a matrix $\M{A}$ with size $m\times r$ as a weighted bipartite graph $G_{A}$.
-The first partition has $m$ nodes and the other $r$ nodes, and matrices $\M{B}$ also a bipartite graph with a $r$ nodes partition. And they represent the multiplication as a tripartite graph,
-which is a combination of $r$ nodes partition for $\M{A}$ and $\M{B}$. Similar, it is easy to  expand this method to handle $N$ factor matrices.
+\begin{figure}[t]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[scale = 0.4]{fig_graph_matrix}\\
+  \caption{Graph Presentation of a Matrix}
+  \label{fig:GraphMatrix}
+\end{figure}
+\begin{figure}[t]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[scale = 0.4]{fig_graph_factor_matrices}\\
+  \caption{Graph Presentation of Factor Matrices}
+  \label{fig:GraphMatrices}
+\end{figure}
 
-\subsection{Generalization Diamond Sampling}
+\section{Core Sampling}
+We represent the latent space by $R$ nodes, 
+and call it the core partition which comes form the concept of core tensor in TD decomposition.
+And we call our sampling method as core sampling, which means it starts from the core partition.
 
-In equation \ref{eq:CPDecomposition}, we have $N$ factor matrices $\Mn{A}{1},\dots,\Mn{A}{N}$.
-Those $N$ factor matrices can be represented by a weighted $(N+1)$-partite graph $G_{T}$.
-And we call those $N+1$ partitions as partition $\overline{V},V_{1},V_{2},\ldots,V_{N}$,
-in which partition $V_{n}$ has $L_n$ vertexes and partition $\overline{V}$ has $R$ vertexes.
-We call $v^n_{i_n}$ the $i_n$-th vertex in partition $V_{n}$,
-and $\overline{v}_{r}$ the $r$-th vertex in partition $\overline{V}$.
-Every two vertexes from different partition $V_i,V_j,i,j\in {1,2,\ldots,N}$ are not adjacent.
-A vertex $\overline{v}_r$ in $\overline{V}$ is only adjacent to vertexes $v^n_i$ in $V_n$ when $\Sca{a}{n}{r}$ is non-zero and the edge weight $\Sca{a}{n}{r}$.
+\subsection{Scoring Mechanism}
 
-Under the graph presentation, we define an event $\varepsilon_{\V{i},r',r}$ consisting of three phases:
-\begin{itemize}
-  \item phase 1. Pick an edge $e=(v^1_{i_1},\overline{v}_r)$;
-  \item phase 2. Walk $N-1$ times from the $\overline{v}_r$ to other partitions $V_2,\ldots,V_N$, arrive at $v^2_{i_2},v^3_{i_3},\ldots,v^N_{i_N}$;
-  \item phase 3. Walk from $v^1_{i_1}$ to $\overline{V}$ and end in $\overline{v}_r'$.
-\end{itemize}
-
-When the event $\varepsilon_{\V{i},r',r}$ happened,
-we give a score according to the coordinate $\V{i}:\Coord$.
-In next sections, we will assign each phase designed probabilities so that the final score of $\V{i}:\Coord$ will be an estimation in some form of $x^2_{\V{i}}$.
-The sampling algorithm is shown in ~\Alg{DiamondSampling}.
+We start our sampling algorithm in core partition.
+The size of nodes in core partition are $R$.
+We sample the index $r$ with designed probabilities.
+After an index $r$ was sampled, we repeat $N$ times to sample orther indexes $\V{i}:\Coord$.
+In each round, we will get $N+1$ indexes, and we call this event $\varepsilon_{\V{i},r}$.
+After event $\varepsilon_{\V{i},r}$ happened, we give the coordinate $\Coord$ a score.
+This is shown in ~\Alg{CoreSampling}
 
 \begin{algorithm}[t]
-    \caption{Diamond Sampling with factor matrixes}
-    \label{alg:DiamondSampling}
+    \caption{Core Sampling with factor matrixes}
+    \label{alg:CoreSampling}
     Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.\\
     Let $s$ be the number of samples.
     \begin{algorithmic}[1]
-    \For{all $(i_1,r)$}
-    \State $w_{i_1r} \leftarrow \mid \Sca{a}{1}{r}\mid
-    \norm{\Varow{1}}{1}\norm{\Vacol{2}}{1}\ldots\norm{\Vacol{N}}{1} $
+    \For{$r\in{1,2,\ldots,R}$}
+    \State $w_r \leftarrow \Nrocl{1}{r}\norm{\Vacol{2}}{1}\ldots\Nrocl{N}{r}$
+    \label{line:Weight}
     \EndFor
-    \State Initialize an empty map for coordinate.
     \For{$ \ell = 1,\ldots,s$}
-    \State Sample $(i_1,r)$ with probability $w_{i_1r}/\norm{\V{W}}{1}$        \label{line:phase1}
-    \For {$n=2,...,N$}
+    \State Sample $r$ with probability $w_r/\norm{\V{W}}{1}$
+    \label{line:CorePartition}
+    \For {$n = 1,...,N$}
+    \label{line:ItemPartitionFor}
     \State Sample $i_n$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
-    \label{line:phase2}
     \EndFor
-    \State Sample $r'$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$
-    \label{line:phase3}
-    \State \label{line:scoring}
-        Get score: $sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'})
-    \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}$
-    \If {the map has key $i_1,i_2,\cdots,i_N$}
-    \State  Set a new key with this score
+    \label{line:ItemPartitionEnd}
+    \State 
+    \label{line:Scoring}
+        $\M{X}_{\V{i},\ell} \leftarrow sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})$
+    \If {$\V{i}=\Coord$ has not been sampled}
+    \State  Creat $\widehat{x}_{\V{i}} \leftarrow \M{X}_{\V{i},\ell} $
     \Else
-    \State Increase the key by this score
+    \State $\widehat{x}_{\V{i}} \leftarrow \widehat{x}_{\V{i}} + \M{X}_{\V{i},\ell}$
     \EndIf
     \EndFor
+    \label{line:ScoringEnd}
     \end{algorithmic}
 \end{algorithm}
 
-\subsection{Probability in Each Phase}
-
-\begin{itemize}
-  \item Walking with probability  (~\AlgLines{DiamondSampling}{phase2}{phase3})
-
-  In phase 2 we start from a vertex in $\overline{V}$ to $V_i$, and phase 3 from a vertex in $V_1$ to $\overline{V}$. We choose the path(edge) according to its weight. That is in phase 3, picking $r\in\{1,2,\ldots,R\}$ with probability $|\Sca{a}{1}{r'}|/\norm{\Varow{1}}{1}$ or given $r$, in phase 2, picking $i_n\in\{1,2,\ldots,L_n\}$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
-
-  \item Picking an edge (~\AlgLine{DiamondSampling}{phase1})
-
-  When we pick an edge $e=(v^1_{i_1},\overline{v}_r)$ in phase 1, we are picking the vertexes pair $(v^1_{i_1},\overline{v}_r)$. Beforehand, we assign each pair a probability:
-  \[
-    p(i_1,r) = |\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1} / \norm{\V{W}}{1}
-  \]
-  where,
-  \[
-    \norm{\V{W}}{1} = \sum_{i_1,r}\mid \Sca{a}{1}{k}\mid \norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
-  \]
-  Then we pick the pair $(v^1_{i_1},\overline{v}_r)$ according the probability $p(i_1,r)$.
-\end{itemize}
-
-\subsection{Scoring Sampled Coordinates}
-
-Totally, we do $s$ times sampling, and each time we will get an coordinate $\V{i} =\Coord$.
-If this coordinate has not been sampled previously, let the score of this coordinate in the $\ell$-th turn be
+\subsubsection{Probabilities}
+The weight we designed for nodes in core partition are:
 \[
-\M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r}\cdot\Sca{a}{1}{r'}) \Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'},
+    w_r = \WreightR
 \]
-and make $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$ into a set where we save the scores. Otherwise, increase $\widehat{x}_{\V{i}}$ in the set by $\M{X}_{\V{i},\ell}$. It is shown in ~\AlgLine{DiamondSampling}{scoring}. For $\V{i}$ that not be sampled in $\ell$-th turn, we can assume that $\M{X}_{\V{i},\ell}=0$. So
+which is shown in ~\AlgLine{CoreSampling}{Weight}.
+
+In each round, we sample the index $r$ with probability $w_r/\norm{\V{w}}{1}$ (~\AlgLine{CoreSampling}{CorePartition}). Then repeat $N$ times, walk form the node $\overline{v}_r$ in partition $\overline{V}$ to other partition $V_i$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$ (~\AlgLines{CoreSampling}{ItemPartitionFor}{ItemPartitionEnd}).
+
+\subsubsection{Scores}
+Each time we sampled an coordinate $\V{i} = \Coord $. The score of this coordinate in the $\ell $-th turn is
+\[
+\M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})
+\]
+If this coordinate has not been sampled previously, create a container $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$. Otherwise, increase $\widehat{x}_{\V{i}}$ by $\M{X}_{\V{i},\ell}$ (~\AlgLines{CoreSampling}{Scoring}{ScoringEnd}). For $\V{i}$ that not be sampled in $\ell$-th turn, we also assume that $\M{X}_{\V{i},\ell}=0$, so that
+
 \[
 \widehat{x}_{\V{i}} = \sum_{\ell} \M{X}_{\V{i},\ell}
 \]
 
-In the next part, we will show that $\widehat{x}_{\V{i}}$ is a good estimation of $x_{\V{i}}^2$.
-
-\subsection{Extracting Top-$t$ Largest Value}
+We will show that $\widehat{x}_{\V{i}}$ is an estimation of $x_{\V{i}}/\norm{\V{w}}{1}$.
+\subsection{Extracte Top-$t$ Largest Values}
 After sampling, we will get some coordinates with scores.
 And we use the sampling score $\widehat{x}_{\V{i}}$ and coordinate set $\V{i}$ to do postprocessing.
 Let $\Omega_s = \{\V{i}_j|j = 1,2,\ldots,s\}$ be the coordinates have been sampled.
@@ -322,66 +336,176 @@ and the budget $t'$ is a tradeoff between accuracy and computation. The algorith
     \end{algorithmic}
 \end{algorithm}
 
-\subsection{Correctness and Error Bounds}
+\subsection{Core Sampling with Different Scores}
 
-As we defined previously, the event $\varepsilon_{\V{i},r',r}$ is picking a pair $(v^1_{i_1},\overline{v}_r)$ then pick paths from $V_1$ to $\overline{V}$ and some addition pathes from $\overline{V}$ to $V_i,i\in{2,\ldots,N}$. And we assume that $\M{X}_{\V{i},\ell},\ell\in\{1,2\ldots,s\}$ are independent. Under these assumptions, we give two lemmas.
+Actually, there are two primary factors that affect the accuracy of sampling.
+The first one is the probability of coordinate $\V{i}$ called $p(\epsilon_{\V{i}})$.
+When we use the maximum budget $t'=s$, 
+which means we will compute all the actual value of indexes that we sampled. 
+And it is just a Bernoulli trials for petical coordinate. 
+So the higher probability $p(\epsilon_{\V{i}})$ of largest elements is,
+the more likely it will be sampled finally,
+and thus the higher the accuracy will be.
+The other factor is the final score $\widehat{x}_{\V{i}}$ that we assigned.
+Since we compute the top-$t'$ elements' actual value after pre-sorting,
+the order of original score is mostly concerned.
+That ideal case is that the final score keeps the order of actual values 
+in which case the increasing the budget do not influence the accuracy.
+We summarize these two factors as occurrence probability of coordinate and isotonicity of score.
+In the next, we introduce how to do extra sampling in core partition that get better isotonicity of score.
 
-\begin{lemma}\label{lem:Expectation}
-The expectation of $\widehat{x}_{\V{i}}$ equals to $sx^2_{\V{i}}/\norm{\M{W}}{1}$.
-\end{lemma}
+For example, after sampled $r$ in one round,
+we sample another $r'$ with the sample probability $w_{r'}/\norm{\V{w}}{1}$.
+And the adjust the score we use:
+\[
+\M{X}_{\V{i},\ell}  = \frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\WreightR}
+\]
 
+It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2/\norm{\V{w}}{1}^2$.
+And we can sample more additional nodes in core partition with adjusted score 
+to make the final score be an estimation of $x_{\V{i}}^n/\norm{\V{w}}{1}^n$.
+However, the demand number of samples will increase exponentially.
+In practice, we use the primary or second order estimation to reach a good performance.
 
-\begin{proof}[Proof:]
-The final score $\widehat{x}_{\V{i}} = \sum_{\ell=1}\M{X}_{\V{i},\ell}$. And
-\begin{equation}\label{eq:Expectation}
-\mathbb{E}[\widehat{x}_{\V{i}}] = \sum_{\ell=1}\mathbb{E}[\M{X}_{\V{i},\ell}]=s\mathbb{E}[\M{X}_{\V{i},1}]
-\end{equation}
+\subsection{Extension of Core Sampling}
 
-The probability of $\varepsilon_{\V{i},r',r}$ is
+We now consider the first factor the occurrence of coordinate 
+which determine the upper bound of the final accuracy.
+And the effort for significantly improving the final accuracy significantly
+need to focus on $Pr(\epsilon_{\V{i}})$.
+So we introduce the extension version of core sampling to reach a higher accuracy bound.
 
+Instead of sampling one index $r$, we sampled the indexes pair $(r,r')$ firstly.
+To implement this mechanism,
+we introduce the extension matrix which expend the feature dimension to $R^2$.
+Suppose $\V{v}$ is an item vector with dimension $R$,
+the extension vector, assumed as $\V{v}^e$,
+is generated following the rule below:
+\[
+    \V{v}^e(r+r'R) = \V{v}(r)\V{v}(r')\ r,r' = {1,2,...,R}
+\]
+After this expansion, we get $N$ expanded factor matrices
+\[
+    \M{E}^{(n)}=[\VnC{e}{n}{1},\ldots,\VnC{e}{n}{R^2}]
+\]
+of each $\M{A}^{(n)}$. 
+And it is easy to notice that
+\[
+    \VnC{e}{n}{*l} = \sum\nolimits_{i_n}\Sca{a}{n}{r}\Sca{a}{n}{r'},l=r+r'R
+\]
+Then use the origin core sampling to process these expanded factor matrices will make the probability of coordinate proportioning to $x_{\V{i}}^2$.
+\begin{proof}
+Suppose all factor matrices are nonnegative. According to central sampling, we first sample the indexes pair $(r,r')$ in which $l = r+r'R$ with probability $w_l/\norm{\V{w}}{1}$. And sample the other nodes in partition $V_n$ with probability $e^{(n)}_{i_nl}/\norm{\VnC{e}{n}{*l}}{1}$. By definition, we know
+\[
+w_l = \norm{\VnC{e}{1}{*l}}{1}\cdots \norm{\VnC{e}{N}{l}}{1}, l = 1,\ldots,R^2
+\]
+and
+\[
+e^{(n)}_{i_nl} = \Sca{a}{n}{r}\Sca{a}{n}{r'}, l = r+r'R
+\]
+So, let $l = r+r'R$
 \begin{align*}
-Pr(\varepsilon_{\V{i},r',r})
-%& = Pr( {\rm pick\ } (v^1_{i_1},\overline{v}_r))
-%Pr( {\rm walk\ to\ } \overline{v}_r' | {\rm given\ }v^1_{i_1} )
-%Pr( {\rm walk\ to\ } v^2_{i_2} | {\rm given\ }\overline{v}_r) \cdots Pr( {\rm walk\ to\ } v^N_{i_N} | {\rm given\ }\overline{v}_r ) \\
-& = Pr({\rm phase\ 1})Pr({\rm phase\ 2})Pr({\rm phase\ 3})\\
-&=\frac{w_{i_1r}}{\norm{\V{W}}{1}}
-  \frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\cdots
-  \frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}
-  \frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}}\\
-%&=\frac{    |\Sca{a}{1}{r}|\norm{{\VnC{a}{1}{i_1*}}}{1}\norm{{\VnC{a}{2}{*r}}}{1}\cdots\norm{{\VnC{a}{N}{*r}}}{1}   }{  \norm{\V{W}}{1}  }\frac{|\Sca{a}{1}{r'}|}{\norm{{\VnC{a}{1}{i_1*}}}{1}} \frac{|\Sca{a}{2}{r}|}{\norm{{\VnC{a}{2}{*r}}}{1}}\frac{|\Sca{a}{N}{r}|}{\norm{{\VnC{a}{N}{*r}}}{1}}\\
-&=\frac{    |\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|    }{\norm{\V{W}}{1}}
-\end{align*}
-
-Then we get the probability of one walk:
-
-\begin{equation}\label{eq:ProbabilityOneWalk}
-Pr(\varepsilon_{\V{i},r',r})=\frac{|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}
-\end{equation}
-
-Using \Eqn{Expectation} and \Eqn{ProbabilityOneWalk}. The expectation
-\begin{align*}
-&\mathbb{E}[x_{\V{i}}/s] = \mathbb{E}[\M{X}_{\V{i},1}]\\
-&=\sum_{r,r'} Pr(\varepsilon_{\V{i},r',r}) sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
-\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}\\
-%&=\frac{\sum_{r,r'}|\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|sgn(\Sca{a}{1}{r'}\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})
-%\Sca{a}{2}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\M{W}}{1}}\\
-&=\frac{\sum_{r,r'} \Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\V{W}}{1}}\\
-&=\frac{(\sum_{r}\Sca{a}{1}{r}\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})^2}{\norm{\V{W}}{1}}\\
-&=\frac{x_{\V{i}}^2}{\norm{\V{W}}{1}}
+Pr(\epsilon_{\V{i}}) &= \sum_{l} Pr(\epsilon_{\V{i},l})= \sum_{r,r'} Pr(\epsilon_{\V{i},r,r'})\\
+&= \sum_{l} \frac{w_l}{\V{w}}
+\frac{|e^{(1)}_{i_1l}|}{\norm{\VnC{e}{1}{*l}}{1}}\cdots
+\frac{|e^{(N)}_{i_Nl}|}{\norm{\VnC{e}{N}{*l}}{1}}\\
+& = \sum_{r,r'} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}
+{\norm{\V{W}}{1}}\\
+& = \frac{(\sum_{r}|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)^2}{\norm{\V{W}}{1}}\\
+& = \frac{x_{\V{i}}^2}{\norm{\V{w}}{1}}
 \end{align*}
 \end{proof}
 
 
+We can make the probability of coordinate proportioning to $n$-the power the its value by extending the feature vector to $R^N$. However, the cost the computing cost and storage for the extension matrix will increase exponentially.
 
+\section{Theoretical Analysis}
+
+Until now, we just give the result without any prove.
+In this section, we will show the probabilities of coordinates and the expectation of scores.
+Then some usefull error bounds will be given.
+We suppose all factor matrices are nonnegative which is premise of compact conclusions.
+
+\subsection{Probability of Coordinates}
+
+The probability of coordinate $\V{i}$ to be sampled in core sampling is
+$x_{\V{i}}/\norm{\V{w}}{1}$, even with extra sampling in core partition.
+
+\begin{proof}
+When we just sample one index in core partition, the probability of $\V{i}$ is:
+\begin{align*}
+Pr(\epsilon_{\V{i}}) 
+& = \sum_{r=1}^{R} Pr(\epsilon_{\V{i},r}) \\
+& = \sum_{r=1}^{R} \frac{\WreightR}{\norm{\V{W}}{1}}
+    \frac{|\Sca{a}{1}{r}|}{\Nrocl{1}{r}}\ldots\frac{|\Sca{a}{N}{r}|}{\Nrocl{N}{r}}\\
+& = \sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}} 
+  = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
+\end{align*}
+Because each extra sampling in core partition is independent, we have 
+\[
+    Pr(\epsilon_{\V{i},r_1,\ldots,r_n}) = 
+    Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}/\norm{\V{w}}{1}
+\]
+So when we do $n$ extra sampling, then the occurrence probability of coordinate $\V{i}$ is:
+\begin{align*}
+Pr(\epsilon_{\V{i}}) 
+&= \sum_{r_1,\ldots,r_n} Pr(\epsilon_{\V{i},r_1,\ldots,r_n})\\
+&= \sum_{r_1,\ldots,r_n} Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})
+                         \frac{w_{r_n}}{\norm{\V{w}}{1}} \\
+&= \sum_{r_1,\ldots,r_{n-1}} Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}}) \\
+& \cdots\\
+&= \sum_{r_1} Pr(\epsilon_{\V{i},r_1})
+ = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
+\end{align*}
+\end{proof}
+
+\subsection{Expectation of Score}
+When we do $n$ extra sampling, the expectation score of $n$ order estimation is
+$sx_{\V{i}}^n/\norm{\V{w}}{1}^n$.
+\begin{lemma}\label{lem:Expectation}
+The expectation of $\widehat{x}_{\V{i},n}$ equals to $sx_{\V{i}}^n/\norm{\V{w}}{1}^n$.
+\end{lemma}
+\begin{proof} The expectation of first order estimation is:
+\begin{align*}
+\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\M{X}_{\V{i},\ell}\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\\
+& = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
+\end{align*}
+The expectation of score for $n$-th power estimation in $\ell$-th turn satisfies
+\[
+\M{X}_{\V{i},\ell,n}  = \frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\Nrocl{1}{r_n}\ldots\Nrocl{N}{r_n}}
+\M{X}_{\V{i},\ell,n-1}
+\]
+Then the expectation score of $n$-th power estimation is:
+
+\begin{align*}
+& \mathbb{E}[\widehat{x}_{\V{i},n}/s] 
+= \sum_{r_1,\ldots,r_n}Pr(\epsilon_{\V{i},r_1,\cdots,r_n})\M{X}_{\V{i},\ell,n}\\
+& = \sum_{r_1,\ldots,r_n}
+\frac{Pr(\epsilon_{\V{i},r_1,\cdots,r_{n-1}})w_{r_n}}{\norm{\V{w}}{1}}\M{X}_{\V{i},\ell,n}\\
+& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\sum_{r_1,\cdots,r_{n-1}}
+Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
+& = \sum_{r_1,\ldots,r_{n-1}}
+\frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\norm{\V{w}}{1}}
+Pr(\epsilon_{\V{i},r_1,\cdots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
+& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\mathbb{E}[\widehat{x}_{\V{i},n-1}/s]
+\end{align*}
+\end{proof}
+Then we get
+\begin{equation}
+\mathbb{E}[\widehat{x}_{\V{i},n}] = sx^n_{\V{i}}/\norm{\V{w}}{1}^n
+\end{equation}
+
+\subsection{Error Bounds}
 \begin{lemma}\label{lem:Bound}
 Fix $\varepsilon > 0$ and error probability $\sigma \in (0,1)$. Assuming all entries in factor matrices are nonnegative and at most $K$. If the number of samples
 \[
-s \leq 3K^{N-1}\norm{\V{W}}{1}\log{(2/\sigma)}/(\varepsilon ^2{x_{\V{i}}}^2),
+s \geq 3\norm{\V{w}}{1}^n\log{(2/\sigma)}/(\epsilon x^n_{\V{i}})
 \]
 then
 \[
-Pr[|{\widehat{x}_{\V{i}}}\norm{\V{W}}{1}/s-{x_{\V{i}}}^2| \geq \varepsilon{x_{\V{i}}}^2] \leq \sigma
+Pr(|\frac{\widehat{x}_\V{i}\norm{\V{w}}{1}^n}{s} - x^n_{\V{i}}| < \epsilon x^n_{\V{i}}) \leq \sigma
 \]
 \end{lemma}
 
@@ -415,210 +539,27 @@ Pr[\widehat{x}_{\V{i}}\cdot\norm{\V{W}}{1}/s \leq (1-\epsilon)x_{\V{i}}] \leq \s
 \end{proof}
 
 \begin{theorem}\label{theo:Order}
-Fix some threshold $\tau$ and error probability $\sigma\in(0,1)$. Assume all entries in factor matrices are nonnegative and at most  K. Suppose $s \geq 12K^{N-1}\norm{\V{W}}{1}\log(2L_1L_2\cdots L_N/\sigma)/{\tau^2}$. Then with probability at least $1-\sigma$, the following holds for all indexes $\V{i} = (i_1,i_2,\ldots,i_N)$ and $\V{i'} = (i'_1,i'_2,\ldots,i'_N)$ : if $x_{\V{i}}>\tau$ and $ x_{\V{i'}} < \tau/4$, then $\widehat{x_{\V{i}}}>\widehat{x}_{\V{i'}}$.
+Given the threshold $\tau$ and error probability $\sigma$. 
+Assume all entries in factor matrices are nonnegative. Suppose
+\[
+    s \geq 12\norm{\V{w^c}}{1}^n\log{(2/\sigma)}/\tau^n
+\]
+Then with probability at least $1-\sigma$,
+the following holds for all coordinates $\V{i}:(i_1,i_2,\ldots,i_N)$ 
+and $\V{i'}:(i'_1,i'_2,\ldots,i'_N)$:
+\[
+    if\ x_{\V{i}} > \tau\ and \ x_{\V{i'}} < \tau/\sqrt[n]{4e}, \ then\ \widehat{x_{\V{i}}} > \widehat{x_{\V{i'}}}
+\]
 \end{theorem}
 
-\begin{proof}[proof:]
-
-\end{proof}
-
-
-\section{Central Sampling Algorithm}
-
-Actually, there are two primary factors that affect the recall of sampling. The first one is the probability of multi-indexes or coordinate $\V{i}$, which we called $p(\epsilon_{\V{i}})$. When we use the maximum budget $t'=s$, we will compute all the actual value of indexes that we sampled, then the score we assigned to $\V{i}$ do not influence the final accuracy. So the higher probability $p(\epsilon_{\V{i}})$ of largest elements is, the more likely it will be sampled, and thus the higher the accuracy will be. The other factor is the final score $\widehat{x}_{\V{i}}$ that we assigned. Since we compute the top-$t'$ elements' actual value after pre-sorting, the order of original score is mostly concerned. That ideal case is if the final score keeps the order of actual value, the amount of budget will not influence the accuracy against the maximum budget.
-
-The probability of coordinate $\V{i}$ determine the upper bound of final accuracy in expectation. The better of score we assign to coordinate $\V{i}$ will keep the order of actual value do, the closer accuracy to the upper bound when we consider the budget $t'$.
-
-We summarize these two factors as occurrence probability of coordinate and isotonicity of score.
-
-In the following sections, we introduce the new method that sample the coordinate proportional to the $x_{\V{i}}$, and different kind of scores we assign to coordinate for estimating any order of actual value.
-
-\subsection{Sampling Mechanism}
-
-We starts from the central nodes in partition $\overline{V}$ by assigning some appropriate weight to it, then transfer to the other partitions from the vertex we sampled.
-
-\subsubsection{Weight and Transfer Probability}
-
-The weight we designed for central nodes is:
-
-\[
-    w_r = \norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}
-\]
-
-In each turn, we sample the index $r$ with probability $w_r/\norm{\V{w}}{1}$.Then repeat $N$ times, walk form the node $\overline{v}_r$ in partition $\overline{V}$ to other partition $V_i$ with probability $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$.
-
-\subsubsection{Scoring the Coordinates}
-
-Each time we sampled an coordinate $\V{i} = \Coord $. The score of this coordinate in the $\ell $-th turn is
-\[
-\M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})
-\]
-If this coordinate has not been sampled previously, create a container $\widehat{x}_{\V{i}} = \M{X}_{\V{i},\ell}$. Otherwise, increase $\widehat{x}_{\V{i}}$ by $\M{X}_{\V{i},\ell}$. For $\V{i}$ that not be sampled in $\ell$-th turn, we also assume that $\M{X}_{\V{i},\ell}=0$, so that
-
-\[
-\widehat{x}_{\V{i}} = \sum_{\ell} \M{X}_{\V{i},\ell}
-\]
-
-We will show that $\widehat{x}_{\V{i}}$ is an estimation of $x_{\V{i}}/\norm{\V{w}}{1}$.
-
-\subsubsection{Use Different Score in Central Sampling}
-The benefit of central sampling is that we can use different scores if we do extra sampling in partition $\overline{V}$. For example, after sampled $r$ in one turn, we sample another $r'$ with the sample probability $w_{r'}/\norm{\V{w}}{1}$. And the score we use:
-
-\[
-\M{X}_{\V{i},\ell}  = \frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}
-\]
-
-It will make the $\widehat{x}_{\V{i}}$ be an estimation of $x_{\V{i}}^2/\norm{\V{w}}{1}^2$. Also, we can sample more additional nodes in partition $\overline{V}$ and adjust the score to make the final score be an estimation of $x_{\V{i}}^n/\norm{\V{w}}{1}^n$.
-
-Since we use the budget $t'$ to do pre-sorting, the better the score will keep the order of actual values, the less the budget we need. And with the growth of budget $t'$, the accuracy with approach closer to the accuracy with maximum budget in expectation.
-
-So the first factor, occurrence of indexes, determine the upper bound of recall, and the score we assigned to a sampled coordinate decide the ability to approach the bound with less budget. In our method, we can adjustment the score to make it be an estimation of $n$-th power of the actual value. However, the demand number of samples will increase exponentially. In practice, we use the first order or quadratic score to reach a good performance.
-
-\subsection{The Probability of Coordinates and Expectation of Score}
-
-As mentioned, the occurrence of coordinates determine the upper bound of sampling accuracy. Suppose all factor are nonnegative, then the probability of each coordinate $\V{i}$ that to be sampled is
-
-\begin{align*}
-Pr(\epsilon_{\V{i}}) = &\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\\
-=& \sum_{r=1}^{R} \frac{\norm{\Vacol{1}}{1}\ldots\norm{\Vacol{N}}{1}}{\norm{\V{W}}{1}}\frac{|\Sca{a}{1}{r}|}{\norm{\Vacol{1}}{1}}\ldots \frac{|\Sca{a}{N}{r}|}{\norm{\Vacol{N}}{1}} \\
-=& \sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}} = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
-\end{align*}
-
-The expectation score of first order is:
-\begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i}}]& =\sum_{\ell=1}^{s}\sum_{r=1}^{R} Pr(\epsilon_{\V{i},r})\M{X}_{\V{i},\ell}\\
-& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\\
-& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\\
-& = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
-\end{align*}
-
-
-And it is easy to prove that the extra sampling in partition $\overline{V}$ will not change the probability of each coordinate.
-Because each extra sampling is independent, we have $Pr(\epsilon_{\V{i},r_1,\ldots,r_n})=Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}/\norm{\V{w}}{1}$.
-So when we do $n$ extra sampling, then the occurrence probability of coordinate $\V{i}$ is:
-
-\begin{align*}
-Pr(\epsilon_{\V{i}}) &= \sum_{r_1,\ldots,r_n}Pr(\epsilon_{\V{i},r_1,\ldots,r_n})\\
-&= \sum_{r_1,\ldots,r_n}Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\frac{w_{r_n}}{\norm{\V{w}}{1}}\\
-&= \sum_{r_1,\ldots,r_{n-1}}Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\\
-& \cdots\\
-&= \sum_{r_1}Pr(\epsilon_{\V{i},r_1})= \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
-\end{align*}
-So, the probability of coordinate keep same when we change the score we used.
-In the nex part, we will show that with extra sampling, the expectation of final score will be $sx_{\V{i}}^n/\norm{\V{w}}{1}^n$.
 \begin{proof}
-The score for $n$-th power estimation in $\ell$-th turn is
-\[
-\M{X}_{\V{i},\ell,n}  = \frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\Nrocl{1}{r_n}\ldots\Nrocl{N}{r_n}}
-\M{X}_{\V{i},\ell,n-1}
-\]
-Because each extra sampling is independent, we have $Pr(\epsilon_{\V{i},r_1,\ldots,r_n})=Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}/\norm{\V{w}}{1}$. So the expectation score of $n$-th power estimation is:
 
-\begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i},n}/s]
-& = \sum_{r_1,\ldots,r_n}Pr(\epsilon_{\V{i},r_1,\cdots,r_n})\M{X}_{\V{i},\ell,n}\\
-& = \sum_{r_1,\ldots,r_n}
-\frac{Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}}{\norm{\V{w}}{1}}\M{X}_{\V{i},\ell,n}\\
-& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\sum_{r_1,\ldots,r_{n-1}}
-Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
-& = \sum_{r_1,\ldots,r_{n-1}}
-\frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\norm{\V{w}}{1}}
-Pr(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})\M{X}_{\V{i},\ell,n-1}\\
-& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\mathbb{E}[\widehat{x}_{\V{i},n-1}/s]
-\end{align*}
 \end{proof}
-Then we get
-\begin{equation}
-\mathbb{E}[\widehat{x}_{\V{i},n}/s] = \frac{x^n_{\V{i}}}{\norm{\V{w}}{1}^n}
-\end{equation}
+So the more $r$ we sampled, the better order will keep. 
+We call $d=\sqrt[n]{4e}$ the distinguishability.
+To get high distinguishability, we need more sample number to reach the same error bound.
 
-\subsection{Extension of Central Sampling}
-
-Since we notice that the occurrence of coordinate will determine the upper bound of the final accuracy. The effort for significantly improving the final accuracy significantly need to focus on $Pr(\epsilon_{\V{i}})$. So we introduce the extension version of central sampling to reach a higher bound.
-
-We first sampled an indexes pair $(r,r')$ of central nodes instead of one index $r$ a time. Then we sampled other indexes with designed probability according to the sampled pair. To realize this mechanism, we introduce the extension matrix, and the sampling method will be same as the original central sampling. The extension matrix expend the feature dimension to $R^2$. Suppose $\V{v}$ is an item vector with dimension $R$, the extension vector, assumed $\V{v}^e$, is generated following the rule below:
-\[
-\V{v}^e(r+r'R) = \V{v}(r)\V{v}(r')\ r,r' = {1,2,...,R}
-\]
-
-After this expansion, we get $N$ expanded factor matrices. And we just simply use $\M{E}^{(n)}=[\VnC{e}{n}{1},\ldots,\VnC{e}{n}{R^2}]$ to represent the extension of factor matrix $\M{A}^{(n)}$. And it is easy to notice that
-\[
-\VnC{e}{n}{*l} = \sum\nolimits_{i_n}\Sca{a}{n}{r}\Sca{a}{n}{r'},l=r+r'R
-\]
-Then use the origin central  sampling to process these expanded factor matrices, which will make the probability of coordinate proportioning to $x_{\V{i}}^2$.
-\begin{proof}
-Suppose all factor matrices are nonnegative. According to central sampling, we first sample the indexes pair $(r,r')$ in which $l = r+r'R$ with probability $w_l/\norm{\V{w}}{1}$. And sample the other nodes in partition $V_n$ with probability $e^{(n)}_{i_nl}/\norm{\VnC{e}{n}{*l}}{1}$. By definition, we know
-\[
-w_l = \norm{\VnC{e}{1}{*l}}{1}\cdots \norm{\VnC{e}{N}{l}}{1}, l = 1,\ldots,R^2
-\]
-and
-\[
-e^{(n)}_{i_nl} = \Sca{a}{n}{r}\Sca{a}{n}{r'}, l = r+r'R
-\]
-So, let $l = r+r'R$
-\begin{align*}
-Pr(\epsilon_{\V{i}}) &= \sum_{l} Pr(\epsilon_{\V{i},l})= \sum_{r,r'} Pr(\epsilon_{\V{i},r,r'})\\
-&= \sum_{l} \frac{w_l}{\V{w}}
-\frac{|e^{(1)}_{i_1l}|}{\norm{\VnC{e}{1}{*l}}{1}}\cdots
-\frac{|e^{(N)}_{i_Nl}|}{\norm{\VnC{e}{N}{*l}}{1}}\\
-& = \sum_{r,r'} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}|}
-{\norm{\V{W}}{1}}\\
-& = \frac{(\sum_{r}|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)^2}{\norm{\V{W}}{1}}\\
-& = \frac{x_{\V{i}}^2}{\norm{\V{w}}{1}}
-\end{align*}
-\end{proof}
-
-The same as central sampling, we can use different score for sampled coordinate. In practice, we use the following score to update a coordinate:
-\[
-\widehat{x}_{\V{i}} \leftarrow \widehat{x}_{\V{i}} +sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'})
-\]
-
-We can make the probability of coordinate proportioning to $n$-the power the its value by extending the feature vector to $R^N$. However, the cost the computing cost and storage for the extension matrix will increase exponentially.
-The estimation of final score is in some form of $x^2_{\V{i}}$, to reach the $x^n_{\V{i}}$ we use the following algorithm.
-
-\subsubsection{Using Different Central Probability}
-For each node $\overline{v}_r$ in partition $\overline{V}$. We use the different wight
-\[
-w_r = \sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{1}{*l}}{1}
-\cdots\sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{N}{*l}}{1}
-\]\
-After sampling the index $r$, we sample each index $i_n$ according to probability:
-\[
-\frac{\sum_{l=rR}^{l=rR+r}|e^{(n)}_{i_nl}|}{\norm{\VnC{e}{n}{*l}}{1}}
-\]
-And sample $N$ more indexes $r_1,\ldots,r_N$ with probability $|\Sca{a}{n}{r_n}|/\norm{\VnC{a}{n}{*r_n}}{1}$.
-This will make the final score be an estimation of  $x^{n+1}_{\V{i}}$.
-After each sampling we use the score:
-\[
-\M{X}_{\V{i},\ell} = sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\prod_{n=1}^{n=N}(\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n})
-\]
-
-This is the max extension, we can reduce the times of term $\sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{n}{*l}}{1}$ used, and replace by the term $\Nrocl{n}{r}$ to save computation. And adjust the score to get a resonabale result.
-\subsection{Finding top-$t$ largest value}
-
-The algorithm for finding the top-$t$ largest value is same as diamond sampling which is shown in ~\Alg{Topt}. The score $\widehat{x}_\V{i}$ depend on the specific algorithm used.
-
-\subsection{The Relation to Diamond Sampling}
-If we divide the indexes pair $(i_1,r)$ in diamond sampling into sampling $r$ then $i_1$. We will find that those two methods are similar. For diamond sampling, if we only sample the index $r$, we notice that the probability of node $\overline{v}_r$ is
-\begin{align*}
-P(r) &= \sum\nolimits_{i_1}P(i_1,r)\\
-&= \sum\nolimits_{i_1}
-|\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
-/ \norm{\V{W^d}}{1}\\
-& = \sum_{l=rR}^{l=rR+r}\norm{\VnC{e}{1}{*l}}{1}\norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
-/ \norm{\V{W^d}}{1}
-\end{align*}
-and
-\begin{align*}
-P(i_1) &= \sum\nolimits_{r}P(i_1,r)\\
-&= \sum\nolimits_{r}
-|\Sca{a}{1}{r}|\norm{\Varow{1}}{1} \norm{\Vacol{2}}{1} \ldots \norm{\Vacol{N}}{1}
-/ \norm{\V{W^d}}{1}\\
-& = \frac{\sum_{l=rR}^{l=rR+r}|e^{(1)}_{i_1l}|}{\norm{\VnC{e}{1}{*l}}{1}}
-\end{align*}
-where $l=r+RL$. We can see it is the special case to expend only the first matrix and combine the index $l$ with $r$.
-\section{Sampling methods for queries}
-
+\section{Core Sampling for Queries}
 In recommendation system, it is demanded to find the most $k$ relevant items for a set of users. For consistency, say $\M{A}^{(1)}$ stands for the querying users, and the rest $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ are items. Each row in matrix $\M{A}^{(1)}$ represents a particular user $\V{u}$. And the $N-1$ order tenor in ~\Eqn{RankTensorCP} represents the predicted ranking score of this user for all combinations.
 
 \begin{equation}\label{eq:RankTensorCP}
@@ -663,105 +604,14 @@ specific sampling algorithm. For central sampling, and we notice that for one us
 \end{algorithm}
 
 
-\section{Use Different Ranking Function}
-As for \Def{DefinitionTopt}, we mention three different ranking functions: Euclidean distance, cosine similarity and inner product. The algorithm we designed is  mainly aim at the inner product. But we can modify the score of coordinate to handle the other ranking function.
 
-\subsection{Relation of Three Ranking Function}
-Since the Euclidean distance, cosine similarity and inner product are both defined for two vectors, we suppose that there are only two factor matrices $\M{A}\in R^{M\times R},\M{B}\in R^{N\times R}$.
-
-For Euclidean metric,
-\[
-\arg\min_{(i,j))}(\V{a}_{i*}-\V{b}_{j*})^2
-= \arg\max_{(i,j))}(2\V{a}_{i*}^T\V{b}_{j*}
-- \V{a}_{i*}^T\V{a}_{i*}
-- \V{b}_{j*}^T\V{b}_{j*})
-\]
-So we adjust the score for $(i,j)$:
-\[
-\widehat{x}_{ij} = (a_{ir}-b_{jr})^2/|a_{ir}b_{jr}|
-\]
-Then the expectation of $\widehat{x}_{ij}$ will be $s(\V{a}_{i*}-\V{b}_{j*})^2/\norm{\V{w}}{1}$.
-
-For cosine similarity,
-\[
-\arg\max_{(i,j))}\frac{\V{a}_{i*}^T\V{b}_{j*}}
-{\V{a}_{i*}^T\V{a}_{i*}\V{b}_{j*}^T\V{b}_{j*}}
-\]
-So we adjust the socre for $(i,j)$:
-\[
-\widehat{x}_{ij} =\frac{sgn(a_{ir}b_{jr})}{\V{a}_{i*}^T\V{a}_{i*}\V{b}_{j*}^T\V{b}_{j*}}
-\]
-Then the expectation of $\widehat{x}_{ij}$ will be
-\[
-\frac{s\V{a}_{i*}^T\V{b}_{j*}}
-{\V{a}_{i*}^T\V{a}_{i*}\V{b}_{j*}^T\V{b}_{j*}\norm{\V{w}}{1}}.
-\]
-
-\section{Theoretical Analysis}
-
-For comparison, we use the similar error bound used in diamond sampling.
-We will compare the probability of coordinate between each algorithm, and evaluate score for keeping the origin order after sampling.
-
-\subsection{Error Bounds}
-We use $\V{w}^d,\V{w}^c,\V{w}^e$ to represent the different weight of those sampling algorithm.
-We sum the expectation of score in each algorithm up:
-
-\begin{align}
-    \mathbb{E}[\widehat{x}_{\V{i}}^d] &= sx^2_{\V{i}}/\norm{\V{W}^d}{1} \\
-    \mathbb{E}[\widehat{x}_{\V{i}}^c] &= sx^n_{\V{i}}/\norm{\V{W}^c}{1}^n\\
-    \mathbb{E}[\widehat{x}_{\V{i}}^e] &= sx_{\V{i}}^2/\norm{\V{w}^e}{1}
-\end{align}
-Where
-\begin{align*}
-    \norm{\V{W}^d}{1} &= \sum\nolimits_{i_1,r}
-        |\Sca{a}{1}{r}|\norm{\Varow{1}}{1}\norm{\Vacol{2}}{1}\cdots\norm{\Vacol{N}}{1}\\
-    \norm{\V{W}^c}{1} &= \sum\nolimits_{r}
-        \norm{\Vacol{1}}{1}\cdots\norm{\Vacol{N}}{1}\\
-    \norm{\V{W}^c}{1} &= \sum\nolimits_{l}
-        \norm{\VnC{e}{1}{*l}}{1}\cdots\norm{\VnC{e}{N}{l}}{1}
-\end{align*}
-
-\subsection{Probability of sampling a coordinate}
-
-Suppose all of factor matrices is nonnegative, then we get the occurrence probability of coordinate for different algorithms.
-\begin{eqnarray}
-% \nonumber to remove numbering (before each equation)
-    \label{eq:ProbabilityDianomd}
-    Pr^d(\varepsilon_{\V{i}}) & = & x_\V{i}\norm{\Varow{1}}{1}/\norm{\V{W^d}}{1}\\
-    \label{eq:ProbabilityCentral}
-    Pr^c(\varepsilon_{\V{i}}) & = & x_{\V{i}}/\norm{\V{W}^c}{1}\\
-    \label{eq:ProbabilityExtensiom}
-    Pr^e(\varepsilon_{\V{i}}) & = & x_{\V{i}}^2/\norm{\V{w}^e}{1}
-\end{eqnarray}
-
-\subsection{Order preservation via scores}
-
-The ~\Lem{Bound} indicates the ability of diamond sampling to keep order after the sample. To be comparable, we give the error bound of central sampling by similar technique.
-As mentioned previously, we can sample extra indexes to make the score be the estimation of $x^n_{\V{i}}$. It is easy to prove that if the number of samples
-\[
-s \geq 3\norm{\V{w^c}}{1}^n\log{(2/\sigma)}/(\epsilon x^n_{\V{i}})
-\]
-We have
-\[
-Pr(|\frac{\widehat{x}_\V{i}\norm{\V{w^c}}{1}^n}{s} - x^n_{\V{i}}| < \epsilon x^n_{\V{i}}) \leq \sigma
-\]
-and for
-\[
-    s \geq 12\norm{\V{w^c}}{1}^n\log{(2/\sigma)}/\tau^n
-\]
-Then with probability $1-\sigma$, we have
-\[
-if\ x_{\V{i}} > \tau\ and \ x_{\V{i'}} < \tau/\sqrt[n]{4e}, \ then\ \widehat{x_{\V{i}}} > \widehat{x_{\V{i'}}}
-\]
-
-The more extra indexes we sampled, the better order will keep. We call $\sqrt[n]{4e}\geq 1$ the distinguishability. To get high distinguishability, we need more sample number to reach the same error bound. And we use the product $s\sqrt[n]{4e}$ to evaluate central sampling with different $n$.
 \section{Implementing details}
 In section, we introduce some tricks get the improvement for algorithm.
 
 \subsection{Data Structure}
 The first one is the matrix structure, we use the row major order, and the rest factor matrices in column major order, since it is efficient for row index sampling. And the absolute sum of each column  will be computed saved previously. Particularly, we use the transposition of the user matrix when diamond sampling is in processing.
 
-\subsection{Picking Central Nodes}
+\subsection{Picking Core Nodes}
 In central sampling when we sample the $r$ and in ~\AlgLine{QuerySampling}{Indexes}, instead of sample $r$ once a time, we compute the $c_r$ with expectation $sw_r/\norm{\V{w}}{1}$. $\V{w}$ is determined in use of sampling algorithm.
 \begin{equation*}c_r=
     \left\{
@@ -773,29 +623,6 @@ In central sampling when we sample the $r$ and in ~\AlgLine{QuerySampling}{Index
       \end{array}
     \right.
 \end{equation*}
-
-\subsection{Picking the Edge}
-We arrange the weight probability vector in diamond as $p(i_1,r) = w_{i_1+rL_1}$.
-We pick the $s$ edge with probability  $w_{i_1+rL_1}/\norm{\V{W}}{1}$. Since $s$ is much larger than the length of $\V{w^d}$, we use the binary search on the cumulative of $\V{w^d}$ via ~\Alg{Pickedge}. During the sampling we can count $c_r$ for each central nodes.
-
-\begin{algorithm}[ht]
-    \caption{Sample the Indexes Pair}
-    \label{alg:Pickedge}
-    Given weight vector $\V{W}\in R^{L\times R}$ and number of samples $s$. Sample the indexes pair $(i_1,r)$.
-    \begin{algorithmic}[1]
-    \State Initialize $c_r=0,r=1,\ldots,R$,and $\V{i}\in R^s$
-    \State Sample $\mu_{\ell} \thicksim U(0,1)$ for $\ell \in \{1,\ldots,s\}$
-    \State Sort $\V{\mu}$ so that $\mu_1 \leq \cdots\leq\mu_s$
-    \State $k \leftarrow 1,\rho \leftarrow \mu_k$
-    \For {$\ell = 1,\ldots,s$}
-    \While {$\mu_k > \rho$}
-    \State $k \leftarrow k+1,\rho \leftarrow \mu_k$
-    \EndWhile
-    \State $r = k \% L$, $i = k \backslash L$
-    \State $\V{i}_{\ell} \leftarrow i$, $c_r\leftarrow c_r + 1$
-    \EndFor
-    \end{algorithmic}
-\end{algorithm}
 
 We use Vose Alias's method to sample $c_r$ times $i_n$ wih probability ${\Sca{a}{n}{r}}/\Nrocl{n}{r}$.
 
@@ -818,21 +645,21 @@ We remove the minority until all user, item and tag occurred in at least 5 times
   \centering
   \begin{tabular}{|c|c|c|c|c|}
     \hline
-    DataSet & User & Item & Tag & Triplets \\
+    DataSet & User & Item & Tag \\
     \hline
-    lastfm      & 1133 &  2556   &  1289  &  54174   \\
-    delicious   & 1106 &  11613  &  1858  &  92663   \\
-    ml-2k       & 364  &  1326   &  957   &  18288   \\
-    ml-10m      & 507  &  1746   &  1246  &  26579   \\
-    ml-20m      & 3176 &  6785   &  7162  &  329050  \\
+    ml-2k       & 456  &  1973   &  1222  \\
+    ml-10m      & 993  &  3298   &  2555  \\
+    lastfm      & 1348 &  6927   &  2132  \\
+    ml-20m      & 3432 &  8971   &  7979  \\
+    delicious   & 1681 &  29540  &  7251  \\
     \hline
   \end{tabular}
   \caption{Data Statistics}
 \end{table}
-Then we use the user, item(URL, movie, artist, etc for different datasets), tag and ranking to form a sparse tensor\cite{TTB_Sparse}. The tensor toolbox\cite{TTB_Software} help us to do the CP decomposition.After the decomposition we have three factor matrices for user, item and tag.
+Use the algorithm in \cite{Rendle_RTF} to train each data set under CP decomposition model,
+after witch, we have three factor matrices for user, item and tag.
 
 \subsection{Accuracy and Time Consuming}
-
 We evaluate those different methods' performance on time and accuracy. We both use first order score for central sampling and extension version.
 When we use the maximum budget witch is using actual values of all sampled coordinates, the recall of each data set is show in ~\Fig{RecallMaxBudget}. And the accuracy of using budget $t'=10t$ is drawn in ~\Fig{RecallBudget}. And the time consuming for each algorithms in shown in ~\Fig{Time}.
 \begin{figure}[ht]
@@ -860,7 +687,6 @@ When we use the maximum budget witch is using actual values of all sampled coord
 \end{figure}
 \subsection{Isotonicity of Score}
 The isotonicity of scores means the ability of score to keep the original order in actual value. And as we mentioned previously, we may sample some extra indexes and adjust the score to get a high distinguishability. Since the central sampling has the same probability of coordinate in different scores, they are comparable. ~\Fig{Isotonicity} shows the isotonicity of different we used under the same samples.
-
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
@@ -871,11 +697,6 @@ The isotonicity of scores means the ability of score to keep the original order 
 
 \subsection{Sampling for Queries}
 We use the list of sub-path to save the computation of sampling for queries, and we will show the recall when we use the sub-indexes pool and not.
-
-
-
-
-
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
@@ -883,27 +704,6 @@ We use the list of sub-path to save the computation of sampling for queries, and
   \caption{Accuracy for each queries. We use $t=100$ and $s=10^4$.}
   \label{fig:Queries}
 \end{figure}
-
-
-\subsection{Other Ranking Functions}
-For Euclidean metric and cosine similarity, we evaluate our method one the data set of only two matrices. The result is shown in ~\Fig{EuclideanMetric} and ~\Fig{Cosine}.
-
-\begin{figure}[H]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width= 8cm,height=4.5cm,draft]{draft}\\
-  \caption{Accuracy for using Euclidean metric.}
-  \label{fig:EuclideanMetric}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width= 8cm,height=4.5cm,draft]{draft}\\
-  \caption{Accuracy for using cosine metric.}
-  \label{fig:Cosine}
-\end{figure}
-
 
 \section{Conclusion}
 
