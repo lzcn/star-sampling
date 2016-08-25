@@ -81,8 +81,7 @@ function [ diamond, central, extension ] = oneSampling(Variables)
                 extensionTemp.times(i,j) = eTime;
             end
         end
-        diamond.recall = diamond.recall + diamondTemp.recall;
-        diamond.times = diamond.times + diamondTemp.times;
+
         central.recall = central.recall + centralTemp.recall;
         central.times = central.times + centralTemp.times;
         extension.recall = extension.recall + extensionTemp.recall;
