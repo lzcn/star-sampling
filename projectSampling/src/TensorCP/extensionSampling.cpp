@@ -43,13 +43,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
 	double *C = mxGetPr(prhs[2]);
-	Matrix MatA(mxGetM(prhs[0]), rankSize, A);
-	Matrix MatB(mxGetM(prhs[1]), rankSize, B);
-	Matrix MatC(mxGetM(prhs[2]), rankSize, C);
+	Matrix MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]), MATRIX_NONE_SUM);
+	Matrix MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]), MATRIX_NONE_SUM);
+	Matrix MatC(mxGetM(prhs[2]), mxGetN(prhs[2]), mxGetPr(prhs[2]), MATRIX_NONE_SUM);
 	// the budget
-	const uint budget = (uint)mxGetPr(prhs[3])[0];
+	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
 	// number of samples
-	const uint NumSample = (uint)mxGetPr(prhs[4])[0];
+	const size_t NumSample = (size_t)mxGetPr(prhs[4])[0];
 	// find the top-t largest value
 	const uint top_t = (uint)mxGetPr(prhs[5])[0];
 	// result of sampling
@@ -65,8 +65,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mexPrintf("- Top-%d ",top_t);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");mexEvalString("drawnow");
+	mexPrintf("......\n");mexEvalString("drawnow");
 	// compute the extension for matrices
+	start = clock();
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
 	double *Cex = (double*)malloc(mxGetM(prhs[2])*rankSizeExt*sizeof(double));
@@ -74,7 +75,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(Bex, 0, mxGetM(prhs[1])*rankSizeExt*sizeof(double));
 	memset(Cex, 0, mxGetM(prhs[2])*rankSizeExt*sizeof(double));
 	// compute the extension matrices
-	start = clock();
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			// extension for matrix A
@@ -92,9 +92,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}
 	}
 	// extension matrices
-	Matrix MatAex(mxGetM(prhs[0]), rankSizeExt, Aex);
-	Matrix MatBex(mxGetM(prhs[1]), rankSizeExt, Bex);
-	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex);
+	Matrix MatAex(mxGetM(prhs[0]), rankSizeExt, Aex, MATRIX_COL_SUM);
+	Matrix MatBex(mxGetM(prhs[1]), rankSizeExt, Bex, MATRIX_COL_SUM);
+	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex, MATRIX_COL_SUM);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec = duration;
@@ -114,19 +114,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
+	mexPrintf("%f during the initialization phase.\n",*tsec);mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
 	start = clock();
-	uint *freq_r = (uint *)malloc(rankSizeExt*sizeof(uint));
-	memset( freq_r, 0, rankSizeExt*sizeof(uint));
+	size_t *freq_r = (size_t *)malloc(rankSizeExt*sizeof(size_t));
+	memset( freq_r, 0, rankSizeExt*sizeof(size_t));
 	for (uint r = 0; r < rankSizeExt; ++r){
 		double u = (double)rand()/(double)RAND_MAX;
 		double c = (double)NumSample*weight[r]/SumofW;
 		if(u < (c - floor(c)))
-			freq_r[r] = (uint)ceil(c);
+			freq_r[r] = (size_t)ceil(c);
 		else
-			freq_r[r] = (uint)floor(c);
+			freq_r[r] = (size_t)floor(c);
 	}
 	uint *IdxI = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
 	memset(IdxI, 0, (NumSample + rankSizeExt)*sizeof(uint));
@@ -135,7 +136,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	uint *IdxK = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
 	memset(IdxK, 0, (NumSample + rankSizeExt)*sizeof(uint));
 	// sample indexes
-	for (uint r = 0,offset = 0; r < rankSizeExt; ++r){
+	size_t offset = 0;
+	for (uint r = 0; r < rankSizeExt; ++r){
 		// sample i
 		vose_alias( freq_r[r], (IdxI + offset), \
 					MatAex.row, \
@@ -145,32 +147,31 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		vose_alias( freq_r[r], (IdxJ + offset), \
 					MatBex.row, \
 					(MatBex.element + r*MatBex.row), \
-					MatBex.SumofCol[r]);	
+					MatBex.SumofCol[r]);
 		// sample k
 		vose_alias( freq_r[r], (IdxK + offset), \
 					MatCex.row, \
 					(MatCex.element + r*MatCex.row), \
-					MatCex.SumofCol[r]);						
+					MatCex.SumofCol[r]);
 		offset += freq_r[r];
 	}
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
 	for(uint r = 0,offset = 0; r < rankSizeExt; ++r){
-		for(uint s = 0; s < freq_r[r]; ++s,++offset){
+		for(size_t s = 0; s < freq_r[r]; ++s,++offset){
 			uint idxi = IdxI[offset];
 			uint idxj = IdxJ[offset];
 			uint idxk = IdxK[offset];
 			uint idxr = r / rankSize;
-			double valueSampled = sgn_foo(MatA.GetElement(idxi,idxr)) \
-								* sgn_foo(MatB.GetElement(idxj,idxr)) \
-								* sgn_foo(MatC.GetElement(idxk,idxr));
-			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
+			double value = sgn(MatA(idxi,idxr) * MatB(idxj,idxr) * MatC(idxk,idxr));
+			IrJc[point3D(idxi, idxj, idxk)] += value;
 		}
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
+	mexPrintf("%f during the sampling phase.\n",*tsec);mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
@@ -190,7 +191,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	start = clock();
 	// compute the top-t' (budget) actual value
-	for(uint m = 0; m < tempSortedVec.size() && m < budget; ++m){
+	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
 		double true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
@@ -199,6 +200,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
+	mexPrintf("%f during the sorting phase.\n",*tsec);mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
