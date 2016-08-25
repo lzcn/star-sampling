@@ -21,7 +21,8 @@ projectSampling/data
 projectSampling/others
 #ignore data
 *.dat
-
+# Experiment directiory
+projectSampling/experiments
 # Debug file
 *.pdb*
 
