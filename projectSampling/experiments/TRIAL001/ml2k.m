@@ -4,7 +4,7 @@ out_dir = './max/ml-2k';
 if(~isdir(out_dir))
     mkdir(out_dir);
 end
-samples = power(10,4:8);
+samples = power(10,9);
 budget = samples;
 top_t = power(10,0:3);
 turn = 10;
@@ -50,9 +50,9 @@ for TurnNum = 1:turn
 end
 CRecall= CRecall/turn;
 CTimes = CTimes /turn;
-save(fullfile(out_dir,'CRecall.mat'),'CRecall');
-save(fullfile(out_dir,'CTimes.mat'),'CTimes');
+% save(fullfile(out_dir,'CRecall.mat'),'CRecall');
+% save(fullfile(out_dir,'CTimes.mat'),'CTimes');
 ERecall= ERecall/turn;
 ETimes = ETimes /turn;
-save(fullfile(out_dir,'ERecall.mat'),'ERecall');
-save(fullfile(out_dir,'ETimes.mat'),'ETimes');
+% save(fullfile(out_dir,'ERecall.mat'),'ERecall');
+% save(fullfile(out_dir,'ETimes.mat'),'ETimes');
