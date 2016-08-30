@@ -19,7 +19,7 @@
 
 #include "mex.h"
 #include "matrix.h"
-
+#include "utilmex.h"
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	clock_t start,finish;
@@ -33,9 +33,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
 	double *C = mxGetPr(prhs[2]);
-	Matrix MatA(mxGetM(prhs[0]), rankSize, A);
-	Matrix MatB(mxGetM(prhs[1]), rankSize, B);
-	Matrix MatC(mxGetM(prhs[2]), rankSize, C);
+	Matrix MatA(mxGetM(prhs[0]), rankSize, A,MATRIX_NONE_SUM);
+	Matrix MatB(mxGetM(prhs[1]), rankSize, B,MATRIX_NONE_SUM);
+	Matrix MatC(mxGetM(prhs[2]), rankSize, C,MATRIX_NONE_SUM);
 	// the budget
 	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
 	// number of samples
@@ -55,10 +55,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mexPrintf("- Top-%d ",knn);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");mexEvalString("drawnow");
+	mexPrintf("- Number of Queries:%d ",(NumQueries));
+	mexPrintf("......\n");mexEvalString("drawnow");
 	//-------------------------
 	// extension for matrices
 	//-------------------------
+	start = clock();
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
 	double *Cex = (double*)malloc(mxGetM(prhs[2])*rankSizeExt*sizeof(double));
@@ -81,10 +83,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
 		}
 	}
+	finish = clock();
+	for (size_t i = 0; i < NumQueries; i++) {
+		SamplingTime[i] = (double)(finish - start)/NumQueries;
+	}
 	// extension matrices
-	Matrix MatAex(mxGetM(prhs[0]), rankSizeExt, Aex);
-	Matrix MatBex(mxGetM(prhs[1]), rankSizeExt, Bex);
-	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex);
+	Matrix MatAex(mxGetM(prhs[0]), rankSizeExt, Aex,MATRIX_COL_SUM);
+	Matrix MatBex(mxGetM(prhs[1]), rankSizeExt, Bex,MATRIX_COL_SUM);
+	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex,MATRIX_COL_SUM);
 	//-------------------------
 	// Do Sampling
 	//-------------------------
@@ -95,14 +101,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------
 	// Sampling the Indexes
 	//-----------------------
+	progressbar(0);
 	std::vector<std::vector<point2D>> subWalk(rankSizeExt);
 	for(uint i = 0; i < NumQueries; ++i){
+		clearprogressbar();
+		progressbar((double)i/NumQueries);
 		double SumofW = 0.0;
 		start = clock();
 		for (uint r = 0; r < rankSizeExt; ++r){
 			weight[r] = abs(MatAex.GetElement(i,r));
-			weight[r] *= MatBex.SumofCol[r];
-			weight[r] *= MatCex.SumofCol[r];
+			//weight[r] *= MatBex.SumofCol[r];
+			//weight[r] *= MatCex.SumofCol[r];
 			SumofW += weight[r]; 
 		}
 		finish = clock();
@@ -177,7 +186,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
-	mexPrintf("Done!\n");
+	clearprogressbar();
+	progressbar(1);
+	mexPrintf("\n");
 	//---------------
 	// free
 	//---------------
