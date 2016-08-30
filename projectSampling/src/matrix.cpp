@@ -3,8 +3,8 @@
 #include "matrix.h"
 
 
-int sgn(double x){ return (x < 0 ? -1:1); }
-int sgn_foo(double x){ return (x < 0 ? -1:1); }
+double sgn(double x){ return (x < 0 ? -1:1); }
+double sgn_foo(double x){ return (x < 0 ? -1:1); }
 /*
 	class for point2D
 */

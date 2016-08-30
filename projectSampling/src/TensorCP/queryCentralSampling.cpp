@@ -18,7 +18,7 @@
 
 #include "mex.h"
 #include "matrix.h"
-
+#include "utilmex.h"
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	clock_t start,finish;
@@ -49,10 +49,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *SamplingTime = mxGetPr(plhs[1]);
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
 	mexPrintf("Central Sampling for Queries");
-	mexPrintf("- Top-%d ",knn);
+	mexPrintf("- Top:%d ",knn);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");mexEvalString("drawnow");
+	mexPrintf("- Number of Queries:%d ",(NumQueries));
+	mexPrintf("......\n");mexEvalString("drawnow");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
@@ -66,7 +67,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-------------------------
 	// list for sub walk
 	std::vector<std::vector<point2D> > subWalk(rankSize);
+	progressbar(0);
 	for(uint i = 0; i < NumQueries; ++i){
+		clearprogressbar();
+		progressbar((double)i/NumQueries);
 		start = clock();
 		double SumofW = 0.0;
 		for (uint r = 0; r < rankSize; ++r){
@@ -76,7 +80,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			SumofW += weight[r];
 		}
 		finish = clock();
-		SamplingTime[i] += (double)(finish - start);
+		SamplingTime[i] = (double)(finish - start);
 		if(SumofW == 0)
 			continue;
 		start = clock();
@@ -128,12 +132,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		//sort the values have been sampled
 		//-----------------------------------
 		std::vector<pidx3d> tempSortedVec;
+		std::vector<pidx3d> sortVec;
 		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr) {
 			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
 		start = clock();
 		sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
-		std::vector<pidx3d> sortVec;
 		for(uint t = 0; t < tempSortedVec.size() && t < budget; ++t){
 			double true_value = MatrixRowMul(tempSortedVec[t].first, MatA, MatB, MatC);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
@@ -146,7 +150,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			knnValue[i*knn + s] = sortVec[s].second;
 		}
 	}
-	mexPrintf("Done!");
+	clearprogressbar();
+	progressbar(1);
 	//---------------
 	// free
 	//---------------

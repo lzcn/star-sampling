@@ -113,7 +113,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     double stdev = 0.1;
     double lambda = 1e-6;
     double alpha = 0.1;
-    uint maxiter = 1000;
+    uint maxiter = 500;
 	mexPrintf("SGD for factorization ......\n");mexEvalString("drawnow");
 	// postive tag index for each post
 	uint *t_pos_Ind = (uint*)malloc(Posts.size()*tagSize*sizeof(uint));
@@ -157,7 +157,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// w(t+,t-) = s(y(u,i,t+,t-))[1- s(y(u,i,t+,t-))]
 	double *wtptn = (double*)malloc(tagSize*tagSize*sizeof(double));
 	memset(wtptn, 0, tagSize*tagSize*sizeof(double));
-	double AUC_pre = 0.0;
     for(uint l = 0; l < maxiter;++l){
 		//for (u,i) in Posts do
 		start = clock();
@@ -235,8 +234,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			}
         }
 		mexPrintf("Iter:%d,ObjectFuntcionValue:%f, TimeDuration:%f\n",l,AUC,timeDuration(start));mexEvalString("drawnow");
-		if((abs(AUC - AUC_pre)/AUC) < 1e-4) break;
-		AUC_pre = AUC;
     }
 	///////////////////
 	// Conveter

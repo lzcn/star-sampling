@@ -1,24 +1,3 @@
-/*
-	Extension Sampling with three factor matrices
-	usage:
-	[value, time, indexes] =  extensionSampling(A, B, C, budget, samples, top_t);
-
-	* Variables input:
-		A:	size: (L1, R)
-		B:  size: (L2, R)
-		C:  size: (L3, R)
-		samples: numbers of samples
-		top_t : find the top_t value in tensor
-
-		* Variables output:
-			value: size: (top_t, 1)
-						 the top_t value 
-			time: time consuming during the sampling
-			indexes: size (top_t, 3)
-							 the indexes of the corresponding value	
-		Author : Zhi Lu
-*/
-
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -77,29 +56,30 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			for (uint h = 0; h < rankSize; ++h){
-				double p = 0.0;
-				for(uint i = 0; i < Arow; ++i){
-					p += abs(MatA(i,m)*MatA(i,n)*MatA(i,h));
-				}
-				// extension for matrix B
-				double q = 0.0;
-				for(uint j = 0; j < Brow; ++j){
-					q += abs(MatB(j,m)*MatB(j,n)*MatB(j,h));
-				}
-				// extension for matrix C
-				double t = 0.0;
-				for(uint k = 0; k < Crow; ++k){
-					t += abs(MatC(k,m)*MatC(k,n)*MatC(k,h));
-				}
-				weight[(m*rankSize*rankSize + n*rankSize + h)] = p*q*t;
-				SumofW += p*q*t; 
+					double p = 0.0;
+					for(uint i = 0; i < Arow; ++i){
+						p += abs(MatA(i,m)*MatA(i,n)*MatA(i,h));
+					}
+					// extension for matrix B
+					double q = 0.0;
+					for(uint j = 0; j < Brow; ++j){
+						q += abs(MatB(j,m)*MatB(j,n)*MatB(j,h));
+					}
+					// extension for matrix C
+					double t = 0.0;
+					for(uint k = 0; k < Crow; ++k){
+						t += abs(MatC(k,m)*MatC(k,n)*MatC(k,h));
+					}
+					size_t r = m*rankSize*rankSize + n*rankSize + h;
+					weight[r] = p*q*t;
+					SumofW += p*q*t; 
 			}
 		}
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec = duration;
-	mexPrintf("%f during the initialization phase.\n",*tsec);mexEvalString("drawnow");
+	mexPrintf("%f during the initialization phase.\n",duration);mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
@@ -114,20 +94,21 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		else
 			freq_r[r] = (size_t)floor(c);
 	}
-	uint *IdxI = (uint*)malloc(NumSample*sizeof(uint));
-	memset(IdxI, 0, NumSample*sizeof(uint));
-	uint *IdxJ = (uint*)malloc(NumSample*sizeof(uint));
-	memset(IdxJ, 0, NumSample*sizeof(uint));
-	uint *IdxK = (uint*)malloc(NumSample*sizeof(uint));
-	memset(IdxK, 0, NumSample*sizeof(uint));
+	
+	uint *IdxI = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
+	memset(IdxI, 0, (NumSample + rankSizeExt)*sizeof(uint));
+	uint *IdxJ = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
+	memset(IdxJ, 0, (NumSample + rankSizeExt)*sizeof(uint));
+	uint *IdxK = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
+	memset(IdxK, 0, (NumSample + rankSizeExt)*sizeof(uint));
 	// sample indexes
-	size_t offset = 0;
 	double *pa = (double *)malloc(MatA.row*sizeof(double));
-	memset( pa, 0, MatA.row*sizeof(double));
 	double *pb = (double *)malloc(MatB.row*sizeof(double));
-	memset( pb, 0, MatB.row*sizeof(double));
 	double *pc = (double *)malloc(MatC.row*sizeof(double));
+	memset( pa, 0, MatA.row*sizeof(double));
+	memset( pb, 0, MatB.row*sizeof(double));
 	memset( pc, 0, MatC.row*sizeof(double));
+	size_t offset = 0;
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			for (uint h = 0; h < rankSize; ++h){
@@ -139,7 +120,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				double sum_b = 0.0;
 				for(uint j = 0; j < Brow; ++j){
 					pb[j] = abs(MatB(j,m)*MatB(j,n)*MatB(j,h));
-					sum_a += pa[j];
+					sum_b += pb[j];
 				}
 				// extension for matrix C
 				double sum_c = 0.0;
@@ -147,7 +128,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					pc[k] = abs(MatC(k,m)*MatC(k,n)*MatC(k,h));
 					sum_c += pc[k];
 				}
-				size_t r = (m*rankSize*rankSize + n*rankSize + h);
+				size_t r = m*rankSize*rankSize + n*rankSize + h;
 				vose_alias(freq_r[r], (IdxI + offset), MatA.row, pa, sum_a);
 				vose_alias(freq_r[r], (IdxJ + offset), MatB.row, pb, sum_b);
 				vose_alias(freq_r[r], (IdxK + offset), MatC.row, pc, sum_c);
@@ -158,18 +139,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
-	for(uint r = 0,offset = 0; r < rankSizeExt; ++r){
-		for(size_t s = 0; s < freq_r[r]; ++s,++offset){
+	offset = 0;
+	for(uint r = 0; r < rankSizeExt; ++r){
+		for(size_t s = 0; s < freq_r[r]; ++s){
 			uint idxi = IdxI[offset];
 			uint idxj = IdxJ[offset];
 			uint idxk = IdxK[offset];
-			IrJc[point3D(idxi, idxj, idxk)] = 1;
+			IrJc[point3D(idxi, idxj, idxk)] += 1;
+			++offset;
 		}
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sampling phase.\n",*tsec);mexEvalString("drawnow");
+	mexPrintf("%f during the sampling phase.\n",duration);mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
@@ -185,7 +168,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sorting phase.\n",*tsec);mexEvalString("drawnow");
+	mexPrintf("%f during the sorting phase.\n",duration);mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------

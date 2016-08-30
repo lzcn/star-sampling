@@ -106,7 +106,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	uint *IdxK = (uint*)malloc((NumSample + rankSize)*sizeof(uint));
 	memset(IdxK, 0, (NumSample + rankSize)*sizeof(uint));
 	// sample indexes
-	for (uint r = 0,offset = 0; r < rankSize; ++r){
+	size_t offset = 0;
+	for (uint r = 0; r < rankSize; ++r){
 		// sample i
 		vose_alias( freq_r[r], (IdxI + offset), \
 					MatA.row, \
@@ -127,8 +128,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
-	for(uint r = 0,offset = 0; r < rankSize; ++r){
-		for(size_t s = 0; s < freq_r[r]; ++s,++offset){
+	offset = 0;
+	for(uint r = 0; r < rankSize; ++r){
+		for(size_t s = 0; s < freq_r[r]; ++s){
 			uint idxi = IdxI[offset];
 			uint idxj = IdxJ[offset];
 			uint idxk = IdxK[offset];
@@ -136,6 +138,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 								* sgn_foo(MatB.GetElement(idxj,r)) \
 								* sgn_foo(MatC.GetElement(idxk,r));
 			IrJc[point3D(idxi, idxj, idxk)] += valueSampled;
+			++offset;
 		}
 	}
 	finish = clock();
