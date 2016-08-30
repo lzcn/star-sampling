@@ -114,7 +114,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the initialization phase.\n",*tsec);mexEvalString("drawnow");
+	mexPrintf("%f during the initialization phase.\n",duration);mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
@@ -171,7 +171,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sampling phase.\n",*tsec);mexEvalString("drawnow");
+	mexPrintf("%f during the sampling phase.\n",duration);mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
@@ -200,7 +200,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sorting phase.\n",*tsec);mexEvalString("drawnow");
+	mexPrintf("%f during the sorting phase.\n",duration);mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
