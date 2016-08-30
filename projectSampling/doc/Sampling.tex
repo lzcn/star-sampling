@@ -72,6 +72,7 @@
 \newcommand{\Eqn}[1]   {Equation~\ref{eq:#1}}
 % reference:figure
 \newcommand{\Fig}[1]   {Figure~\ref{fig:#1}}
+\newcommand{\Figs}[2]  {Figure~\ref{fig:#1}$\sim$~\ref{fig:#2}}
 % reference:table
 \newcommand{\Table}[1] {Table~\ref{table:#1}}
 % reference:lemma
@@ -221,14 +222,14 @@ Similarly, the weight of edge $e_{i_nr} = v^{n}_{i_n}v^c_r$ equals to $a^{(n)}_{
 \begin{figure}[t]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[scale=0.4]{fig_graph_matrix}\\
+  \includegraphics[width=3.3in]{fig_graph_matrix}\\
   \caption{Graph Presentation of Matrix $\M{A} \in R^{M \times N}$}
   \label{fig:GraphMatrix}
 \end{figure}
 \begin{figure}[t]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[scale = 0.4]{fig_graph_factor_matrices}\\
+  \includegraphics[width=3.3in]{fig_graph_factor_matrices}\\
   \caption{Graph Presentation of Factor Matrices}
   \label{fig:GraphMatrices}
 \end{figure}
@@ -289,6 +290,11 @@ $|\Sca{a}{n}{r}|/\norm{\Vacol{n}}{1}$
 (~\AlgLines{CoreSampling}{ItemPartitionFor}{ItemPartitionEnd}).
 
 \subsubsection{Scores}
+We stress that the score we designed is used for estimation.
+However, for finding task, the step of scoring is redundance.
+Instead, we just record the coordinate that has been sampled.
+
+We use scores the for completeness of our algrothms.
 Each time a coordinate $\Coord $ occurred, a score of is assigneg to it.
 \[
 \M{X}_{\V{i},\ell}  = sgn(\Sca{a}{1}{r}\cdot\Sca{a}{2}{r}\cdots\Sca{a}{N}{r})
@@ -306,13 +312,19 @@ so that the final sacore
 \end{equation}
 
 \subsection{Extract Top-$t$ Largest Values}
-After sampling, we get a set of coordinates with scores $\predx$.
-Let
+After sampling, we get a set of coordinates with scores $\predx$
+or jsut a set of coordinates which have been sampled.
+Denotes it by
 \[
     \Psi_p = \{\V{i}_p|p = 1,2,\ldots,P\}
 \]
-be all the coordinates have occurred. The size of $\Psi_p$ is $P$.
-To reduce the computation, a pre-sort is carried out.
+The size of $\Psi_p$ is $P$.
+
+There are two strategies for extracting top-$t$ largest values.
+The naive strategy is computing the actual values in $\Psi_p$,
+and extract the top-$t$ largest values.
+We call it the full-computing strategy.
+The other one is called pre-sorting strategy, which cooperates with the scores $\predx$.
 It sort the coordinates in $\Psi_p$ according to scores $\widehat{x}_{\V{i}_p}$
 and extract the top-$t'$ coordinates
 \[
@@ -328,43 +340,16 @@ And the final top-$t$ largest value's coordinates will be
                            \forall i' \in \Omega_{t'} \backslash \Omega_{t}
                 \}
 \]
-
 The use of budget $t'$ is a tradeoff between accuracy and computation.
 
-\subsection{Core Sampling with Different Scores}
-There are two strategies for extracting top-$t$ largest values of what one is the pre-sorting.
-The other strategy is computing the actual values of all occurred coordinate,
-and extract the top-$t$ largest values.
-This is special case to use maximum budget in pre-sorting strategy.
-
 The accuracy of full-computing strategy is determined by the probability of coordinate $\V{i}$.
-For one coordinate, it is Bernoulli trials $\sim B(s,p(\epsilon_{\V{i}}))$.
+For one coordinate, it is a Binomial distribution  $\sim B(s,p(\epsilon_{\V{i}}))$.
 So the higher probability $p(\epsilon_{\V{i}})$ of largest elements is,
 the more likely it will be sampled finally,
 and thus the higher the accuracy will be.
 The pre-sorting strategy do save computation,
 however, the accuracy will less than the full-computing in statistical.
 That ideal case is that the final score keeps the same order of actual values.
-
-The occurrence probability of coordinate and isotonicity of score are two main factors
-that influence our algorithm.
-Next, we introduce how to do extra sampling in core partition
-to get the better isotonicity of score.
-
-For example, after index $r$ has been sampled in one round,
-we can do an extra sample to get anther index $r'$
-with the sample probability $w_{r'}/\norm{\V{w}}{1}$.
-And we adjust the score to be:
-\[
-\M{X}_{\V{i},\ell}  = \frac{sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}}{\WreightR}
-\]
-
-It will make the $\predx$ be an estimation of $sx_{\V{i}}^2/\norm{\V{w}}{1}^2$.
-The same we can sample more additional indexes in core partition with adjusted score
-to make the final score be an estimation of $sx_{\V{i}}^n/\norm{\V{w}}{1}^n$.
-We call it $n$-order estimation.
-However, the demand number of samples will increase exponentially.
-In practice, we use the first or second order estimation to reach a good performance.
 
 \subsection{Extension of Core Sampling}
 
@@ -389,7 +374,13 @@ After such expansion, we get $N$ expanded factor matrices
 of each $\M{A}^{(n)}$.
 Apply core sampling to process these expanded factor matrices
 will make the probability of coordinate proportioning to $x_{\V{i}}^2$.
-We can make the probability of coordinate proportioning to $n$-the power the its value by extending the feature vector to $R^N$. However, the cost the computing cost and storage for the extension matrix will increase exponentially.
+We can make the probability of coordinate proportioning to $n$-the power the its value
+by extending the feature vector to $R^n$.
+For convenience, we use $core^n$ to
+represent the algorithm with coordinate probability proportioning to $x^n_{\V{i}}$.
+That is the $core^1$ stands for the original core sampling, and $core^2$ for the use of extension matrices.
+The theoretical analysis and optimization to save the storage of extension version will be
+introduced in folowing sections.
 
 \section{Theoretical Analysis}
 
@@ -401,40 +392,31 @@ We suppose all factor matrices are nonnegative.
 This premise of the following compact conclusions.
 
 \subsection{Probability of Coordinates}
-
+In one round of sampling,
+we sample one index in core partition and $N$ indexes in other partitions.
+We use the notation $\epsilon_{\V{i},r}$ to represent this random event
+and $\epsilon_{\V{i}}$ for the event that $\V{i}$ occures.
+The $p(\cdot)$ stands for the probability of events.
 \begin{lemma}\label{lem:Probability}
-    In core sampling, $p(\epsilon_{\V{i}})$ equals $x_{\V{i}}/\norm{\V{w}}{1}$,
-    even with extra sampling in core partition.
+    Suppose all facotor matrices are nonnegative.
+    In core sampling, $p(\epsilon_{\V{i}})$ equals $x_{\V{i}}/\norm{\V{w}}{1}$.
 \end{lemma}
 \begin{proof}
-For the primary core sampling, then probability of event $\epsilon_{\V{i}}$ is:
+The probability $\epsilon_{\V{i}}$ is a marginal distribution of $\epsilon_{\V{i},r}$:
 \begin{align*}
 p(\epsilon_{\V{i}})
 & = \sum_{r=1}^{R} p(\epsilon_{\V{i},r}) \\
+& = \sum_{r=1}^{R} p({\rm pick\ }r)p({\rm pick\ }i_1|r)\cdots p({\rm pick\ }i_N|r)\\
 & = \sum_{r=1}^{R} \frac{\WreightR}{\norm{\V{W}}{1}}
     \frac{|\Sca{a}{1}{r}|}{\Nrocl{1}{r}}\ldots\frac{|\Sca{a}{N}{r}|}{\Nrocl{N}{r}}\\
 & = \sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}
   = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
-Because each extra sampling in core partition is independent, we have
-\[
-    p(\epsilon_{\V{i},r_1,\ldots,r_n}) =
-    p(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})w_{r_n}/\norm{\V{w}}{1}
-\]
-So doing $n$ extra sampling, then probability of event $\epsilon_{\V{i}}$ is:
-\begin{align*}
-p(\epsilon_{\V{i}})
-&= \sum_{r_1,\ldots,r_n} p(\epsilon_{\V{i},r_1,\ldots,r_n})\\
-&= \sum_{r_1,\ldots,r_n} p(\epsilon_{\V{i},r_1,\ldots,r_{n-1}})
-                         w_{r_n}/\norm{\V{w}}{1} \\
-&= \sum_{r_1,\ldots,r_{n-1}} p(\epsilon_{\V{i},r_1,\ldots,r_{n-1}}) \\
-& \cdots\\
-&= \sum_{r_1} Pr(\epsilon_{\V{i},r_1})
- = x_{\V{i}}/\norm{\V{w}}{1}
-\end{align*}
 \end{proof}
-\begin{lemma}\label{lem:Probability}
-    In extension core sampling, $p(\epsilon_{\V{i}})$ equals $x^2_{\V{i}}/\norm{\V{w^e}}{1}$,
+The actual probability vector $\V{w}$ is according to the context.
+\begin{lemma}\label{lem:ExtensionProbability}
+    Suppose all facotor matrices are nonnegative.
+    In extension core sampling, $p(\epsilon_{\V{i}})$ equals $x^2_{\V{i}}/\norm{\V{w}}{1}$,
     even with extra sampling in core partition.
 \end{lemma}
 
@@ -446,12 +428,12 @@ for each column of the extension matrices in~\Eqn{ExtensionMatrices} satisfies:
 \]
 According to central sampling,
 we first sample the indexes pair $(r,r'),l = r+r'R$
-with probability $w^e_l/\norm{\V{w^e}}{1}$.
+with probability $w_l/\norm{\V{w}}{1}$.
 Then sample the other indexes $v^{n}_{i_n}$
 with probability $e^{(n)}_{i_nl}/\norm{\VnC{e}{n}{*l}}{1}$.
 By definition, we know
 \[
-w^e_l = \norm{\VnC{e}{1}{*l}}{1}\cdots \norm{\VnC{e}{N}{l}}{1}, l = 1,\ldots,R^2
+w_l = \norm{\VnC{e}{1}{*l}}{1}\cdots \norm{\VnC{e}{N}{l}}{1}, l = 1,\ldots,R^2
 \]
 and
 \[
@@ -462,108 +444,89 @@ So, let $l = r+r'R$
 p(\epsilon_{\V{i}})
 & = \sum_{l}    p(\epsilon_{\V{i},l})
   = \sum_{r,r'} p(\epsilon_{\V{i},r,r'})\\
-& = \sum_{l} \frac{w^e_l}{\V{w^e}}
+& = \sum_{l} \frac{w_l}{\V{w}}
              \frac{|e^{(1)}_{i_1l}|}{\norm{\VnC{e}{1}{*l}}{1}}\cdots
              \frac{|e^{(N)}_{i_Nl}|}{\norm{\VnC{e}{N}{*l}}{1}} \\
-& = \frac{1}{\norm{\V{W^e}}{1}}
+& = \frac{1}{\norm{\V{W}}{1}}
     \sum_{r,r'} |\Sca{a}{1}{r} \cdots\Sca{a}{N}{r}\Sca{a}{1}{r'}\cdots\Sca{a}{N}{r'}| \\
-& = \frac{1}{\norm{\V{W^e}}{1}}
+& = \frac{1}{\norm{\V{W}}{1}}
     (\sum_{r}|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|)^2\\
-& = \frac{x_{\V{i}}^2}{\norm{\V{w^e}}{1}}
+& = \frac{x_{\V{i}}^2}{\norm{\V{w}}{1}}
 \end{align*}
 \end{proof}
-
+And it is noticed that for hign order extension, $p(\epsilon_{\V{i}})$ equals to $x^n_{\V{i}}/\norm{\V{w}}{1}$,
 \subsection{Expectation of Scores}
+In this part, we show the expectation of scores is an estimation of actual value.
 \begin{lemma}\label{lem:Expectation}
-The expectation of $n$-order score $\widehat{x}_{\V{i},n}$ equals to $sx_{\V{i}}^n/\norm{\V{w}}{1}^n$.
+The expectation of score $\widehat{x}_{\V{i}}$ in core sampling equals to $sx_{\V{i}}/\norm{\V{w}}{1}$.
 \end{lemma}
-\begin{proof} Use~\Eqn{score} and the independence of scores in different iterations,
-     the expectation of score for primary core sampling is:
+\begin{proof}
+    The final score shown in ~\Eqn{score},
+    with the independence of $\M{X}_{\V{i},\ell}$ in different iterations $\ell$,
+    the expectation of final score in core sampling is:
 \begin{align*}
 \mathbb{E}[\predx]
-& =\sum_{\ell=1}^{s}\sum_{r=1}^{R} p(\epsilon_{\V{i},r})\M{X}_{\V{i},\ell}\\
+& = \sum_{\ell}^s \mathbb{E}[\M{X}_{\V{i},\ell}]\\
+& = \sum_{\ell=1}^{s}\sum_{r=1}^{R} p(\epsilon_{\V{i},r})\M{X}_{\V{i},\ell}\\
 & = s\sum_{r=1}^{R} \frac{|\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}|}{\norm{\V{W}}{1}}sgn(\Sca{a}{1}{r}\cdots\Sca{a}{N}{r})\\
-& = s\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}\\
-& = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
+& = s\sum_{r=1}^{R} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}
+= \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
-The score for $n$-order estimation in $\ell$-th turn satisfies
-\[
-\M{X}_{\V{i},\ell,n}  = \frac{\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}}{\Nrocl{1}{r_n}\ldots\Nrocl{N}{r_n}}
-\M{X}_{\V{i},\ell,n-1}
-\]
-Then the expectation score for $n$-order estimation is:
-\begin{align*}
-\mathbb{E}[\widehat{x}_{\V{i},n}/s]
-& = \sum_{r_1,\ldots,r_n} p(\epsilon_{\V{i},r_1,\cdots,r_n})\M{X}_{\V{i},\ell,n}\\
-& = \sum_{r_1,\ldots,r_n}
-\frac{p(\epsilon_{\V{i},r_1,\cdots,r_{n-1}})w_{r_n}}{\norm{\V{w}}{1}}\M{X}_{\V{i},\ell,n}\\
-& = \mathbb{E}[\widehat{x}_{\V{i},n-1}/s]\sum_{r_n}\frac{|\Sca{a}{1}{r_n}\cdots\Sca{a}{N}{r_n}|}{\norm{\V{w}}{1}}\\
-& = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}\mathbb{E}[\widehat{x}_{\V{i},n-1}/s]\\
-& \cdots \\
-& = \frac{x^{n-1}_{\V{i}}\mathbb{E}[\predx/s]}{\norm{\V{w}}{1}^{n-1}}
-= \frac{x^n_{\V{i}}}{s\norm{\V{w}}{1}^n}
-\end{align*}
-Then we get $\mathbb{E}[\widehat{x}_{\V{i},n}] = sx^n_{\V{i}}/\norm{\V{w}}{1}^n$
 \end{proof}
 
 \subsection{Error Bounds}
-\begin{lemma}\label{lem:Bound}
-Fix $\varepsilon > 0$ and error probability $\sigma \in (0,1)$.
+\begin{theorem}\label{theo:ObservationBound}
+Fix error probability $\sigma \in (0,1)$.
+The demond of samples of coordinate $\V{i}$ being observated as least once is
+\[
+    s \geq \ln(1/\sigma)/p(\epsilon_{\V{i}})
+\]
+\end{theorem}
+\begin{proof}
+Since it is a Binomial distribution  $\sim B(s,p(\epsilon_{\V{i}}))$ with
+small $p(\epsilon_{\V{i}})$ and large $s$.
+The Posson approximation is used with $\lambda = sp(\epsilon_{\V{i}})$.
+So $Prob(x\geq1)=1-Prob(x=0)=1-e^{-sp(\epsilon_{\V{i}})} \geq 1-\sigma$.
+That gives $s \geq \ln(1/\sigma)/p(\epsilon_{\V{i}})$.
+\end{proof}
+
+\begin{theorem}\label{theo:Bound}
+Fix $\delta > 0$ and error probability $\sigma \in (0,1)$.
 Assuming all entries in factor matrices are nonnegative.
 In core sampling, if the number of samples
 \[
-    s \geq 3\norm{\V{w}}{1}^n\log{(2/\sigma)}/(\epsilon^2 x^n_{\V{i}})
+    s \geq 3\norm{\V{w}}{1}\log{(2/\sigma)}/(\delta^2 x_{\V{i}})
 \]
 then
 \[
-    Pr(|\predx\norm{\V{W}}{1}^n/s - x^n_{\V{i}}| > \epsilon x^n_{\V{i}}) \leq \sigma
+    Pr(|\predx\norm{\V{W}}{1}/s - x_{\V{i}}| > \delta x_{\V{i}}) \leq \sigma
 \]
-\end{lemma}
-
-\begin{proof}
-Since $\M{X}_{\V{i},\ell}$ is in $[0,1]$
-and $\predx=\sum_{\ell}\M{X}_{\V{i},\ell}$ is a sum of random variables in $[0,1]$.
-Applying the Chernoff bound,
-\[
-    Pr[\predx \geq (1+\epsilon)\mathbb{E}[\predx]] < \exp{(-\epsilon^2\mathbb{E}[\predx]/3)}
-\]
-Substitute bound of $s$ to ~\Lem{Expectation}, we have
-$\mathbb{E}[\predx]=(sx^n_{\V{i}})/\norm{\V{W}}{1}^n \leq 3\log{(2/\sigma)/\epsilon^2}$.
-Then
-\[
-    Pr[\predx\norm{\V{W}}{1}^n/s \geq (1+\epsilon) x^n_{\V{i}}] < \sigma/2
-\]
-and
-\[
-    Pr[\predx\norm{\V{W}}{1}^n/s \leq (1-\epsilon) x^n_{\V{i}}] \leq \sigma/2
-\]
-which combined, we get
-\[
-    Pr(|\predx\norm{\V{W}}{1}^n/s - x^n_{\V{i}}| > \epsilon x^n_{\V{i}}) \leq \sigma
-\]
-\end{proof}
-
-\begin{theorem}\label{theo:Order}
-Given the threshold $\tau$ and error probability $\sigma$ in core sampling,
-and let
-\[
-    s \geq 12\norm{\V{w}}{1}^n\log{(2/\sigma)}/\tau^n
-\]
-Then with probability at least $1-\sigma$,
-the following holds for all coordinates $\V{i}$
-and $\V{i}'$:
-if $x_{\V{i}} > \tau$ and $x_{\V{i}'} < \tau/\sqrt[n]{4e}$,
-then $\widehat{x_{\V{i}}} > \widehat{x}_{\V{i}'}$.
 \end{theorem}
 
 \begin{proof}
-
+This result is closely follows the proof of Lemma 3 from \cite{BaPiKoSe15}.
+Since  $ \M{X}_{\V{i},\ell},\cdots,\M{X}_{\V{i},s} $
+are independent random variables taking values in $\{0,1\}$.
+So $\predx$ is the sum of independent Poisson trials(Bernoulli trials are a special case).
+The Chernoff bounds for the sum of Poisson trials shows for any $0 <\delta <1 $:
+\[
+    Pr[|\predx - \mu|\geq\delta\mu)] \leq 2\exp{(-\mu\delta^2/3)}
+\]
+where $\mu=\mathbb{E}[\predx]=(sx_{\V{i}})/\norm{\V{W}}{1}$.
+And by the choice of $s$, we have
+$\mu\leq 3\log{(2/\sigma)/\delta^2}$.
+Then
+\[
+    Pr[|\predx-sx_{\V{i}}/\norm{\V{W}}{1}|\geq\delta sx_{\V{i}}/\norm{\V{W}}{1}] \leq \sigma
+\]
+multipling by $\norm{\V{W}}{1}/s$ inside the ${\rm Pr}[\cdot]$ gives
+\[
+    Pr(|\predx\norm{\V{W}}{1}/s - x_{\V{i}}| > \delta x_{\V{i}}) \leq \sigma
+\]
 \end{proof}
-We call $d=\sqrt[n]{4e}$ the distinguishability.
-And to get high distinguishability,
-we can use the $n$-order score of core sampling.
-And to reach the same error boundneed,
-the $n$-order estimation demands more sample number.
+The ~\Theo{ObservationBound} and ~\Theo{Bound} show that shows that
+to reach a good performance of finding of estimate the vaule $x_{\V{i}}$
+the demand samles $s\geq \norm{\V{w}}{1}/x_{\V{i}}^n$.
 
 \section{Core Sampling for Queries}
 In recommendation system,
@@ -589,8 +552,6 @@ We define $R$ pools $\V{g}_1,\V{g}_2,\ldots,\V{g}_R$ to save occurred coordinate
 The algorithm for query sampling is show in ~\Alg{QuerySampling}.
 In ~\AlgLine{QuerySampling}{Indexes},
 the user-oriented indexes $r$ is depending on the specific choice of sampling algorithm.
-For core sampling, and we notice that for one user,
-the probability of nodes $\overline{v}_r$ is the same.
 
 \begin{algorithm}[t]
     \caption{Finding top k-tuples for a query}\label{alg:QuerySampling}
@@ -620,8 +581,8 @@ the probability of nodes $\overline{v}_r$ is the same.
 
 \section{Fast Implementation}
 In section, we introduce some implementing details get improvements.
-
-The core sampling sample one $r$ in one round like
+\subsection{Core Partiton Sampling}
+Core sampling samples one $r$ in one round like
 ~\AlgLine{CoreSampling}{CorePartition} and ~\AlgLine{QuerySampling}{Indexes}.
 In practice, instead of sample $r$ once a time,
 we sample the frequency $c_r$,
@@ -646,9 +607,60 @@ It requires $O(n)$ for initialization, where $n$ is the distribution size, and
 const time for each generation.
 In our algorithm $c_r$ is the number of generations,
 and the probability distribution ${\Sca{a}{n}{r}}/\Nrocl{n}{r}$.
-
+\subsection{Extension of Matrices}
+Use the extension matrices will be storage-costing.
+Utilizing the frequency sampling, we do not to save the extension matrices in memory.
+Firstly, we compute the probability vector in core partition, whichi takes $O(R^2)$ in storage.
+And for each time we sample $c_l$ times coordiantes,
+we only need to compute the probability vectors $e^{(n)}_{i_nl}/\norm{\V{w}}{1}$ once.
+Teh storage it taks totally $O(L_1 + L_2 + \cdots + L_N)$,
+that makes high order extension possible.
 \section{Experiments Results}
-We will analysis the recall and time consuming of our algorithms on real data sets.
+In this section, we will analysis the recall
+and time consuming of our algorithms on real data sets.
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3.3in]{fig_ml_2k_recall}\\
+  \caption{Recall for different methods in ml-2k data sets.}
+  \label{fig:ml_2k_recall}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3.3in]{fig_ml_10m_recall}\\
+  \caption{Recall for different methods in ml-10m data sets.}
+  \label{fig:ml_10m_recall}
+\end{figure}
+
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3.3in]{fig_lastfm_recall}\\
+  \caption{Recall for different methods in lastfm data sets.}
+  \label{fig:lastfm_recall}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[scale = 0.4]{fig_delicious_recall}\\
+  \caption{Recall for different methods in delicious data sets.
+            }
+  \label{fig:delicious_recall}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[scale = 0.4,clip=true,viewport = 0 0 10 10]{fig_times}\\
+  \caption{Time for different data sets using the different sampling approaches.
+           The costs of time is not depended on the top $t$,
+           when full-computing strategy is used.}
+  \label{fig:Time}
+\end{figure}
+
+
 \subsection{Data and Preprocessing}
 We evaluate our algorithms on some real datesets:
 DeliciousBookmarks
@@ -657,22 +669,21 @@ Last.FM\footnote{http://www.lastfm.com}(lastfm),
 MovieLens+IMDb\footnote{http://www.imdb.com }/
 Rotten Tomatoes\footnote{http://www.rottentomatoes.com}(ml-2k).
 Those data sets are released in the framework of the 2nd International Workshop (HetRec2011).
-And two more larger data sets of MovieLens\cite{Harper2015}:ml-10m and ml-20m.
+And one larger data sets of MovieLens\cite{Harper2015}:ml-10m.
 
 We use 5-core of each data set in which all user, item and tag occurred at least 5 times.
 The statistics of preprocessed data is shown in ~\Table{Data}.
 \begin{table}[ht]
   \label{table:Data}
   \centering
-  \begin{tabular}{|c|c|c|c|c|}
+  \begin{tabular}{|c|c|c|c|c|c|}
     \hline
-    DataSet & User & Item & Tag \\
+    DataSet     & User & Item    & Tag    & top-1   & top-1000\\
     \hline
-    ml-2k       & 456  &  1973   &  1222  \\
-    ml-10m      & 993  &  3298   &  2555  \\
-    lastfm      & 1348 &  6927   &  2132  \\
-    ml-20m      & 3432 &  8971   &  7979  \\
-    delicious   & 1681 &  29540  &  7251  \\
+    ml-2k       & 456  &  1973   &  1222  & 6.6813  & 2.5663 \\
+    ml-10m      & 993  &  3298   &  2555  & 67.1037 & 26.747 \\
+    lastfm      & 1348 &  6927   &  2132  & 78.1688 & 30.8263\\
+    delicious   & 1681 &  29540  &  7251  & 3.9153  & 2.7896 \\
     \hline
   \end{tabular}
   \caption{Data Statistics}
@@ -682,74 +693,47 @@ The factor size $R$ is $64$.
 After training, we get three factor matrices for user, item and tag of each data set.
 
 \subsection{Recall and Time Consuming}
-We evaluate those different methods' performance on time and accuracy. We both use first order score for central sampling and the extension version.
+We evaluate those different methods' performance on time and recall of top-$t$ values.
+We both use first order score for central sampling and the extension version.
 We use the maximum budget which is the full-strategy to show the performance of our algorithms.
 For each number of samples, we do $10$ times experiments independently, and the average recall is used.
-The recall of each data set is show in ~\Fig{lastfm_recall}. 
-And the recall of using budget $t'=10t$ is drawn in ~\Fig{RecallBudget}. And the time consuming for each algorithms in shown in ~\Fig{Time}.
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[scale=0.4]{fig_lastfm_recall}\\
-  \caption{Recall for different methods in lastfm data sets. "c" is short for the core sampling method, and "e" for the using extension matrices.}
-  \label{fig:lastfm_recall}
-\end{figure}
+The recall of each data set is show in ~\Figs{ml_2k_recall}{delicious_recall} .
+And the time consuming for each algorithms in shown in ~\Fig{Time}.
 
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[scale=0.4]{fig_ml_10m_recall}\\
-  \caption{Recall for different methods in ml-10m data sets. "c" is short for the core sampling method, and "e" for the using extension matrices}
-  \label{fig:ml_10m_recall}
-\end{figure}
 
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[scale=0.4]{fig_ml_2k_recall}\\
-  \caption{Recall for different methods in ml-2k data sets. "c" is short for the core sampling method, and "e" for the using extension matrices.}
-  \label{fig:ml_2k_recall}
-\end{figure}
-
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width= 8cm,height=4.5cm,draft]{draft}\\
-  \caption{Recall for different methods in ml-10m data sets. "c" is short for the core sampling method, and "e" for the using extension matrices, we use the budget $t' =10t$}
-  \label{fig:RecallBudget}
-\end{figure}
-
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width= 8cm,height=4.5cm,draft]{draft}\\
-  \caption{Time for different sampling approaches in different data sets. All methods use the maximum budget that equals to the number of samples}
-  \label{fig:Time}
-\end{figure}
-\subsection{Isotonicity of Score}
-The isotonicity of scores means the ability of score to keep the original order in actual value. And as we mentioned previously, we may sample some extra indexes and adjust the score to get a high distinguishability. Since the central sampling has the same probability of coordinate in different scores, they are comparable. ~\Fig{Isotonicity} shows the isotonicity of different we used under the same samples.
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width= 8cm,height=4.5cm,draft]{draft}\\
-  \caption{Accuracy for different scores. All use the same samples $10^6$ and the budget varies form $10^3$ to $10^6$.}
-  \label{fig:Isotonicity}
-\end{figure}
 
 \subsection{Sampling for Queries}
-We use the list of sub-path to save the computation of sampling for queries, and we will show the recall when we use the sub-indexes pool and not.
+We use the pools to save the computation when it sampling for queries.
+We use the extension matrices to do retrial task with $s=10^5$ and $k=100$.
+the recall and time of each queries is shown in ~\Fig{Queries}.
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width= 8cm,height=4.5cm,draft]{draft}\\
-  \caption{Accuracy for each queries. We use $t=100$ and $s=10^4$.}
+  \includegraphics[scale = 0.4]{fig_queries}\\
+  \caption{Recall and time for queries in date set lastfm.
+           For better visualization,
+           we use every 10 queries in processing.
+           The $k=100$ and samples $s=10^5$.}
   \label{fig:Queries}
 \end{figure}
-
+\subsection{Estimation of Values}
+In ~\Theo{Bound}, we gives the error bound of estimate the actual value.
+We use the $core^3$ to dealing with the data set lastfm.
+And the score $\widehat{x}_{\V{i}}$ is an estimation of $sx^3_{\V{i}}/\norm{\V{w}}{1}$.
+We draw the result of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+We only show the $10^4$ pairs with largest scores in ~\Fig{Est}.
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[scale = 0.4]{fig_lastfm_est}\\
+  \caption{The pairs of estimation value $\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s$ and actual $x^3_{\V{i}}$.
+           We draw the top $1e4$ pairs with largest scores and use $s=10^8$.}
+  \label{fig:Est}
+\end{figure}
 \section{Conclusion}
-
-In this work, we extend the diamond sampling to handle $N$ factor matrices, which is the multi-items recommendation in practical. Then we proposed a new method called central sampling, and point out that, we can adjust this method to get the $n$-the order estimation and reach high distinguishability. However, for the exponential increase of demand sample number, we suggest the first and second order score. We also proposed the extension version of central sampling, it increase the probability of coordinate with the expending on pre-computing and storage. At the end, we modify the score to handle the other ranking functions.
-
+In this paper propose a method for finding top-$t$ values for given CP-models.
+After which we point out that we can adjust this method to get the $n$-the order estimation
+and reach the high probability of finding one coordiante.
 \bibliography{IIP}
 \bibliographystyle{aaai}
 \end{document}
