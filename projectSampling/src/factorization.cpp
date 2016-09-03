@@ -109,11 +109,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     uint itemSize = ItemMap.size();
     uint tagSize = TagMap.size();
     uint factorSize = 64;
-    double mean = 0.25;
+    double mean = 0.0;
     double stdev = 0.1;
     double lambda = 1e-6;
     double alpha = 0.1;
-    uint maxiter = 500;
+    uint maxiter = 1000;
 	mexPrintf("SGD for factorization ......\n");mexEvalString("drawnow");
 	// postive tag index for each post
 	uint *t_pos_Ind = (uint*)malloc(Posts.size()*tagSize*sizeof(uint));
@@ -184,7 +184,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					double y = diff_y_pred(MatUser, MatItem, MatTag, u, i, tag_pos, tag_neg);
 					double wtptn_ui = sigmoid(y)*(1 - sigmoid(y));
 					wtptn[tag_pos * tagSize + tag_neg] = wtptn_ui;
-					post_auc += wtptn_ui*sigmoid(y);
+					post_auc += sigmoid(y);
 					for(uint f = 0; f < factorSize; ++f){
 						inter_v[f] += wtptn_ui*(MatTag(f,tag_pos) - MatTag(f,tag_neg));
 					}
@@ -215,7 +215,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					gradt += wtptn[tag_pos * tagSize + tag_neg];
 				}
 				for(uint f = 0; f < factorSize; ++f){
-					MatTag(f,tag_pos)  += alpha*(-inter_q[f]*gradt/z - lambda*MatTag(f,tag_pos));
+					MatTag(f,tag_pos)  += alpha*(inter_q[f]*gradt/z - lambda*MatTag(f,tag_pos));
 				}
 			}
 			//----------------------------
@@ -229,7 +229,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					gradt += wtptn[tag_pos * tagSize + tag_neg];
 				}
 				for(uint f = 0; f < factorSize; ++f){
-					MatTag(f,tag_neg)  += alpha*(inter_q[f]*gradt/z - lambda*MatTag(f,tag_neg));
+					MatTag(f,tag_neg)  += alpha*(-inter_q[f]*gradt/z - lambda*MatTag(f,tag_neg));
 				}
 			}
         }
