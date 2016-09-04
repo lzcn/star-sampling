@@ -14,6 +14,7 @@
 #include <ctime>
 
 #include "mex.h"
+#include "utilmex.h"
 #include "matrix.h"
 
 double ColMul(const uint *curIdx, double **p, uint rank, uint numMat){
@@ -39,6 +40,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // initialization
     //---------------------
     double duration;
+    double total = 1.0;
+    double progress = 0.0;
+    double progress_flag = 0.0;
     const uint rank = (uint)mxGetM(prhs[0]);
     const uint numMat = nrhs - 1;
     const uint top_t = (uint)mxGetPr(prhs[nrhs-1])[0];
@@ -48,11 +52,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     for(uint i = 0; i < numMat; ++i){
         Mats[i] = mxGetPr(prhs[i]);
         max[i] = mxGetN(prhs[i]);
+        total *= max[i];
     }
     //------------------------
     // Do exhaustive computing
     //------------------------
     std::list<double> listTop;
+    progressbar(progress);
     // subIndex for loop
     start = clock();
     SubIndex index(numMat, max);
@@ -60,6 +66,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     for(uint count = 0; count < top_t && !index.isDone(); ++index,++count){
         double tempValue = ColMul(index.getIdx(),Mats,rank,numMat);
         listTop.push_back(tempValue);
+        progress += 1;
     }
     // sort the list in descending order
     listTop.sort();
@@ -71,6 +78,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             doInsert(tempValue, listTop);
         }
         ++index;
+        progress += 1;
+        if(progress_flag > 1e8){
+            clearprogressbar();
+            progressbar(progress/total);
+            progress_flag = 0;
+        }
     }
     finish = clock();
     duration = (double)(finish - start)/CLOCKS_PER_SEC;
@@ -85,6 +98,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     for(uint i = 0; i < listTop.size(); ++i){
         topValue[i] = *itr++;
     }
+    clearprogressbar();
+    progressbar(1.0);
     //-------------------
     // free
     //--------------------
