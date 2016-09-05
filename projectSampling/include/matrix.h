@@ -41,8 +41,8 @@ double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B);
 double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
 double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B);
 double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
-double MatrixColMul(const Matrix &A, const Matrix &B, uint i, uint j);
-double MatrixColMul(const Matrix &A, const Matrix &B, const Matrix &C, uint i, uint j, uint k);
+double MatrixColMul(Matrix &A, Matrix &B, uint i, uint j);
+double MatrixColMul(Matrix &A, Matrix &B, Matrix &C, uint i, uint j, uint k);
 double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat);
 double vectors_mul(const point2D &coord, Matrix &A, Matrix &B);
 double vectors_mul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
@@ -94,6 +94,7 @@ public:
 	double* element;
 	double* SumofCol;
 	double* SumofRow;
+	Matrix(uint r, uint c);
 	Matrix(uint r, uint c, double*pr);
 	Matrix(uint r, uint c, double*pr, uint TYPE);
 	~Matrix();
@@ -106,6 +107,7 @@ public:
 	uint randCol(uint m);
 private:
 	uint _SUMTYPE;
+	bool _SELFVALUE;
 };
 
 class SubIndex{

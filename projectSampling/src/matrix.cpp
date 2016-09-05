@@ -102,10 +102,18 @@ bool pointND::operator < (const pointND &toCmp)const{
 /*
 	class for matrix
 */
+Matrix::Matrix(uint r, uint c){
+	row = r;
+	col = c;
+	element = (double*)malloc(row*col*sizeof(double));
+	_SELFVALUE = true;
+	_SUMTYPE = MATRIX_NONE_SUM;
+}
 Matrix::Matrix(uint r, uint c, double*pr){
 	row = r;
 	col = c;
 	element = pr;
+	_SELFVALUE = false;
 	_SUMTYPE = MATRIX_FULL_SUM;
 	SumofCol = (double*)malloc(col*sizeof(double));
 	memset(SumofCol, 0, col*sizeof(double));
@@ -123,6 +131,7 @@ Matrix::Matrix(uint r, uint c, double*pr, uint TYPE){
 	row = r;
 	col = c;
 	element = pr;
+	_SELFVALUE = false;
 	_SUMTYPE = TYPE;
 	switch (TYPE) {
 		case MATRIX_FULL_SUM:
@@ -176,6 +185,9 @@ Matrix::~Matrix(){
 			break;
 		default:break;
 	}
+	if(_SELFVALUE){
+		free(element);
+	}
 }
 
 double Matrix::GetElement(uint i, uint j){
@@ -213,88 +225,76 @@ uint Matrix::randCol(uint m){
 
 
 double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B){
-	uint rank = A.col;
-	double temp = 0.0;
-	for(uint r = 0; r < rank; ++r){
-		temp += A.element[coord.x + r * A.row] * \
-				B.element[coord.y + r * B.row];
+	double ans = 0.0;
+	uint r1 = coord.x;
+	uint r2 = coord.y;
+	for(uint c = 0; c < A.col; ++c){
+		ans += A(r1,c) * B(r2,c);
 	}
-	return temp;
+	return ans;
 }
 double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
-	uint rank = A.col;
-	double temp = 0.0;
-	for(uint r = 0; r < rank; ++r){
-		temp += A.element[coord.x + r * A.row] * \
-				B.element[coord.y + r * B.row] * \
-				C.element[coord.z + r * C.row];
+	double ans = 0.0;
+	uint r1 = coord.x;
+	uint r2 = coord.y;
+	uint r3 = coord.z;
+	for(uint c = 0; c < A.col; ++c){
+		ans += A(r1,c) * B(r2,c) * C(r3,c);
 	}
-	return temp;
+	return ans;
 }
 double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B){
-	uint row = A.row;
-	double temp = 0.0;
-	for(uint r = 0; r < row; ++r){
-		temp += A.element[coord.x * row + r] * \
-				B.element[coord.y * row + r];
+	double ans = 0.0;
+	uint c1 = coord.x;
+	uint c2 = coord.y;
+	for(uint r = 0; r < A.row; ++r){
+		ans += A(r,c1) * B(r,c2);
 	}
-	return temp;
+	return ans;
 }
 
 double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
-	uint row = A.row;
-	double temp = 0.0;
-	for(uint r = 0; r < row; ++r){
-		temp += A.element[coord.x * row + r] * \
-				B.element[coord.y * row + r] * \
-				C.element[coord.z * row + r];
+	double ans = 0.0;
+	uint c1 = coord.x;
+	uint c2 = coord.y;
+	uint c3 = coord.z;
+	for(uint r = 0; r < A.row; ++r){
+		ans += A(r,c1) * B(r,c2) * C(r,c3);
 	}
-	return temp;
+	return ans;
 }
 
-double MatrixColMul(const Matrix &A, const Matrix &B, \
-					uint i, uint j){
-	uint rank = A.row;
-	double temp = 0.0;
-	for(uint r = 0; r < rank; ++r){
-		temp += A.element[i * rank + r] * \
-				B.element[j * rank + r];
+double MatrixColMul(Matrix &A, Matrix &B, uint c1, uint c2){
+	double ans = 0.0;
+	for(uint r = 0; r < A.row; ++r){
+		ans += A(r,c1) * B(r,c2);
 	}
-	return temp;
+	return ans;
 }
 
-double MatrixColMul(const Matrix &A, \
-					const Matrix &B, \
-					const Matrix &C, \
-					uint i, uint j, uint k){
-	uint rank = A.row;
-	double temp = 0.0;
-	for(uint r = 0; r < rank; ++r){
-		temp += A.element[i * rank + r] * \
-				B.element[j * rank + r] * \
-				C.element[k * rank + r];
+double MatrixColMul(Matrix &A, Matrix &B, Matrix &C, uint c1, uint c2, uint c3){
+	double ans = 0.0;
+	for(uint r = 0; r < A.row; ++r){
+		ans += A(r,c1) * B(r,c2) * C(r,c3);
 	}
-	return temp;
+	return ans;
 }
-double vectors_mul(const point2D &coord, \
-				   Matrix &A, \
-				   Matrix &B){
+double vectors_mul(const point2D &coord, Matrix &A, Matrix &B){
 	double ans = 0;
+	uint i = coord.x;
+	uint j = coord.y;
     for (uint r = 0; r < A.row; ++r){
-        ans += A.GetElement(r,coord.x) * \
-        	   B.GetElement(coord.y,r);
+        ans += A(r,i) * B(j,r);
     }
     return ans;
 }
-double vectors_mul(const point3D &coord, \
-				   Matrix &A, \
-				   Matrix &B, \
-				   Matrix &C){
+double vectors_mul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C){
 	double ans = 0;
+	uint i = coord.x;
+	uint j = coord.y;
+	uint k = coord.z;
     for (uint r = 0; r < A.row; ++r){
-        ans += A.GetElement(r,coord.x) * \
-        	   B.GetElement(coord.y,r) * \
-        	   C.GetElement(coord.z,r);
+        ans += A(r,i) * B(j,r) * C(k,r);
     }
     return ans;
 }
@@ -494,7 +494,7 @@ bool SubIndex::reset(){
 }
 
 SubIndex& SubIndex::operator++(){
-	curIdx[0]++;
+	++curIdx[0];
 	for(uint i = 0; i < idxSize; ++i){
 		if(curIdx[i] < maxIdx[i]){
 			return *this;
