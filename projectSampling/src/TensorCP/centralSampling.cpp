@@ -121,26 +121,42 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(IdxJ, 0, SumCr*sizeof(uint));
 	uint *IdxK = (uint*)malloc(SumCr*sizeof(uint));
 	memset(IdxK, 0, SumCr*sizeof(uint));
+	double *pdfa = (double*)malloc(MatA.row*sizeof(double));
+	double *pdfb = (double*)malloc(MatB.row*sizeof(double));
+	double *pdfc = (double*)malloc(MatC.row*sizeof(double));
+	uint Arow = MatA.row;
+	uint Brow = MatB.row;
+	uint Crow = MatC.row;
 	// sample indexes
 	size_t offset = 0;
 	for (uint r = 0; r < rankSize; ++r){
 		// sample i
-		vose_alias( freq_r[r], (IdxI + offset), \
-					MatA.row, \
-					(MatA.element + r*MatA.row), \
-					MatA.SumofCol[r]);
+		double sum = 0;
+		for(uint i = 0; i < Arow; i++){
+			sum += abs(MatA(i,r));
+			pdfa[i] = sum;
+		}
+		binary_search(freq_r[r], (IdxI + offset), Arow, pdfa);
+		// vose_alias( freq_r[r], (IdxI + offset), MatA.row, (MatA.element + r*MatA.row), MatA.SumofCol[r]);
 		// sample j
-		vose_alias( freq_r[r], (IdxJ + offset), \
-					MatB.row, \
-					(MatB.element + r*MatB.row), \
-					MatB.SumofCol[r]);	
+		sum = 0;
+		for(uint i = 0; i < Brow; i++){
+			sum += abs(MatB(i,r));
+			pdfb[i] = sum;
+		}
+		binary_search(freq_r[r], (IdxJ + offset), Brow, pdfb);
+		// vose_alias( freq_r[r], (IdxJ + offset), MatB.row, (MatB.element + r*MatB.row), MatB.SumofCol[r]);	
 		// sample k
-		vose_alias( freq_r[r], (IdxK + offset), \
-					MatC.row, \
-					(MatC.element + r*MatC.row), \
-					MatC.SumofCol[r]);						
+		sum = 0;
+		for(uint i = 0; i < Crow; i++){
+			sum += abs(MatC(i,r));
+			pdfc[i] = sum;
+		}
+		binary_search(freq_r[r], (IdxK + offset), Crow, pdfc);
+		// vose_alias( freq_r[r], (IdxK + offset), MatC.row, (MatC.element + r*MatC.row), MatC.SumofCol[r]);						
 		offset += freq_r[r];
 	}
+
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
@@ -205,6 +221,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//---------------
 	// free
 	//---------------
+	free(pdfa);
+	free(pdfb);
+	free(pdfc);
 	free(IdxI);
 	free(IdxJ);
 	free(IdxK);
