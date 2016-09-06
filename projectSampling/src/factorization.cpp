@@ -251,6 +251,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}
 		mexPrintf("Iter:%d,ObjectFuntcionValue:%f, TimeDuration:%f\n",l,Objfun,timeDuration(start));mexEvalString("drawnow");
     }
+	MatUser.save("User.txt");
+	MatItem.save("Item.txt");
+	MatTag.save("Tag.txt");
 	///////////////////
 	// Conveter
 	//////////////////
