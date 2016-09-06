@@ -30,49 +30,113 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Remove some tuple untill to be 5-core data
     //--------------------------------------------
 	clock_t start;
+	// number of catrgries
 	uint NumCate = (uint)mxGetM(prhs[0]);
+	// number of postive outfits
 	uint NumofPosEntry = (uint)mxGetN(prhs[0]);
+	// number of negative outfits
 	uint NumofNegEntry = (uint)mxGetN(prhs[1]);
-	size_t *PtrPos = (size_t*)malloc(NumCate*NumofPosEntry*sizeof(size_t));
-	size_t *PtrNeg = (size_t*)malloc(NumCate*NumofNegEntry*sizeof(size_t));
-	double *pos = mxGetPr(prhs[0]);
-	double *neg = mxGetPr(prhs[1]);
-	for(uint r = 0; r < NumCate; ++r){
-		for(uint c1 = 0; c1 < NumofPosEntry; ++c1){
-			PtrPos[c1*NumCate + r] = (size_t)pos[c1*NumCate + r];
-		}
-		for(uint c2 = 0; c2 < NumofNegEntry; ++c2){
-			PtrNeg[c2*NumCate + r] = (size_t)neg[c2*NumCate + r];
-		}
+	uint *PtrPos = (uint*)malloc(NumCate*NumofPosEntry*sizeof(uint));
+	uint *PtrNeg = (uint*)malloc(NumCate*NumofNegEntry*sizeof(uint));
+	double *train_pos = mxGetPr(prhs[0]);
+	double *trian_neg = mxGetPr(prhs[1]);
+	for(uint i = 0; i < NumCate*NumofPosEntry; ++i){
+			PtrPos[i] = (uint)train_pos[i];
 	}
-	DMatrix MatPos(NumCate, NumofPosEntry,pos);
-	DMatrix MatNeg(NumCate, NumofNegEntry,neg);
+	for(uint i = 0; i < NumCate*NumofNegEntry; ++i){
+			PtrNeg[i] = (uint)trian_neg[i];
+	}
     // record the data to a map, and count user,item,tag
 	std::set<pointND> PosTuples;
 	std::set<pointND> NegTuples;
+	// postive outfit
+	for(uint i = 0; i < NumofPosEntry; ++i){
+        PosTuples.insert(pointND((PtrPos + NumCate*i), NumCate));
+	}
+	// postive outfit
+	for(uint i = 0; i < NumofNegEntry; ++i){
+		NegTuples.insert(pointND((PtrNeg + NumCate*i), NumCate));
+	}
+	///////////////////////
+	// Delete the Elements 
+	// in NegTuples while 
+	// all has occured in 
+	// PosTuples
+	//////////////////////
+	for (;PosTuples.size() != 0;){
+		std::set<uint> User;
+		std::set<uint> Top;
+		std::set<uint> Bottom;
+		std::set<uint> Shoe;
+		bool flag = false;
+		// all possible items
+		for(auto itr = PosTuples.begin(); itr != PosTuples.end(); ++itr){
+			Top.insert(itr->coord[1]);
+			Bottom.insert(itr->coord[2]);
+			Shoe.insert(itr->coord[3]);
+		}
+		// if one item of outfit in NegTuples has not ouccured in items, delete
+		for(;NegTuples.size()!=0;){
+			mexPrintf("Current NegTuples size %d\n",NegTuples.size());
+			mexEvalString("drawnow");
+			std::set<pointND> temp;
+			temp = NegTuples;
+			bool changed = false;
+			for(auto itr = temp.begin(); itr != temp.end(); ++itr){
+				// if the NegTuples's element is not in PosTuples skip this tuple
+				if(Top.end() == Top.find(itr->coord[1])||Bottom.end() == Bottom.find(itr->coord[2])||Shoe.end() == Shoe.find(itr->coord[3])){
+					NegTuples.erase(*itr);
+					changed = true;
+					flag = true;
+				}
+			}
+			if(changed) continue;
+			else break;
+		}
+		mexPrintf("NegTuples size %d\n",NegTuples.size());mexEvalString("drawnow");
+		// the user with negative outfits
+		for(auto itr = NegTuples.begin(); itr != NegTuples.end(); ++itr){
+			User.insert(itr->coord[0]);
+		}
+		// if one user has not negative outfits delete
+		for(;PosTuples.size() != 0;){
+			mexPrintf("Current PosTuples size %d\n",PosTuples.size());
+			mexEvalString("drawnow");
+			std::set<pointND> temp;
+			temp = PosTuples;
+			bool changed = false;
+			for(auto itr = temp.begin(); itr != temp.end(); ++itr){
+				if(User.end() == User.find(itr->coord[0])){
+					PosTuples.erase(*itr);
+					changed = true;
+					flag = true;
+				}
+			}
+			if(changed) continue;
+			else break;
+		}
+		mexPrintf("PosTuples size %d\n",PosTuples.size());mexEvalString("drawnow");
+		if(flag) continue;
+		else break;
+	}
+	mexPrintf("Final NegTuples size %d\n",NegTuples.size());
+	mexEvalString("drawnow");
+	mexPrintf("Final PosTuples size %d\n",PosTuples.size());
+	mexEvalString("drawnow");
+	
+	//////////////////////
+	// comprese range
+	//////////////////////
 	std::map<uint,uint> UserMap;
 	std::map<uint,uint> TopMap;
 	std::map<uint,uint> BottomMap;
 	std::map<uint,uint> ShoeMap;
-	for(uint i = 0; i < NumofPosEntry; ++i){
-        PosTuples.insert(pointND((PtrPos + NumCate*i), NumCate));
-        UserMap[(uint)MatPos(0,i)] = 1;
-        TopMap[(uint)MatPos(1,i)] = 1;
-        BottomMap[(uint)MatPos(2,i)] = 1;
-		ShoeMap[(uint)MatPos(3,i)] = 1;
+	for(auto itr = PosTuples.begin(); itr != PosTuples.end(); ++itr){
+		UserMap[itr->coord[0]] = 1;
+		TopMap[itr->coord[1]] = 1;
+		BottomMap[itr->coord[2]] = 1;
+		ShoeMap[itr->coord[3]] = 1;
 	}
-	for(uint i = 0; i < NumofNegEntry; ++i){
-		NegTuples.insert(pointND((PtrNeg + NumCate*i), NumCate));
-		//UserMap[(uint)MatNeg(0,i)] = 1;
-		//TopMap[(uint)MatNeg(1,i)] = 1;
-		//BottomMap[(uint)MatNeg(2,i)] = 1;
-		//ShoeMap[(uint)MatNeg(3,i)] = 1;
-	}
-	// do delete
-	
-    // comprese the range of user, item, tag from 0 to the size;
-	// compression map
-	// record the compression map
 	uint offset = 0;
 	for(auto itr = UserMap.begin(); itr != UserMap.end(); ++itr){
 		itr->second = offset++;
@@ -92,41 +156,32 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // map to save user-outfit
     std::map<uint, std::vector<point3D> > UNeg;
     std::map<uint, std::vector<point3D> > UPos;
-	uint countpos = 0;
-	uint countneg = 0;
+	for(auto itr = PosTuples.begin(); itr != PosTuples.end(); ++itr){
+		uint u = UserMap[itr->coord[0]];
+		uint t  = TopMap[itr->coord[1]];
+		uint b  = BottomMap[itr->coord[2]];
+		uint s = ShoeMap[itr->coord[3]];
+		UPos[u].push_back(point3D(t,b,s));
+	}
 	for(auto itr = NegTuples.begin(); itr != NegTuples.end(); ++itr){
-		if(TopMap.end() == TopMap.find(itr->coord[1])||BottomMap.end() == BottomMap.find(itr->coord[2])||ShoeMap.end() == ShoeMap.find(itr->coord[3])){
+		if(UserMap.end() == UserMap.find(itr->coord[0])){
 			continue;
 		}
-		++countneg;
 		uint u = UserMap[itr->coord[0]];
 		uint t  = TopMap[itr->coord[1]];
 		uint b  = BottomMap[itr->coord[2]];
 		uint s = ShoeMap[itr->coord[3]];
 		UNeg[u].push_back(point3D(t,b,s));
 	}
-	for(auto itr = PosTuples.begin(); itr != PosTuples.end(); ++itr){
-		++countpos;
-		uint u = UserMap[itr->coord[0]];
-		uint t  = TopMap[itr->coord[1]];
-		uint b  = BottomMap[itr->coord[2]];
-		uint s = ShoeMap[itr->coord[3]];
-        UPos[u].push_back(point3D(t,b,s));
-		if(UNeg.end() == UNeg.find(u)){
-			mexPrintf("User:%d has no negative outfits",u);
-			return;
-		}
-	}
-	mexPrintf("Current length of tuple:pos-%d,neg-%d\n",countpos,countneg);mexEvalString("drawnow");
-	
     //////////////////////////////
     // SGD for factorization
     //////////////////////////////
-    // initialized the factor matrices
     uint userSize = UserMap.size();
     uint topSize = TopMap.size();
     uint bottomSize = BottomMap.size();
     uint shoeSize = ShoeMap.size();
+	mexPrintf("User Size:%d, Top Size:%d, Bootom Size:%d,Shoe Size:%d\n",userSize,topSize,bottomSize,shoeSize);
+	mexEvalString("drawnow");
     uint factorSize = 64;
     double mean = 0.0;
     double stdev = 0.1;
@@ -134,71 +189,166 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     double alpha = 0.01;
     uint maxiter = (uint)mxGetPr(prhs[2])[0];
 	mexPrintf("SGD for factorization ......\n");mexEvalString("drawnow");
+	////////////////////////
 	// initialize U,I,T
+	////////////////////////
     DMatrix MatUser(factorSize, userSize);
-    MatUser.init(INIT_RAND_N,mean,stdev);
     DMatrix MatTop(factorSize, topSize);
-    MatTop.init(INIT_RAND_N, mean, stdev);
 	DMatrix MatBottom(factorSize, bottomSize);
-	MatBottom.init(INIT_RAND_N, mean, stdev);
-    DMatrix MatShoe(factorSize, shoeSize);
-    MatShoe.init(INIT_RAND_N, mean, stdev);
-	uint flag = 0;
-    for(uint l = 0; l < maxiter;++l){
+	DMatrix MatShoe(factorSize, shoeSize);
+	char *type; 
+	type = mxArrayToString(prhs[3]); 
+	if(!strcmp(type,"Load")){
+		MatUser.load("User.txt");
+		MatTop.load("Top.txt");
+		MatBottom.load("Bottom.txt");
+		MatShoe.load("Shoe.txt");
+	}else{
+		MatUser.init(INIT_RAND_N,mean,stdev);
+	    MatTop.init(INIT_RAND_N, mean, stdev);
+		MatBottom.init(INIT_RAND_N, mean, stdev);
+		MatShoe.init(INIT_RAND_N, mean, stdev);
+	}
+	///////////////////////////////
+	// Start Iteration
+	///////////////////////////////
+	double* gradu = (double*)malloc(factorSize*sizeof(double));
+	double* gradb = (double*)malloc(factorSize*sizeof(double));
+	double* grads = (double*)malloc(factorSize*sizeof(double));
+	double* gradt = (double*)malloc(factorSize*sizeof(double));
+	for(uint l = 0,saveflag = 0; l < maxiter;++l,++saveflag){
 		start = clock();
-		double BRPOPT = 0.0;
-		//BRPOPT -= Frobenius(MatUser);
-		//BRPOPT -= Frobenius(MatTop);
-		//BRPOPT -= Frobenius(MatBottom);
-		//BRPOPT -= Frobenius(MatShoe);
-		//BRPOPT *= lambda;
+		double ObjFun = 0.0;
+		ObjFun -= Frobenius(MatUser);
+		ObjFun -= Frobenius(MatTop);
+		ObjFun -= Frobenius(MatBottom);
+		ObjFun -= Frobenius(MatShoe);
+		ObjFun *= lambda;
 		for(auto upos = UPos.begin(); upos != UPos.end(); ++upos){
+			// for all u
+			double auc = 0.0;
 			uint u = upos->first;
 			std::vector<point3D> OutfitPosVec = upos->second;
 			std::vector<point3D> OutfitNegVec = UNeg.find(u)->second;
-			for(auto pos = 0; pos < OutfitPosVec.size(); ++pos){
-				point3D OutfitPos = OutfitPosVec[pos];
-				for(auto neg = 0; neg < OutfitNegVec.size(); ++neg){
-					point3D OutfitNeg = OutfitNegVec[neg];
+			uint poSize = OutfitPosVec.size();
+			uint noSize = OutfitNegVec.size();
+			double z = poSize*noSize;
+			double *wtn = (double*)malloc(poSize*noSize*sizeof(double));
+			memset(wtn, 0, poSize*noSize*sizeof(double));
+			memset(gradu, 0, factorSize*sizeof(double));
+			// compute wtn(o+,o-)  and  gradu
+			for(uint pos = 0; pos < poSize; ++pos){
+				uint tpos = OutfitPosVec[pos].x;
+				uint bpos = OutfitPosVec[pos].y;
+				uint spos = OutfitPosVec[pos].z;
+				point3D OutfitPos(tpos,bpos,spos);
+				for(uint neg = 0; neg < noSize; ++neg){
+					uint tneg = OutfitNegVec[neg].x;
+					uint bneg = OutfitNegVec[neg].y;
+					uint sneg = OutfitNegVec[neg].z;
+					point3D OutfitNeg(tneg,bneg,sneg);
 					double y = diff_y_pred(u,OutfitPos,OutfitNeg,MatUser,MatTop,MatBottom,MatShoe);
-					BRPOPT += y;
-					double sigma = 1 - sigmoid(y);
-					uint tpos = OutfitPos.x;
-					uint bpos = OutfitPos.y;
-					uint spos = OutfitPos.z;
-					uint tneg = OutfitNeg.x;
-					uint bneg = OutfitNeg.y;
-					uint sneg = OutfitNeg.z;
+					double wtn_temp = sigmoid(y)*(1-sigmoid(y));
+					wtn[pos * noSize + neg] = wtn_temp;
+					auc += sigmoid(y);
 					for(uint f = 0; f < factorSize; ++f){
-						double ut = MatUser(f,u)*MatTop(f,tpos);
-						double bs = MatBottom(f,bpos)*MatShoe(f,spos);
-						double utn = MatUser(f,u)*MatTop(f,tneg);
-						double bsn = MatBottom(f,bneg)*MatShoe(f,sneg);
-						MatUser(f,u) += alpha*(sigma*(MatTop(f,tpos)*bs - MatTop(f,tneg)*bsn));
-						MatTop(f,tpos) += alpha*(sigma*bs*MatUser(f,u));
-						MatTop(f,tneg) += alpha*(-sigma*bsn*MatUser(f,u));
-						MatBottom(f,bpos) += alpha*(sigma*ut*MatShoe(f,spos));
-						MatBottom(f,bneg) += alpha*(-sigma*utn*MatShoe(f,sneg));
-						MatShoe(f,spos) += alpha*(sigma*ut*MatBottom(f,bpos));
-						MatShoe(f,sneg) += alpha*(-sigma*utn*MatBottom(f,bneg));
+						gradu[f] += wtn_temp*(MatTop(f,tpos)*MatBottom(f,bpos)*MatShoe(f,spos) - MatTop(f,tneg)*MatBottom(f,bneg)*MatShoe(f,sneg));
 					}
-			
 				}
 			}
+			//---------------------------------
+			// update user matrices
+			//---------------------------------
+			for(uint f = 0; f < factorSize; ++f){
+				MatUser(f,u) += alpha*(gradu[f]/z - lambda*MatUser(f,u));
+			}
+			ObjFun += auc/z;
+			//---------------------------------
+			// update postive top,bottom,shoe
+			//---------------------------------
+			memset(gradb, 0, factorSize*sizeof(double));
+			memset(gradt, 0, factorSize*sizeof(double));
+			memset(grads, 0, factorSize*sizeof(double));
+			for(uint pos = 0; pos < poSize; ++pos){
+				uint tpos = OutfitPosVec[pos].x;
+				uint bpos = OutfitPosVec[pos].y;
+				uint spos = OutfitPosVec[pos].z;
+				for(uint neg = 0; neg < noSize; ++neg){
+					double tempwtn = wtn[pos * noSize + neg];
+					for(uint f = 0; f < factorSize; ++f){
+						gradt[f] += tempwtn * MatBottom(f,bpos) * MatShoe(f,spos);
+						gradb[f] += tempwtn * MatTop(f,tpos) * MatShoe(f,spos);
+						grads[f] += tempwtn * MatTop(f,tpos) * MatBottom(f,bpos);
+					}
+				}
+				for(uint f = 0; f < factorSize; ++f){
+					MatTop(f,pos)  += alpha*(gradt[f]*MatUser(f,u)/z - lambda*MatTop(f,pos));
+					MatBottom(f,pos)  += alpha*(gradb[f]*MatUser(f,u)/z - lambda*MatBottom(f,pos));
+					MatShoe(f,pos)  += alpha*(grads[f]*MatUser(f,u)/z - lambda*MatShoe(f,pos));
+				}
+			}
+			//---------------------------------
+			// update negative top,bottom,shoe
+			//---------------------------------
+			memset(gradb, 0, factorSize*sizeof(double));
+			memset(gradt, 0, factorSize*sizeof(double));
+			memset(grads, 0, factorSize*sizeof(double));
+			for(uint neg = 0; neg < noSize; ++neg){
+				uint tneg = OutfitNegVec[neg].x;
+				uint bneg = OutfitNegVec[neg].y;
+				uint sneg = OutfitNegVec[neg].z;
+				for(uint pos = 0; pos < poSize; ++pos){
+					double tempwtn = wtn[pos * noSize + neg];
+					for(uint f = 0; f < factorSize; ++f){
+						gradt[f] += tempwtn * MatBottom(f,bneg) * MatShoe(f,sneg);
+						gradb[f] += tempwtn * MatTop(f,tneg) * MatShoe(f,sneg);
+						grads[f] += tempwtn * MatTop(f,tneg) * MatBottom(f,bneg);
+					}
+				}
+				for(uint f = 0; f < factorSize; ++f){
+					MatTop(f,neg)  += alpha*(-gradt[f]*MatUser(f,u)/z - lambda*MatTop(f,neg));
+					MatBottom(f,neg)  += alpha*(-gradb[f]*MatUser(f,u)/z - lambda*MatBottom(f,neg));
+					MatShoe(f,neg)  += alpha*(-grads[f]*MatUser(f,u)/z - lambda*MatShoe(f,neg));
+				}
+			}
+			free(wtn);
 		}
-		++flag;
-		if(flag > 100){
-			flag = 0;
+		// end of one iteration
+		if(saveflag > 100){
+			saveflag = 0;
 			MatUser.save("User.txt");
 			MatTop.save("Top.txt");
 			MatBottom.save("Bottom.txt");
 			MatShoe.save("Shoe.txt");
-			//BRPOPT = sigmoid(BRPOPT);
-			mexPrintf("Iter:%d,ObjectFuntcionValue:%f, TimeDuration:%f\n",l,BRPOPT,timeDuration(start));mexEvalString("drawnow");
+			mexPrintf("Iter:%d,ObjectFuntcionValue:%f, TimeDuration:%f\n",l,ObjFun,timeDuration(start));
+			mexEvalString("drawnow");
 		}
-	}
+	}// end of all iterations
 	MatUser.save("User.txt");
 	MatTop.save("Top.txt");
 	MatBottom.save("Bottom.txt");
 	MatShoe.save("Shoe.txt");
+	plhs[0] = mxCreateDoubleMatrix(factorSize, userSize, mxREAL);
+	plhs[1] = mxCreateDoubleMatrix(factorSize, topSize, mxREAL);
+	plhs[2] = mxCreateDoubleMatrix(factorSize, bottomSize, mxREAL);
+	plhs[3] = mxCreateDoubleMatrix(factorSize, shoeSize, mxREAL);
+	for(uint i = 0; i < userSize*factorSize; ++i){
+		mxGetPr(plhs[0])[i] = MatUser.value[i];
+	}
+	for(uint i = 0; i < topSize*factorSize; ++i){
+		mxGetPr(plhs[1])[i] = MatTop.value[i];
+	}
+	for(uint i = 0; i < bottomSize*factorSize; ++i){
+		mxGetPr(plhs[2])[i] = MatBottom.value[i];
+	}
+	for(uint i = 0; i < shoeSize*factorSize; ++i){
+		mxGetPr(plhs[3])[i] = MatShoe.value[i];
+	}
+	free(gradu);
+	free(gradt);
+	free(gradb);
+	free(grads);
+	free(PtrPos);
+	free(PtrNeg);
+	mxFree(type);
 }
