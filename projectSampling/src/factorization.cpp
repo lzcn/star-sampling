@@ -150,13 +150,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     DMatrix MatUser(factorSize, userSize);
     DMatrix MatItem(factorSize, itemSize);
 	DMatrix MatTag(factorSize, tagSize);
-	/////////////////
-	// test part
-	///////////////
-	MatUser.init(INIT_RAND_N, mean, stdev);
-	MatItem.init(INIT_RAND_N, mean, stdev);
-	MatTag.init(INIT_RAND_N, mean, stdev);
-	/////////////////
 	char *type; 
 	type = mxArrayToString(prhs[5]); 
 	if(!strcmp(type,"Load")){
