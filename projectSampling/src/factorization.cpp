@@ -283,5 +283,5 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	free(ntSize);
 	free(sumwtneg);
 	free(sumwtpos);
-	 mxFree(type);
+	mxFree(type);
 }
