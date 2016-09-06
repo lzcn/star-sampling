@@ -114,6 +114,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// sampled r's frequency 
 	size_t *freq_r = (size_t*)malloc(MatA.row*sizeof(size_t));
 	memset(freq_r, 0, MatA.row*sizeof(size_t));
+	double* pdfb = (double*)malloc(MatB.row*sizeof(double));
+	double* pdfc = (double*)malloc(MatC.row*sizeof(double));
 
 	start = clock();
 	// Do sample S pairs (r, i)
@@ -124,15 +126,21 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				 weight, 1.0);
 	// sample j,k;
 	size_t offset = 0;
-	for (uint r = 0; r < MatA.row; ++r){
-		vose_alias( freq_r[r], (IdxJ + offset), \
-					MatB.row, \
-					(MatB.element + r*MatB.row), \
-					MatB.SumofCol[r]);
-		vose_alias( freq_r[r], (IdxK + offset), \
-					MatC.row, \
-					(MatC.element + r*MatC.row), \
-					MatC.SumofCol[r]);
+	for (uint r = 0; r < rankSize; ++r){
+		double sum = 0;
+		for(uint i = 0; i < MatB.row; ++i){
+			sum += abs(MatB(i,r));
+			pdfb[i] = sum;
+		}
+		binary_search( freq_r[r], (IdxJ + offset), MatB.row, pdfb);
+		//vose_alias( freq_r[r], (IdxJ + offset), MatB.row, (MatB.element + r*MatB.row), MatB.SumofCol[r]);
+		sum = 0;
+		for(uint i = 0; i < MatC.row; ++i){
+			sum += abs(MatC(i,r));
+			pdfc[i] = sum;
+		}
+		binary_search( freq_r[r], (IdxK + offset), MatC.row, pdfc);
+		//vose_alias( freq_r[r], (IdxK + offset), MatC.row, (MatC.element + r*MatC.row), MatC.SumofCol[r]);
 		offset += freq_r[r];		
 	}
 	// compute update value and saved in map<pair, value>
