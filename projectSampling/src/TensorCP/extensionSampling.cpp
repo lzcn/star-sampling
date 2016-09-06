@@ -43,6 +43,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
 	double *C = mxGetPr(prhs[2]);
+	uint Arow = mxGetM(prhs[0]);
+	uint Brow = mxGetM(prhs[1]);
+	uint Crow = mxGetM(prhs[2]);
 	start = clock();
 	Matrix MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]), MATRIX_NONE_SUM);
 	Matrix MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]), MATRIX_NONE_SUM);
@@ -96,23 +99,29 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			// extension for matrix A
-			for(uint i = 0; i < mxGetM(prhs[0]); ++i){
-				Aex[(m*rankSize + n) * MatA.row + i] = A[m * MatA.row + i] * A[n * MatA.row + i];
+			double sum = 0;
+			for(uint i = 0; i < Arow; ++i){
+				sum += abs(A[m * Arow + i] * A[n * Arow + i]);
+				Aex[(m*rankSize + n) * Arow + i] = sum;
 			}
 			// extension for matrix B
-			for(uint j = 0; j < mxGetM(prhs[1]); ++j){
-				Bex[(m*rankSize + n) * MatB.row + j] = B[m * MatB.row + j] * B[n * MatB.row + j];
+			sum = 0;
+			for(uint j = 0; j < Brow; ++j){
+				sum += abs(B[m * Brow + j] * B[n * Brow + j]);
+				Bex[(m*rankSize + n) * Brow + j] = sum;
 			}
 			// extension for matrix C
-			for(uint k = 0; k < mxGetM(prhs[2]); ++k){
-				Cex[(m*rankSize + n) * MatC.row + k] = C[m * MatC.row + k] * C[n * MatC.row + k];
+			sum = 0;
+			for(uint k = 0; k < Crow; ++k){
+				sum += abs(C[m * Crow + k] * C[n * Crow + k]);
+				Cex[(m*rankSize + n) * Crow + k] = sum;
 			}
 		}
 	}
 	// extension matrices
-	Matrix MatAex(mxGetM(prhs[0]), rankSizeExt, Aex, MATRIX_COL_SUM);
-	Matrix MatBex(mxGetM(prhs[1]), rankSizeExt, Bex, MATRIX_COL_SUM);
-	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex, MATRIX_COL_SUM);
+	Matrix MatAex(mxGetM(prhs[0]), rankSizeExt, Aex, MATRIX_NONE_SUM);
+	Matrix MatBex(mxGetM(prhs[1]), rankSizeExt, Bex, MATRIX_NONE_SUM);
+	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex, MATRIX_NONE_SUM);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
@@ -124,9 +133,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(weight, 0, rankSizeExt*sizeof(double));
 	start = clock();
 	for (uint r = 0; r < rankSizeExt; ++r){
-		weight[r] = MatAex.SumofCol[r];
-		weight[r] *= MatBex.SumofCol[r];
-		weight[r] *= MatCex.SumofCol[r];
+		weight[r] = MatAex(Arow - 1, r);
+		weight[r] *= MatBex(Brow - 1, r);
+		weight[r] *= MatCex(Crow - 1, r);
 		SumofW += weight[r]; 
 	}
 	finish = clock();
@@ -159,20 +168,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t offset = 0;
 	for (uint r = 0; r < rankSizeExt; ++r){
 		// sample i
-		vose_alias( freq_r[r], (IdxI + offset), \
-					MatAex.row, \
-					(MatAex.element + r*MatAex.row), \
-					MatAex.SumofCol[r]);
+		binary_search( freq_r[r], (IdxI + offset), Arow, (MatAex.element + r*Arow));
+		// vose_alias( freq_r[r], (IdxI + offset), MatAex.row, (MatAex.element + r*MatAex.row), MatAex.SumofCol[r]);
 		// sample j
-		vose_alias( freq_r[r], (IdxJ + offset), \
-					MatBex.row, \
-					(MatBex.element + r*MatBex.row), \
-					MatBex.SumofCol[r]);
+		binary_search( freq_r[r], (IdxJ + offset), Brow, (MatBex.element + r*Brow));
+		// vose_alias( freq_r[r], (IdxJ + offset), MatBex.row, (MatBex.element + r*MatBex.row), MatBex.SumofCol[r]);
 		// sample k
-		vose_alias( freq_r[r], (IdxK + offset), \
-					MatCex.row, \
-					(MatCex.element + r*MatCex.row), \
-					MatCex.SumofCol[r]);
+		binary_search( freq_r[r], (IdxK + offset), Crow, (MatCex.element + r*Crow));
+		// vose_alias( freq_r[r], (IdxK + offset), MatCex.row, (MatCex.element + r*MatCex.row), MatCex.SumofCol[r]);
 		offset += freq_r[r];
 	}
 	// compute update value and saved in map<pair, value>
