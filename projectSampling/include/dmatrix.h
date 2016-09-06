@@ -29,6 +29,7 @@ public:
 	uint randRow(uint n, double sum);
 	uint randCol(uint m, double sum);
     void init(uint TYPE, double mean, double stdev);
+    void DMatrix::load(std::string filename);
     void DMatrix::save(std::string filename);
     double* get_abs_row_sum();
     double* get_abs_col_sum();
@@ -36,12 +37,12 @@ public:
 	uint row, col;
 	double *value;
 private:
-    bool SELFINITVALUE;
+    bool _SELFVALUE;
     
 };
 
 DMatrix::~DMatrix(){
-    if(SELFINITVALUE)
+    if(_SELFVALUE)
         free(value);
 }
 
@@ -49,25 +50,22 @@ DMatrix::DMatrix(){
     row = 0;
     col = 0;
     value = nullptr;
-    SELFINITVALUE = false;
+    _SELFVALUE = false;
 }
 DMatrix::DMatrix(uint r_dim, uint c_dim){
     row = r_dim;
     col = c_dim;
-    value = nullptr;
-    SELFINITVALUE = false;
+    value = (double*)malloc(row*col*sizeof(double));
+    memset(value, 0, row*col*sizeof(double));
+    _SELFVALUE = true;
 }
 DMatrix::DMatrix(uint r_dim, uint c_dim, double *ptr){
     row = r_dim;
     col = c_dim;
     value = ptr;
-    SELFINITVALUE = false;
+    _SELFVALUE = false;
 }
 void DMatrix::init(uint TYPE, double mean, double stdev){
-    if(value == nullptr){
-        value = (double*)malloc(col*row*sizeof(double));
-        SELFINITVALUE = true;
-    }
     switch (TYPE) {
         case INIT_RAND_N:
             for(uint i = 0; i < col*row; ++i){
@@ -88,7 +86,6 @@ void DMatrix::init(uint TYPE, double mean, double stdev){
     }
 }
 double& DMatrix::operator()(uint i, uint j){ 
-    //assert((i >= row) && (j >= col));
     return value[j*row +i];
 }
 double DMatrix::operator()(uint i, uint j) const {
@@ -118,10 +115,24 @@ uint DMatrix::randCol(uint m, double sum){
     }
     return (col-1);
 }
+void DMatrix::load(std::string filename){
+    std::ifstream in_file (filename.c_str());
+    if (! in_file.is_open()) {
+        throw "Unable to open file " + filename;
+    }	
+    for(uint c = 0; c < col; c++){
+        for(uint r = 0; r < row; r++){
+            double v;
+            in_file >> v;
+            value[c*row + r] = v;
+        }
+    }
+    in_file.close();
+} 		
+
 void DMatrix::save(std::string filename) {
     std::ofstream out_file (filename.c_str());
     if (out_file.is_open())	{
-        out_file << row << "\t" << col << std::endl;
         for (uint c = 0; c < col; c++){
             for (uint r = 0; r < row; r++){
                 out_file << value[c*row + r] << "\t";
