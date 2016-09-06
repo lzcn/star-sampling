@@ -43,9 +43,26 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
 	double *C = mxGetPr(prhs[2]);
+	start = clock();
 	Matrix MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]), MATRIX_NONE_SUM);
 	Matrix MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]), MATRIX_NONE_SUM);
 	Matrix MatC(mxGetM(prhs[2]), mxGetN(prhs[2]), mxGetPr(prhs[2]), MATRIX_NONE_SUM);
+	Matrix AT(mxGetN(prhs[0]),mxGetM(prhs[0]));
+	Matrix BT(mxGetN(prhs[1]),mxGetM(prhs[1]));
+	Matrix CT(mxGetN(prhs[2]),mxGetM(prhs[2]));
+	for(uint r = 0 ; r < rankSize; ++r){
+		for (uint i = 0; i < MatA.row; ++i) {
+			AT(r,i) = MatA(i,r);
+		}
+		for (uint j = 0; j < MatB.row; ++j) {
+			BT(r,j) = MatB(j,r);
+		}
+		for (uint k = 0; k < MatC.row; ++k) {
+			CT(r,k) = MatC(k,r);
+		}
+	}
+	finish = clock();
+	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	// the budget
 	const size_t budget = (size_t)mxGetPr(prhs[3])[0];
 	// number of samples
@@ -58,11 +75,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// time duration sampling
 	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
 	double *tsec = mxGetPr(plhs[1]);
+	*tsec = duration;
 	// indexes of values
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Extension Sampling:");
-	mexPrintf("- Top-%d ",top_t);
+	mexPrintf("- Top:%d ",top_t);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
 	mexPrintf("......\n");mexEvalString("drawnow");
@@ -97,7 +115,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	Matrix MatCex(mxGetM(prhs[2]), rankSizeExt, Cex, MATRIX_COL_SUM);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tsec = duration;
+	*tsec += duration;
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
@@ -119,6 +137,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Do Sampling
 	//-------------------------
 	start = clock();
+	size_t SumCr = 0;
 	size_t *freq_r = (size_t *)malloc(rankSizeExt*sizeof(size_t));
 	memset( freq_r, 0, rankSizeExt*sizeof(size_t));
 	for (uint r = 0; r < rankSizeExt; ++r){
@@ -128,13 +147,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			freq_r[r] = (size_t)ceil(c);
 		else
 			freq_r[r] = (size_t)floor(c);
+		SumCr += freq_r[r];
 	}
-	uint *IdxI = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
-	memset(IdxI, 0, (NumSample + rankSizeExt)*sizeof(uint));
-	uint *IdxJ = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
-	memset(IdxJ, 0, (NumSample + rankSizeExt)*sizeof(uint));
-	uint *IdxK = (uint*)malloc((NumSample + rankSizeExt)*sizeof(uint));
-	memset(IdxK, 0, (NumSample + rankSizeExt)*sizeof(uint));
+	uint *IdxI = (uint*)malloc(SumCr*sizeof(uint));
+	memset(IdxI, 0, SumCr*sizeof(uint));
+	uint *IdxJ = (uint*)malloc(SumCr*sizeof(uint));
+	memset(IdxJ, 0, SumCr*sizeof(uint));
+	uint *IdxK = (uint*)malloc(SumCr*sizeof(uint));
+	memset(IdxK, 0, SumCr*sizeof(uint));
 	// sample indexes
 	size_t offset = 0;
 	for (uint r = 0; r < rankSizeExt; ++r){
@@ -192,7 +212,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	start = clock();
 	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		double true_value = MatrixRowMul(tempSortedVec[m].first, MatA, MatB, MatC);
+		double true_value = MatrixColMul(tempSortedVec[m].first, AT, BT, CT);
 		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
 	// sort the vector according to the actual value

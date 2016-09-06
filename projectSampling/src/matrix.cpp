@@ -374,6 +374,27 @@ void doInsert(double p, std::list<double> &listTop, point3D &coord, std::list<po
         }
     }	
 }
+void binary_search(size_t s, uint *dst, uint n, double *pdf){
+	double sum = pdf[n-1];
+	for (size_t i = 0; i < s; ++i){
+		double u = sum*((double)rand()/(double)RAND_MAX);
+		*(dst + i) = binary_search_once(pdf,n-1,u);
+	}
+}
+uint binary_search_once(double *a, uint ub, double s){
+	uint m;
+	uint lb = 0;
+	if(s < a[0])
+	return 0;
+	while (lb < ub-1){
+		m = (lb + ub )/2;
+		if (s < a[m])
+			ub = m;
+		else
+			lb = m;
+	}
+	return (ub);
+}
 void vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf){
 	double *scaled_prob = new double[n];
 	double *table_prob = new double[n];

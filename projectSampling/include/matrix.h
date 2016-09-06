@@ -46,6 +46,8 @@ double MatrixColMul(Matrix &A, Matrix &B, Matrix &C, uint i, uint j, uint k);
 double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat);
 double vectors_mul(const point2D &coord, Matrix &A, Matrix &B);
 double vectors_mul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
+void binary_search(size_t s, uint *dst, uint n, double *pdf);
+uint binary_search_once(double *a, uint ub, double s);
 void sort_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
 void sort_sample(size_t s, uint*dst, uint n, double*p, double sum);
 void vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf);
