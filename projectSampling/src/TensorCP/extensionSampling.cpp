@@ -99,22 +99,23 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			// extension for matrix A
+			size_t r = m*rankSize + n;
 			double sum = 0;
 			for(uint i = 0; i < Arow; ++i){
 				sum += abs(A[m * Arow + i] * A[n * Arow + i]);
-				Aex[(m*rankSize + n) * Arow + i] = sum;
+				Aex[r * Arow + i] = sum;
 			}
 			// extension for matrix B
 			sum = 0;
 			for(uint j = 0; j < Brow; ++j){
 				sum += abs(B[m * Brow + j] * B[n * Brow + j]);
-				Bex[(m*rankSize + n) * Brow + j] = sum;
+				Bex[r * Brow + j] = sum;
 			}
 			// extension for matrix C
 			sum = 0;
 			for(uint k = 0; k < Crow; ++k){
 				sum += abs(C[m * Crow + k] * C[n * Crow + k]);
-				Cex[(m*rankSize + n) * Crow + k] = sum;
+				Cex[r * Crow + k] = sum;
 			}
 		}
 	}
@@ -181,14 +182,19 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
-	for(uint r = 0,offset = 0; r < rankSizeExt; ++r){
-		for(size_t s = 0; s < freq_r[r]; ++s,++offset){
-			uint idxi = IdxI[offset];
-			uint idxj = IdxJ[offset];
-			uint idxk = IdxK[offset];
-			uint idxr = r / rankSize;
-			double value = sgn(MatA(idxi,idxr) * MatB(idxj,idxr) * MatC(idxk,idxr));
-			IrJc[point3D(idxi, idxj, idxk)] += value;
+	for (uint m = 0; m < rankSize; ++m){
+		for (uint n = 0; n < rankSize; ++n){
+			size_t r = m*rankSize + n;
+			for(size_t s = 0; s < freq_r[r]; ++s,++offset){
+				uint idxi = IdxI[offset];
+				uint idxj = IdxJ[offset];
+				uint idxk = IdxK[offset];
+				double value = 1.0;
+				value *= sgn(MatA(idxi,m)) * sgn(MatA(idxi,n));
+				value *= sgn(MatB(idxj,m)) * sgn(MatB(idxj,n));
+				value *= sgn(MatC(idxk,m)) * sgn(MatC(idxk,n));
+				IrJc[point3D(idxi, idxj, idxk)] += value;
+			}
 		}
 	}
 	finish = clock();

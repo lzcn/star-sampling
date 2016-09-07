@@ -176,7 +176,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					double score = sgn(MatA(idxi,m))*sgn(MatA(idxi,n))*sgn(MatA(idxi,h));
 					score *= sgn(MatB(idxj,m))*sgn(MatB(idxj,n))*sgn(MatB(idxj,h));
 					score *= sgn(MatC(idxk,m))*sgn(MatC(idxk,n))*sgn(MatC(idxk,h));
-					IrJc[point3D(idxi, idxj, idxk)] += 1;
+					IrJc[point3D(idxi, idxj, idxk)] += score;
 					++offset;
 				}
 			}
