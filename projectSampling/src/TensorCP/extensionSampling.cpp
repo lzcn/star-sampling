@@ -99,7 +99,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			// extension for matrix A
-			size_t r = m*rankSize + n;
+			size_t r = m * rankSize + n;
 			double sum = 0;
 			for(uint i = 0; i < Arow; ++i){
 				sum += abs(A[m * Arow + i] * A[n * Arow + i]);
@@ -182,6 +182,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	std::map<point3D, double> IrJc;
+	offset = 0;
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			size_t r = m*rankSize + n;
