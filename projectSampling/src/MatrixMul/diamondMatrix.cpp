@@ -32,8 +32,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]),MATRIX_COL_SUM);
 	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]),MATRIX_COL_SUM);
 	Matrix BT(mxGetN(prhs[1]),mxGetM(prhs[1]));
+	uint rankSize = mxGetM(prhs[0]);
 	for(uint r = 0 ; r < rankSize; ++r){
-		for (uint j = 0; j < MatB.row; ++j) {
+		for (uint j = 0; j < MatB.row; ++j){
 			BT(r,j) = MatB(j,r);
 		}
 	}
