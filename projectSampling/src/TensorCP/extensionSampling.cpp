@@ -82,7 +82,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// indexes of values
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
-	mexPrintf("Starting Extension Sampling:");
+	mexPrintf("Starting Core^2 Sampling:");
 	mexPrintf("- Top:%d ",top_t);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
@@ -142,7 +142,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the initialization phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the initialization phase.\n",*tsec);mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
@@ -179,29 +179,40 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		// vose_alias( freq_r[r], (IdxK + offset), MatCex.row, (MatCex.element + r*MatCex.row), MatCex.SumofCol[r]);
 		offset += freq_r[r];
 	}
+	finish = clock();
+	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec += duration;
+	mexPrintf("|-%f during the sampling phase.\n",duration);mexEvalString("drawnow");
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
+	start = clock();
 	std::map<point3D, double> IrJc;
 	offset = 0;
-	for (uint m = 0; m < rankSize; ++m){
-		for (uint n = 0; n < rankSize; ++n){
-			size_t r = m*rankSize + n;
-			for(size_t s = 0; s < freq_r[r]; ++s,++offset){
-				uint idxi = IdxI[offset];
-				uint idxj = IdxJ[offset];
-				uint idxk = IdxK[offset];
-				double value = 1.0;
-				value *= sgn(MatA(idxi,m)) * sgn(MatA(idxi,n));
-				value *= sgn(MatB(idxj,m)) * sgn(MatB(idxj,n));
-				value *= sgn(MatC(idxk,m)) * sgn(MatC(idxk,n));
-				IrJc[point3D(idxi, idxj, idxk)] += value;
+	if(budget >= NumSample){
+		for(size_t i = 0; i < SumCr; ++i){
+			IrJc[point3D(IdxI[i], IdxJ[i], IdxK[i])] = 1;
+		}
+	}else{
+		for (uint m = 0; m < rankSize; ++m){
+			for (uint n = 0; n < rankSize; ++n){
+				size_t r = m*rankSize + n;
+				for(size_t s = 0; s < freq_r[r]; ++s,++offset){
+					uint idxi = IdxI[offset];
+					uint idxj = IdxJ[offset];
+					uint idxk = IdxK[offset];
+					double value = 1.0;
+					value *= sgn(MatA(idxi,m)) * sgn(MatA(idxi,n));
+					value *= sgn(MatB(idxj,m)) * sgn(MatB(idxj,n));
+					value *= sgn(MatC(idxk,m)) * sgn(MatC(idxk,n));
+					IrJc[point3D(idxi, idxj, idxk)] += value;
+				}
 			}
 		}
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sampling phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the scoring phase.\n",duration);mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
@@ -230,7 +241,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sorting phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the sorting phase.\n",duration);mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------

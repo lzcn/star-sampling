@@ -58,7 +58,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// indexes of values
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
-	mexPrintf("Starting Extension Sampling:");
+	mexPrintf("Starting Core^3 Sampling:");
 	mexPrintf("- Top:%d ",top_t);
 	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
 	mexPrintf("- Budget:1e%d ",(int)log10(budget));
@@ -78,12 +78,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					for(uint i = 0; i < Arow; ++i){
 						p += abs(MatA(i,m)*MatA(i,n)*MatA(i,h));
 					}
-					// extension for matrix B
 					double q = 0.0;
 					for(uint j = 0; j < Brow; ++j){
 						q += abs(MatB(j,m)*MatB(j,n)*MatB(j,h));
 					}
-					// extension for matrix C
 					double t = 0.0;
 					for(uint k = 0; k < Crow; ++k){
 						t += abs(MatC(k,m)*MatC(k,n)*MatC(k,h));
@@ -97,7 +95,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the initialization phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the initialization phase.\n",*tsec );mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
@@ -160,24 +158,30 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sampling phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the sampling phase.\n",duration);mexEvalString("drawnow");
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	offset = 0;
 	start = clock();
-	for (uint m = 0; m < rankSize; ++m){
-		for (uint n = 0; n < rankSize; ++n){
-			for (uint h = 0; h < rankSize; ++h){
-				size_t r = m*rankSize*rankSize + n*rankSize + h;
-				for(size_t s = 0; s < freq_r[r]; ++s){
-					uint idxi = IdxI[offset];
-					uint idxj = IdxJ[offset];
-					uint idxk = IdxK[offset];
-					double score = sgn(MatA(idxi,m))*sgn(MatA(idxi,n))*sgn(MatA(idxi,h));
-					score *= sgn(MatB(idxj,m))*sgn(MatB(idxj,n))*sgn(MatB(idxj,h));
-					score *= sgn(MatC(idxk,m))*sgn(MatC(idxk,n))*sgn(MatC(idxk,h));
-					IrJc[point3D(idxi, idxj, idxk)] += score;
-					++offset;
+	if(budget >= NumSample){
+		for(size_t i = 0; i < SumCr; ++i){
+			IrJc[point3D(IdxI[i], IdxJ[i], IdxK[i])] = 1;
+		}
+	}else{
+		for (uint m = 0; m < rankSize; ++m){
+			for (uint n = 0; n < rankSize; ++n){
+				for (uint h = 0; h < rankSize; ++h){
+					size_t r = m*rankSize*rankSize + n*rankSize + h;
+					for(size_t s = 0; s < freq_r[r]; ++s){
+						uint idxi = IdxI[offset];
+						uint idxj = IdxJ[offset];
+						uint idxk = IdxK[offset];
+						double score = sgn(MatA(idxi,m))*sgn(MatA(idxi,n))*sgn(MatA(idxi,h));
+						score *= sgn(MatB(idxj,m))*sgn(MatB(idxj,n))*sgn(MatB(idxj,h));
+						score *= sgn(MatC(idxk,m))*sgn(MatC(idxk,n))*sgn(MatC(idxk,h));
+						IrJc[point3D(idxi, idxj, idxk)] += score;
+						++offset;
+					}
 				}
 			}
 		}
@@ -185,7 +189,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the computing score.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the scoring phase.\n",duration);mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
@@ -201,7 +205,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sorting phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("|-%f during the sorting phase.\n",duration);mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
