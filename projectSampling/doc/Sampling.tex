@@ -505,175 +505,6 @@ And the algorithm for query sampling is show in ~\Alg{QuerySampling}.
     \EndFor
     \end{algorithmic}
 \end{algorithm}
-
-\section{Fast Implementation}
-In this section, we introduce some implementing details to get improvements.
-\subsection{Core Partiton Sampling}
-We samples only one vertex $v^c_\V{r}$ in one iteration like
-~\AlgLine{CoreSampling}{CorePartition} and ~\AlgLine{QuerySampling}{Indexes}.
-In practice, instead of sampling $v^c_\V{r}$, we sample the frequency $c_\V{r}$,
-so that the expectation $c_\V{r}$ is $\mu_{c_\V{r}}=sw_\V{r}/\norm{\V{w}}{1}$.
-The distribution of $c_\V{r}$ is:
-\begin{equation*}c_\V{r}=
-    \left\{
-      \begin{array}{ll}
-        \lfloor \mu_{c_\V{r}} \rfloor,
-        & \hbox{$p=\lceil \mu_{c_\V{r}} \rceil - \mu_{c_\V{r}}$} \\\\
-        \lceil \mu_{c_\V{r}} \rceil,
-        & \hbox{$p=\lfloor \mu_{c_\V{r}} \rfloor - \mu_{c_\V{r}}$}
-      \end{array}
-    \right.
-\end{equation*}
-It requires $O(R^k)$ complexity comparing $O(sk\log{R})$
-for sampling $s$ vertices in ${\rm core}^k$ partition.
-And we use the alias method\cite{Vose91}
-for efficiently sampling from a discrete probability distribution.
-It requires $O(n)$ for initialization, where $n$ is the distribution size, and
-const time for each generation.
-\subsection{Extension of Core Partition}
-Using the extension matrices has the same result of ${\rm core}^k$ sampling,
-and when $k$ is small it will be computation saving but storage-costing.
-Each extension matrix takes extra $O(L_nR^k)$ storage,
-the same storage costing for ${\rm core}^k$ sampling without optimizing.
-Utilizing the frequency sampling, we do save the storage in memory.
-Firstly, we compute the probability vector in core partition, which takes $O(R^k)$ in storage,
-And for each time we sample $c_{\V{r}}$ times coordinates with given $\V{r}$,
-in which we only need to compute the probability vectors
-$|\Sca{e}{n}{\V{r}}|/\norm{\VnC{e}{n}{*\V{r}}}{1}$ and uesd once.
-The extra storage for the probability vectors takes totally
-$O(R^k + L_1 + L_2 + \cdots + L_N)$ in storage,
-that makes high order extension possible.
-\section{Experiments Results}
-In this section, we will analysis the recall
-and time consuming of our algorithms on real data sets.
-
-\subsection{Data and Preprocessing}
-We evaluate our algorithms on some real date sets:
-DeliciousBookmarks
-\footnote{http://www.delicious.com}(delicious for short),
-Last.FM\footnote{http://www.lastfm.com}(lastfm),
-MovieLens+IMDb\footnote{http://www.imdb.com }/
-Rotten Tomatoes\footnote{http://www.rottentomatoes.com}(ml-2k).
-Those data sets are released in the framework of the 2nd International Workshop (HetRec2011).
-And one larger data sets of MovieLens\cite{Harper2015}:ml-10m.
-
-We use 5-core of each data set in which all user, item and tag occurred at least 5 times.
-The statistics of preprocessed data is shown in ~\Table{Data}.
-\begin{table}[ht]
-  \centering
-  \begin{tabular}{|c|c|c|c|c|c|}
-    \hline
-    DataSet     & User & Item    & Tag    & top-1   & top-1000\\
-    \hline
-    ml-2k       & 456  &  1973   &  1222  & 6.6813  & 2.5663 \\
-    ml-10m      & 993  &  3298   &  2555  & 67.1037 & 26.747 \\
-    lastfm      & 1348 &  6927   &  2132  & 78.1688 & 30.8263\\
-    delicious   & 1681 &  29540  &  7251  & 3.9153  & 2.7896 \\
-    \hline
-  \end{tabular}
-  \caption{Data Statistics}
-  \label{table:Data}
-\end{table}
-We use the algorithm in \cite{Rendle_RTF} to train each data set under CP decomposition model.
-The factor size $R$ is $64$.
-After training, we get three factor matrices for user, item and tag of each data set.
-
-\subsection{Recall and Time Consuming}
-We evaluate those different methods' performance on time and recall of top-$t$ values.
-We both use first order score for central sampling and the extension version.
-We use the maximum budget which is the full-strategy to show the performance of our algorithms.
-For each number of samples, we do $10$ times experiments independently, and the average recall is used.
-The recall of each data set is show in ~\Figs{ml_2k_recall}{delicious_recall} .
-And the time consuming for each algorithms in shown in ~\Figs{ml_2k_times}{delicious_times}.
-
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_2k_recall}\\
-  \caption{Recall for different methods in ml-2k data sets.}
-  \label{fig:ml_2k_recall}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_10m_recall}\\
-  \caption{Recall for different methods in ml-10m data sets.}
-  \label{fig:ml_10m_recall}
-\end{figure}
-
-
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_lastfm_recall}\\
-  \caption{Recall for different methods in lastfm data sets.}
-  \label{fig:lastfm_recall}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_delicious_recall}\\
-  \caption{Recall for different methods in delicious data sets.}
-  \label{fig:delicious_recall}
-\end{figure}
-
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_2k_times}\\
-  \caption{Time for ml-2k data set.}
-  \label{fig:ml_2k_times}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_10m_times}\\
-  \caption{Time for ml-10m data set.}
-  \label{fig:ml_10m_times}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_lastfm_times}\\
-  \caption{Time for lastfm data set.}
-  \label{fig:lastfm_times}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_delicious_times}\\
-  \caption{Time for delicious data sets.}
-  \label{fig:delicious_times}
-\end{figure}
-
-\subsection{Sampling for Queries}
-We use the coordinates pools to save the computation.
-And ${\rm core}^2$ extension is uesd 
-to find the top-$100$ largerst values for queries in date set lastfm.
-The recall and time of each queries is shown in ~\Fig{Queries}.
-\begin{figure}[t]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_queries}\\
-  \caption{Recall and time for queries in date set lastfm with $s=10^5$.
-           For better visualization,
-           we show every $10$ queries in processing.}
-  \label{fig:Queries}
-\end{figure}
-\subsection{Estimation of Values}
-In ~\Theo{Bound}, we gives the error bound of estimate the actual prediction values.
-We the performance on data set lastfm with ${\rm core}^3$ sampling and $s=10^8$.
-The score $\widehat{x}_{\V{i}}$ is an estimation of $sx^3_{\V{i}}/\norm{\V{w}}{1}$.
-We draw the result of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
-We show the top-$10^4$ pairs with largest scores in ~\Fig{Est}.
-\begin{figure}[t]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=2.5in]{fig_lastfm_est}\\
-  \caption{Plot of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
-          The deshed line the reference for the equality.}
-  \label{fig:Est}
-\end{figure}
 \section{Theoretical Analysis}
 
 Until now, we just give the result without any proofs.
@@ -789,7 +620,190 @@ multiplying by $\norm{\V{W}}{1}/s$ inside the ${\rm Pr}[\cdot]$ gives
 The ~\Theo{ObservationBound} and ~\Theo{Bound} show that shows that
 to reach a reasonable result of finding or estimate the value $x^k_{\V{i}}$,
 the demand samples for ${\rm core}^k$ sampling is $s\approx \norm{\V{w}}{1}/x_{\V{i}}^k$.
+\section{Fast Implementation}
+In this section, we introduce some implementing details to get improvements.
+\subsection{Core Partiton Sampling}
+We samples only one vertex $v^c_\V{r}$ in one iteration like
+~\AlgLine{CoreSampling}{CorePartition} and ~\AlgLine{QuerySampling}{Indexes}.
+In practice, instead of sampling $v^c_\V{r}$, we sample the frequency $c_\V{r}$,
+so that the expectation $c_\V{r}$ is $\mu_{c_\V{r}}=sw_\V{r}/\norm{\V{w}}{1}$.
+The distribution of $c_\V{r}$ is:
+\begin{equation*}c_\V{r}=
+    \left\{
+      \begin{array}{ll}
+        \lfloor \mu_{c_\V{r}} \rfloor,
+        & \hbox{$p=\lceil \mu_{c_\V{r}} \rceil - \mu_{c_\V{r}}$} \\\\
+        \lceil \mu_{c_\V{r}} \rceil,
+        & \hbox{$p=\lfloor \mu_{c_\V{r}} \rfloor - \mu_{c_\V{r}}$}
+      \end{array}
+    \right.
+\end{equation*}
+It requires $O(R^k)$ complexity comparing $O(sk\log{R})$
+for sampling $s$ vertices in ${\rm core}^k$ partition.
+\subsection{Extension of Core Partition}
+Using the extension matrices has the same result of ${\rm core}^k$ sampling,
+and when $k$ is small it will be computation saving but storage-costing.
+Each extension matrix takes extra $O(L_nR^k)$ storage,
+the same storage costing for ${\rm core}^k$ sampling without optimizing.
+Utilizing the frequency sampling, we do save the storage in memory.
+Firstly, we compute the probability vector in core partition, which takes $O(R^k)$ in storage,
+And for each time we sample $c_{\V{r}}$ times coordinates with given $\V{r}$,
+in which we only need to compute the probability vectors
+$|\Sca{e}{n}{\V{r}}|/\norm{\VnC{e}{n}{*\V{r}}}{1}$ and uesd once.
+The extra storage for the probability vectors takes totally
+$O(R^k + L_1 + L_2 + \cdots + L_N)$ in storage,
+that makes high order extension possible.
+\section{Experiments Results}
+In this section, we will analysis the recall
+and time consuming of our algorithms on real data sets.
 
+\subsection{Data and Preprocessing}
+We evaluate our algorithms on some real date sets:
+DeliciousBookmarks
+\footnote{http://www.delicious.com}(delicious for short),
+Last.FM\footnote{http://www.lastfm.com}(lastfm),
+MovieLens+IMDb\footnote{http://www.imdb.com }/
+Rotten Tomatoes\footnote{http://www.rottentomatoes.com}(ml-2k).
+Those data sets are released in the framework of the 2nd International Workshop (HetRec2011).
+And one larger data sets of MovieLens\cite{Harper2015}:ml-10m.
+
+We use 5-core of each data set in which all user, item and tag occurred at least 5 times.
+The statistics of preprocessed data is shown in ~\Table{Data}.
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{|c|c|c|c|c|c|}
+    \hline
+    DataSet     & User & Item    & Tag    & top-1   & top-1000\\
+    \hline
+    ml-2k       & 456  &  1973   &  1222  & 6.6813  & 2.5663 \\
+    ml-10m      & 993  &  3298   &  2555  & 67.1037 & 26.747 \\
+    lastfm      & 1348 &  6927   &  2132  & 78.1688 & 30.8263\\
+    delicious   & 1681 &  29540  &  7251  & 3.9153  & 2.7896 \\
+    \hline
+  \end{tabular}
+  \caption{Data Statistics}
+  \label{table:Data}
+\end{table}
+We use the algorithm in \cite{Rendle_RTF} to train each data set under CP decomposition model.
+The factor size $R$ is $64$.
+After training, we get three factor matrices for user, item and tag of each data set.
+
+\subsection{Recall and Time Consuming}
+We evaluate those different methods' performance on time and recall of top-$t$ values.
+We both use first order score for central sampling and the extension version.
+We use the maximum budget which is the full-strategy to show the performance of our algorithms.
+For each number of samples, we do $10$ times experiments independently, and the average recall is used.
+The recall of each data set is show in ~\Figs{ml_2k_recall}{delicious_recall} .
+And the time consuming for each algorithms in shown in ~\Figs{ml_2k_times}{delicious_times}.
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_ml_2k_recall}\\
+  \caption{Recall for different methods in ml-2k data sets.}
+  \label{fig:ml_2k_recall}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_ml_10m_recall}\\
+  \caption{Recall for different methods in ml-10m data sets.}
+  \label{fig:ml_10m_recall}
+\end{figure}
+
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_lastfm_recall}\\
+  \caption{Recall for different methods in lastfm data sets.}
+  \label{fig:lastfm_recall}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_delicious_recall}\\
+  \caption{Recall for different methods in delicious data sets.}
+  \label{fig:delicious_recall}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_ml_2k_times}\\
+  \caption{Time for ml-2k data set.}
+  \label{fig:ml_2k_times}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_ml_10m_times}\\
+  \caption{Time for ml-10m data set.}
+  \label{fig:ml_10m_times}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_lastfm_times}\\
+  \caption{Time for lastfm data set.}
+  \label{fig:lastfm_times}
+\end{figure}
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_delicious_times}\\
+  \caption{Time for delicious data sets.}
+  \label{fig:delicious_times}
+\end{figure}
+\subsection{Sampling with Bugets}
+The score we introduced in \Eqn{score} in used for the pre-sorting strategy.
+We use a budget $t' = s/10$ to do sampiling for data lastfm.
+The recall shown in \Fig{budget}.
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_lastfm_recall_budget}\\
+  \caption{Recall for different methods in delicious data sets with budget $t'=s/10$.}
+  \label{fig:budget}
+\end{figure}
+Compare with the result in \Fig{lastfm_recall}, we can notice that the scores of coordinate
+do save the orders good.
+\subsection{Sampling for Queries}
+We use the coordinates pools to save the computation.
+And ${\rm core}^2$ extension is uesd 
+to find the top-$100$ largerst values for queries in date set lastfm.
+The recall and time of each queries is shown in ~\Fig{Queries}.
+\begin{figure}[t]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_queries}\\
+  \caption{Recall and time for queries in date set lastfm with $s=10^5$.
+           For better visualization,
+           we show every $10$ queries in processing.}
+  \label{fig:Queries}
+\end{figure}
+\subsection{Estimation of Values}
+In ~\Theo{Bound}, we gives the error bound of estimate the actual prediction values.
+We the performance on data set lastfm with ${\rm core}^3$ sampling and $s=10^8$.
+The score $\widehat{x}_{\V{i}}$ is an estimation of $sx^3_{\V{i}}/\norm{\V{w}}{1}$.
+We draw the result of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+We show the top-$10^4$ pairs with largest scores in ~\Fig{Est}.
+\begin{figure}[t]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=2.5in]{fig_lastfm_est}\\
+  \caption{Plot of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+          The deshed line the reference for the equality.}
+  \label{fig:Est}
+\end{figure}
+\section{Comparison with Diamond Sampling}
+The diamond sampling is for MAD which is the matrix multiplication task.
+To compare our algorithm with diamond sampling, we use item and tag matrices.
+For each user, we multiply the user vector into item matrix
+to get user oriented matrix pair.
+We evalute the average recall and time-consuming of those user oriented factor matrices.
+And the budget of $t'=s/10$ is used since the diamond sampling only consider the result with budgets.
+The result of comparison is shown in \Fig{Comparison}.
 \section{Conclusion}
 In this paper propose a method for finding top-$t$ values for given CP-models.
 After which we point out that we can adjust this method to get the $n$-the order estimation
