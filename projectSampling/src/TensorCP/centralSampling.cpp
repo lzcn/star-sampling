@@ -157,10 +157,15 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		// vose_alias( freq_r[r], (IdxK + offset), MatC.row, (MatC.element + r*MatC.row), MatC.SumofCol[r]);						
 		offset += freq_r[r];
 	}
+	finish = clock();
+	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec += duration;
 	mexPrintf("|-%f during the sampling phase.\n",duration);mexEvalString("drawnow");
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
-	std::map<point3D, double> IrJc;
+	start = clock();
+	//std::map<point3D, double> IrJc;
+	TPoint3DMap IrJc;
 	offset = 0;
 	if (budget >= NumSample) {
 		for(size_t i = 0; i < SumCr; ++i){

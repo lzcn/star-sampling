@@ -126,7 +126,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset( pa, 0, Arow*sizeof(double));
 	memset( pb, 0, Brow*sizeof(double));
 	memset( pc, 0, Crow*sizeof(double));
-	std::map<point3D, double> IrJc;
 	size_t offset = 0;
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
@@ -161,6 +160,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mexPrintf("|-%f during the sampling phase.\n",duration);mexEvalString("drawnow");
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
+	// std::map<point3D, double> IrJc;
+	TPoint3DMap IrJc;
 	offset = 0;
 	start = clock();
 	if(budget >= NumSample){
@@ -193,12 +194,25 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
+	// for pre sort
+	std::vector<pidx3d> tempSortedVec;
 	// sort by actual value
 	std::vector<pidx3d> sortVec;
-	start = clock();
+	// push the value into a vector for sorting
 	for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
-		double true_value = MatrixColMul(mapItr->first, AT, BT, CT);
-		sortVec.push_back(std::make_pair(mapItr->first, true_value));
+		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
+	}
+	start = clock();
+	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
+	finish = clock();
+	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	*tsec += duration;
+
+	start = clock();
+	// compute the top-t' (budget) actual value
+	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
+		double true_value = MatrixColMul(tempSortedVec[m].first, AT, BT, CT);
+		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
 	// sort the vector according to the actual value
 	sort(sortVec.begin(), sortVec.end(), compgt<pidx3d>);

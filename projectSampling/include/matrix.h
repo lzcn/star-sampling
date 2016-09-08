@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <algorithm>
 
 typedef unsigned int uint;
@@ -78,7 +79,20 @@ public:
 	uint y;
 	uint z;
 };
-
+struct hashFunc{
+    size_t operator()(const point3D &k) const{
+    size_t h1 = std::hash<uint>()(k.x);
+    size_t h2 = std::hash<uint>()(k.y);
+    size_t h3 = std::hash<uint>()(k.z);
+    return (h1 ^ (h2 << 1)) ^ h3;
+    }
+};
+struct equalsFunc{
+  bool operator()( const point3D& lhs, const point3D& rhs ) const{
+    return (lhs.x == rhs.x) && (lhs.y == rhs.y) && (lhs.z == rhs.z);
+  }
+};
+typedef std::unordered_map<point3D, double, hashFunc, equalsFunc> TPoint3DMap;
 class pointND
 {
 public:
