@@ -168,24 +168,24 @@ high scores for related tuples.
 And it is also reasonable since the actual prediction value and
 top-$t$ tuples are not critical in recommendation.
 
-\begin{table}[t]
-  \centering
-  \begin{tabular}{|c|c|}
-    \hline
-    Notations & Explanation \\
-    \hline
-    $\T{A}$ & tensor \\
-    $\M{A}$ & matrix \\
-    $\Mn{A}{n}$ & $n$-th factor matrix of tensor\\
-    $\V{A}_{*r},\V{A}_r$ & $k$-th column of matrix \\
-    $\V{A}_{i*}$ & $i$-th row of matrix \\
-    $\V{A}$ & vector \\
-    $a_{ir}$ & element of matrix, a scalar\\
-    \hline
-  \end{tabular}
-  \caption{Notation}
-  \label{table:Notation}
-\end{table}
+%\begin{table}[t]
+%  \centering
+%  \begin{tabular}{|c|c|}
+%    \hline
+%    Notations & Explanation \\
+%    \hline
+%    $\T{A}$ & tensor \\
+%    $\M{A}$ & matrix \\
+%    $\Mn{A}{n}$ & $n$-th factor matrix of tensor\\
+%    $\V{A}_{*r},\V{A}_r$ & $k$-th column of matrix \\
+%    $\V{A}_{i*}$ & $i$-th row of matrix \\
+%    $\V{A}$ & vector \\
+%    $a_{ir}$ & element of matrix, a scalar\\
+%    \hline
+%  \end{tabular}
+%  \caption{Notation}
+%  \label{table:Notation}
+%\end{table}
 
 \subsection{Notations}
 
@@ -197,7 +197,7 @@ It is defined as:
     \ \  {\rm and} \ \
     \norm{\M{M}}{1} = \sum_{i=1}^{m}\sum_{j=1}^{n}|m_{ij}|
 \]
-Some frequently used notations are listed in ~\Table{Notation}.
+%Some frequently used notations are listed in ~\Table{Notation}.
 
 
 \section{Related work}
@@ -251,7 +251,7 @@ In the lower part of ~\Fig{GraphMatrices}, we have $N$ partitions of vertices.
 \begin{figure}[t]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics*[clip = true,viewport = 0 10 330 120]{fig_graph_factor_matrices}\\
+  \includegraphics[]{fig_graph_factor_matrices}\\
   \caption{Graph Presentation of Factor Matrices}
   \label{fig:GraphMatrices}
 \end{figure}
@@ -268,7 +268,7 @@ so that the expectation of estimation value $\widehat{x}_\V{i}$
 after sampling will equal to the actual prediction $x_\V{i}$ in scale.
 The sampling method is shown in \Alg{CoreSampling} and will be explained in details
 in this subsections.
-\begin{algorithm}[t]
+\begin{algorithm}[!ht]
     \caption{Core Sampling with factor matrixes}
     \label{alg:CoreSampling}
     Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.\\
@@ -422,7 +422,7 @@ in which the element of $\Mn{E}{n}$ satisfies
 \]
 And using the original core sampling to deal with the extension matrices obtains same results.
 The ${\rm core}^k$ sampling makes the probability $p(\epsilon_{\V{i}})$ of coordinate proportioning to $x^n_{\V{i}}$.
-\begin{algorithm}[t]
+\begin{algorithm}[ht]
     \caption{${\rm Core}^k$ Sampling with factor matrixes}
     \label{alg:CoreExtensionSampling}
     Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.\\
@@ -475,7 +475,7 @@ used for the next user to save computations.
 For ${\rm core}^k$ extension $m = R^k$.
 And the algorithm for query sampling is show in ~\Alg{QuerySampling}.
 
-\begin{algorithm}[t]
+\begin{algorithm}[ht]
     \caption{Finding top-$t$ tuples for a query}
     \label{alg:QuerySampling}
         Given factor matrix $\M{A}^{(n)}\in R^{L_n\times R}, n = 1,2,\ldots,N$.
@@ -530,7 +530,7 @@ so we have:
 \begin{align*}
 p(\epsilon_{\V{i}})
 & = \sum_{\V{r}} p(\epsilon_{\V{i},\V{r}}) \\
-& = \sum_{\V{r}} p({\rm pick\ }\V{r})p({\rm pick\ }i_1|\V{r})\cdots p({\rm pick\ }i_N|\V{r})\\
+%& = \sum_{\V{r}} p({\rm pick\ }\V{r})p({\rm pick\ }i_1|\V{r})\cdots p({\rm pick\ }i_N|\V{r})\\
 & = \sum_{\V{r}} \frac{w_{\V{r}}}{\norm{\V{W}}{1}}
     \frac{|\Sca{e}{1}{\V{r}}|}{\norm{\VnC{e}{n}{*\V{r}}}{1}}\ldots\frac{|\Sca{e}{N}{\V{r}}|}{\norm{\VnC{e}{N}{*\V{r}}}{1}}\\
 & = \sum_{\V{r}} \frac{\Sca{e}{1}{\V{r}}\cdots\Sca{e}{N}{\V{r}}}{\norm{\V{W}}{1}}\\
@@ -551,8 +551,7 @@ The expectation of score $\widehat{x}_{\V{i}}$ in $core^k$ sampling equals to $s
     the expectation of final score in  $core^k$ sampling is:
 \begin{align*}
 \mathbb{E}[\predx]
-& = \sum_{\ell=1}^{s}\mathbb{E}[\score{\ell}]\\
-& = \sum_{\ell=1}^{s}\sum_{\V{r}} p(\epsilon_{\V{i},\V{r}})\score{\ell} \\
+& = \sum_{\ell=1}^{s}\mathbb{E}[\score{\ell}] = \sum_{\ell=1}^{s}\sum_{\V{r}} p(\epsilon_{\V{i},\V{r}})\score{\ell} \\
 & = s\sum_{\V{r}} \frac{|\enr{1}{r}\cdots\enr{N}{r}|}{\norm{\V{W}}{1}}
                   sgn(\enr{1}{r}\cdots\enr{N}{r})\\
 & = s\sum_{\V{r}} \frac{\enr{1}{r}\cdots\enr{N}{r}}{\norm{\V{W}}{1}}\\
@@ -669,7 +668,7 @@ And one larger data sets of MovieLens\cite{Harper2015}:ml-10m.
 
 We use 5-core of each data set in which all user, item and tag occurred at least 5 times.
 The statistics of preprocessed data is shown in ~\Table{Data}.
-\begin{table}[ht]
+\begin{table}[t]
   \centering
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
@@ -694,75 +693,80 @@ We both use first order score for central sampling and the extension version.
 We use the maximum budget which is the full-strategy to show the performance of our algorithms.
 For each number of samples, we do $10$ times experiments independently, and the average recall is used.
 The recall of each data set is show in ~\Figs{ml_2k_recall}{delicious_recall} .
-And the time consuming for each algorithms in shown in ~\Figs{ml_2k_times}{delicious_times}.
-
-\begin{figure}[ht]
+And the time consuming for each algorithms in shown in ~\Fig{times}.
+\begin{figure}[t]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_2k_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 0 650 200]{fig_ml_2k_recall}\\
   \caption{Recall for different methods in ml-2k data sets.}
   \label{fig:ml_2k_recall}
 \end{figure}
-\begin{figure}[ht]
+\begin{figure}[]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_10m_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 0 650 200]{fig_ml_10m_recall}\\
   \caption{Recall for different methods in ml-10m data sets.}
   \label{fig:ml_10m_recall}
 \end{figure}
 
 
-\begin{figure}[ht]
+\begin{figure}[]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_lastfm_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 0 650 200]{fig_lastfm_recall}\\
   \caption{Recall for different methods in lastfm data sets.}
   \label{fig:lastfm_recall}
 \end{figure}
-\begin{figure}[ht]
+\begin{figure}[]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_delicious_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 0 650 200]{fig_delicious_recall}\\
   \caption{Recall for different methods in delicious data sets.}
   \label{fig:delicious_recall}
 \end{figure}
-
+%\begin{figure}[H]
+%  \centering
+%  % Requires \usepackage{graphicx}
+%  \includegraphics[width=2.5in]{fig_ml_2k_times}\\
+%  \caption{Time for ml-2k data set.}
+%  \label{fig:ml_2k_times}
+%\end{figure}
+%\begin{figure}[H]
+%  \centering
+%  % Requires \usepackage{graphicx}
+%  \includegraphics[width=2.5in]{fig_ml_10m_times}\\
+%  \caption{Time for ml-10m data set.}
+%  \label{fig:ml_10m_times}
+%\end{figure}
+%\begin{figure}[H]
+%  \centering
+%  % Requires \usepackage{graphicx}
+%  \includegraphics[width=2.5in]{fig_lastfm_times}\\
+%  \caption{Time for lastfm data set.}
+%  \label{fig:lastfm_times}
+%\end{figure}
+%\begin{figure}[H]
+%  \centering
+%  % Requires \usepackage{graphicx}
+%  \includegraphics[width=2.5in]{fig_delicious_times}\\
+%  \caption{Time for delicious data sets.}
+%  \label{fig:delicious_times}
+%\end{figure}
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_2k_times}\\
-  \caption{Time for ml-2k data set.}
-  \label{fig:ml_2k_times}
+  \includegraphics[width=3in]{fig_times}\\
+  \caption{Time for all data sets.}
+  \label{fig:times}
 \end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_ml_10m_times}\\
-  \caption{Time for ml-10m data set.}
-  \label{fig:ml_10m_times}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_lastfm_times}\\
-  \caption{Time for lastfm data set.}
-  \label{fig:lastfm_times}
-\end{figure}
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_delicious_times}\\
-  \caption{Time for delicious data sets.}
-  \label{fig:delicious_times}
-\end{figure}
-\subsection{Sampling with Bugets}
+\subsection{Sampling with Budgets}
 The score we introduced in \Eqn{score} in used for the pre-sorting strategy.
 We use a budget $t' = s/10$ to do sampiling for data lastfm.
 The recall shown in \Fig{budget}.
-\begin{figure}[ht]
+\begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{fig_lastfm_recall_budget}\\
+  \includegraphics[width=3.3in]{fig_lastfm_recall_budget}\\
   \caption{Recall for different methods in delicious data sets with budget $t'=s/10$.}
   \label{fig:budget}
 \end{figure}
@@ -773,7 +777,7 @@ We use the coordinates pools to save the computation.
 And ${\rm core}^2$ extension is uesd 
 to find the top-$100$ largerst values for queries in date set lastfm.
 The recall and time of each queries is shown in ~\Fig{Queries}.
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=3in]{fig_queries}\\
@@ -788,22 +792,42 @@ We the performance on data set lastfm with ${\rm core}^3$ sampling and $s=10^8$.
 The score $\widehat{x}_{\V{i}}$ is an estimation of $sx^3_{\V{i}}/\norm{\V{w}}{1}$.
 We draw the result of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
 We show the top-$10^4$ pairs with largest scores in ~\Fig{Est}.
-\begin{figure}[t]
+We can see that there are a several actual value have the same estimation values.
+This is because the sampling algorothm will distinguish the value with certain gaps.
+With high order of extension, this gap will be small. 
+\begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=2.5in]{fig_lastfm_est}\\
+  \includegraphics[width=3in]{fig_lastfm_est}\\
   \caption{Plot of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
-          The deshed line the reference for the equality.}
+          The deshed line is the reference for equality.}
   \label{fig:Est}
 \end{figure}
-\section{Comparison with Diamond Sampling}
+\subsection{Comparison with Diamond Sampling}
 The diamond sampling is for MAD which is the matrix multiplication task.
 To compare our algorithm with diamond sampling, we use item and tag matrices.
 For each user, we multiply the user vector into item matrix
 to get user oriented matrix pair.
 We evalute the average recall and time-consuming of those user oriented factor matrices.
 And the budget of $t'=s/10$ is used since the diamond sampling only consider the result with budgets.
-The result of comparison is shown in \Fig{Comparison}.
+The result of comparison is shown in \Fig{Comparison_recall} and \Fig{Comparison_time}.
+
+\begin{figure}[H]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{fig_comparision_recall}\\
+  \caption{The comparison of recall in different algorithm for data set lasftm.}
+  \label{fig:Comparison_recall}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+% Requires \usepackage{graphicx}
+    \includegraphics[width=3in]{fig_comparison_times}\\
+    \caption{The comparison of time in different algorithm for data set lasftm.}
+\label{fig:Comparison_time}
+\end{figure}
+
 \section{Conclusion}
 In this paper propose a method for finding top-$t$ values for given CP-models.
 After which we point out that we can adjust this method to get the $n$-the order estimation
