@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <algorithm>
 
 typedef unsigned int uint;
@@ -41,11 +42,13 @@ double MatrixRowMul(const point2D &coord, Matrix &A, Matrix &B);
 double MatrixRowMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
 double MatrixColMul(const point2D &coord, Matrix &A, Matrix &B);
 double MatrixColMul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
-double MatrixColMul(const Matrix &A, const Matrix &B, uint i, uint j);
-double MatrixColMul(const Matrix &A, const Matrix &B, const Matrix &C, uint i, uint j, uint k);
+double MatrixColMul(Matrix &A, Matrix &B, uint i, uint j);
+double MatrixColMul(Matrix &A, Matrix &B, Matrix &C, uint i, uint j, uint k);
 double vectors_mul(const pointND &p,std::vector<Matrix*> &vMat);
 double vectors_mul(const point2D &coord, Matrix &A, Matrix &B);
 double vectors_mul(const point3D &coord, Matrix &A, Matrix &B, Matrix &C);
+void binary_search(size_t s, uint *dst, uint n, double *pdf);
+uint binary_search_once(double *a, uint ub, double s);
 void sort_sample(size_t s, uint*i, uint*r, size_t *freq, uint m, uint n, double*pdf, double sum_pdf);
 void sort_sample(size_t s, uint*dst, uint n, double*p, double sum);
 void vose_alias(size_t s, uint *dst, uint n, double *pdf,double sum_pdf);
@@ -76,7 +79,20 @@ public:
 	uint y;
 	uint z;
 };
-
+struct hashFunc{
+    size_t operator()(const point3D &k) const{
+    size_t h1 = std::hash<uint>()(k.x);
+    size_t h2 = std::hash<uint>()(k.y);
+    size_t h3 = std::hash<uint>()(k.z);
+    return (h1 ^ (h2 << 1)) ^ h3;
+    }
+};
+struct equalsFunc{
+  bool operator()( const point3D& lhs, const point3D& rhs ) const{
+    return (lhs.x == rhs.x) && (lhs.y == rhs.y) && (lhs.z == rhs.z);
+  }
+};
+typedef std::unordered_map<point3D, double, hashFunc, equalsFunc> TPoint3DMap;
 class pointND
 {
 public:
@@ -94,6 +110,7 @@ public:
 	double* element;
 	double* SumofCol;
 	double* SumofRow;
+	Matrix(uint r, uint c);
 	Matrix(uint r, uint c, double*pr);
 	Matrix(uint r, uint c, double*pr, uint TYPE);
 	~Matrix();
@@ -106,6 +123,7 @@ public:
 	uint randCol(uint m);
 private:
 	uint _SUMTYPE;
+	bool _SELFVALUE;
 };
 
 class SubIndex{

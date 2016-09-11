@@ -24,10 +24,10 @@ int complt(const Tpair &v1,const Tpair &v2){
 
 class point2D{
 public:
-    size_t x;
-    size_t y;
+    uint x;
+    uint y;
     
-	point2D(size_t i, size_t j);
+	point2D(uint i, uint j);
 	~point2D(){};
 	bool operator<(const point2D &toCmp)const;
 	bool operator==(const point2D &toCmp)const;
@@ -36,11 +36,11 @@ public:
 
 class point3D{
 public:
-    size_t x;
-    size_t y;
-    size_t z;
+    uint x;
+    uint y;
+    uint z;
         
-	point3D(size_t i, size_t j, size_t k);
+	point3D(uint i, uint j, uint k);
 	~point3D(){};
 	bool operator<(const point3D &toCmp)const;
 	bool operator==(const point3D &toCmp)const;
@@ -51,31 +51,31 @@ public:
 class pointND
 {
 public:
-	pointND(size_t *p, size_t n);
+	pointND(uint *p, uint n);
 	~pointND(){};
 	bool operator<(const pointND &toCmp)const;
-	size_t num;
-	size_t *coord;
+	uint num;
+	uint *coord;
 };
 
-point2D::point2D(size_t i, size_t j){
+point2D::point2D(uint i, uint j){
 	x = i;
 	y = j;
 }
 
 class SubIndex{
 public:
-	SubIndex(int n, size_t *max);
+	SubIndex(uint n, uint *max);
 	~SubIndex();
 	bool isDone(){return doneFlag;};
 	bool reset();
 	SubIndex& operator++();
-	const size_t *getIdx(){return curIdx;};
+	const uint *getIdx(){return curIdx;};
 private:
-	int idxSize;
+	uint idxSize;
 	bool doneFlag;
-	size_t *curIdx;
-	const size_t *maxIdx;
+	uint *curIdx;
+	const uint *maxIdx;
 };
 
 ////////////////
@@ -110,7 +110,7 @@ bool point2D::operator > (const point2D &toCmp)const{
 //  point3D 
 ///////////////
 
-point3D::point3D(size_t i, size_t j, size_t k){
+point3D::point3D(uint i, uint j, uint k){
 	x = i;
 	y = j;
 	z = k;
@@ -154,12 +154,12 @@ bool point3D::operator > (const point3D &toCmp)const{
 //  pointND 
 ///////////////
 
-pointND::pointND(size_t *p, size_t n){
+pointND::pointND(uint *p, uint n){
 	coord = p;
 	num = n;
 }
 bool pointND::operator < (const pointND &toCmp)const{
-	for(size_t i = 0; i < num; ++i){
+	for(uint i = 0; i < num; ++i){
 		if(coord[i] < toCmp.coord[i]){
 			return true;
 		}else if(coord[i] > toCmp.coord[i]){
@@ -174,12 +174,12 @@ bool pointND::operator < (const pointND &toCmp)const{
 ////////////////
 // SubIndex
 ////////////////
-SubIndex::SubIndex(int n, size_t *max){
+SubIndex::SubIndex(uint n, uint *max){
 	idxSize = n;
 	maxIdx = max;
 	doneFlag = false;
-	curIdx = (size_t*)malloc((n + 1)*sizeof(size_t));
-	memset(curIdx, 0, (n + 1)*sizeof(size_t));
+	curIdx = (uint*)malloc((n + 1)*sizeof(uint));
+	memset(curIdx, 0, (n + 1)*sizeof(uint));
 }
 SubIndex::~SubIndex(){
 	free(curIdx);
@@ -187,12 +187,12 @@ SubIndex::~SubIndex(){
 
 bool SubIndex::reset(){
 	doneFlag = false;
-	memset(curIdx, 0, (idxSize + 1)*sizeof(size_t));
+	memset(curIdx, 0, (idxSize + 1)*sizeof(uint));
 	return true;
 }
 SubIndex& SubIndex::operator++(){
 	curIdx[0]++;
-	for(size_t i = 0; i < idxSize; ++i){
+	for(uint i = 0; i < idxSize; ++i){
 		if(curIdx[i] < maxIdx[i]){
 			return *this;
 		}else{

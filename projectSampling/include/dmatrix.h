@@ -6,6 +6,9 @@
 #include <list>
 #include <map>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <string>
 #include "random.h"
 #include "util.h"
 const uint INIT_RAND_U = 1;
@@ -14,7 +17,6 @@ const uint INIT_ALL_ZEROS = 4;
 const uint INIT_ALL_ONES = 5;
 
 class DMatrix;
-class DVector;
 
 class DMatrix{
 public:    
@@ -27,35 +29,20 @@ public:
 	uint randRow(uint n, double sum);
 	uint randCol(uint m, double sum);
     void init(uint TYPE, double mean, double stdev);
+    void DMatrix::load(std::string filename);
+    void DMatrix::save(std::string filename);
     double* get_abs_row_sum();
     double* get_abs_col_sum();
 public:
 	uint row, col;
 	double *value;
 private:
-    bool SELFINITVALUE;
-    
-};
-
-class DVector{
-public:
-    DVector();
-    DVector(uint v_dim);
-    DVector(uint v_dim, double*ptr);
-    void init(uint TYPE, double mean, double stdev);
-	~DVector();
-    double& operator()(uint n);
-	double operator()(uint n)const;
-public:
-	uint dim;
-	double* value;
-private:
-    bool SELFINITVALUE;
+    bool _SELFVALUE;
     
 };
 
 DMatrix::~DMatrix(){
-    if(SELFINITVALUE)
+    if(_SELFVALUE)
         free(value);
 }
 
@@ -63,25 +50,22 @@ DMatrix::DMatrix(){
     row = 0;
     col = 0;
     value = nullptr;
-    SELFINITVALUE = false;
+    _SELFVALUE = false;
 }
 DMatrix::DMatrix(uint r_dim, uint c_dim){
     row = r_dim;
     col = c_dim;
-    value = nullptr;
-    SELFINITVALUE = false;
+    value = (double*)malloc(row*col*sizeof(double));
+    memset(value, 0, row*col*sizeof(double));
+    _SELFVALUE = true;
 }
 DMatrix::DMatrix(uint r_dim, uint c_dim, double *ptr){
     row = r_dim;
     col = c_dim;
     value = ptr;
-    SELFINITVALUE = false;
+    _SELFVALUE = false;
 }
 void DMatrix::init(uint TYPE, double mean, double stdev){
-    if(value == nullptr){
-        value = (double*)malloc(col*row*sizeof(double));
-        SELFINITVALUE = true;
-    }
     switch (TYPE) {
         case INIT_RAND_N:
             for(uint i = 0; i < col*row; ++i){
@@ -102,7 +86,6 @@ void DMatrix::init(uint TYPE, double mean, double stdev){
     }
 }
 double& DMatrix::operator()(uint i, uint j){ 
-    //assert((i >= row) && (j >= col));
     return value[j*row +i];
 }
 double DMatrix::operator()(uint i, uint j) const {
@@ -132,57 +115,33 @@ uint DMatrix::randCol(uint m, double sum){
     }
     return (col-1);
 }
-
-DVector::DVector(){
-    dim = 0;
-    value = nullptr;
-    SELFINITVALUE = false;
-}
-DVector::DVector(uint v_dim){
-    dim = v_dim;
-    value = nullptr;
-    SELFINITVALUE = false;
-}
-DVector::DVector(uint v_dim, double *ptr){
-    dim = v_dim;
-    value = ptr;
-    SELFINITVALUE = false;
-}
-double& DVector::operator()(uint n){ 
-    //assert((i >= row) && (j >= col));
-    return value[n];
-}
-double DVector::operator()(uint n) const {
-    return value[n];
-}
-
-void DVector::init(uint TYPE, double mean, double stdev){
-    if(value == nullptr){
-        value = (double*)malloc(dim*sizeof(double));
-        SELFINITVALUE = true;
+void DMatrix::load(std::string filename){
+    std::ifstream in_file (filename.c_str());
+    if (! in_file.is_open()) {
+        throw "Unable to open file " + filename;
+    }	
+    for(uint c = 0; c < col; c++){
+        for(uint r = 0; r < row; r++){
+            double v;
+            in_file >> v;
+            value[c*row + r] = v;
+        }
     }
-    switch (TYPE) {
-        case INIT_RAND_N:
-            for(uint i = 0; i < dim; ++i)
-                // normal distribution with \mu = mean,\sigma^2 = stdev
-                value[i] = rnd::randn(mean, stdev);
-            break;
-        case INIT_RAND_U:
-            for(uint i = 0; i < dim; ++i)
-                value[i] = rnd::randu();
-            break;
-        case INIT_ALL_ONES:
-            memset(value, 1, dim*sizeof(double));
-            break;
-        case INIT_ALL_ZEROS:
-            memset(value, 0, dim*sizeof(double));
-            break;
-        default: break;
-    }
-}
+    in_file.close();
+} 		
 
-DVector::~DVector(){
-    if(SELFINITVALUE)
-        free(value);
+void DMatrix::save(std::string filename) {
+    std::ofstream out_file (filename.c_str());
+    if (out_file.is_open())	{
+        for (uint c = 0; c < col; c++){
+            for (uint r = 0; r < row; r++){
+                out_file << value[c*row + r] << "\t";
+            }
+            out_file << std::endl;
+        }
+        out_file.close();
+    } else {
+        std::cout << "Unable to open file " << filename;
+    }   			
 }
 #endif
