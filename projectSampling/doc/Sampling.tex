@@ -588,7 +588,7 @@ and time consuming of our algorithms on real data sets.
 
 \subsection{Data and Preprocessing}
 We evaluate our algorithms on some real date sets:
-DeliciousBookmarks
+Delicious Bookmarks
 \footnote{http://www.delicious.com}(delicious for short),
 Last.FM\footnote{http://www.lastfm.com}(lastfm),
 MovieLens\footnote{http://www.grouplens.org}+IMDb\footnote{http://www.imdb.com }/
@@ -623,65 +623,16 @@ We use the maximum of $t'$
 to show the performance of our core$^k$ sampling algorithms on finding top-$t$ values.
 For each number of samples, we do $10$ times experiments independently,
 and the average result is used.
-The recall of each data set is show in ~\Figs{ml_2k_recall}{delicious_recall}
+The recall of each data set is show in ~\Fig{recall}
 and the time consuming shown in ~\Fig{times}.
 \begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_ml_2k_recall}\\
-  \caption{Recall for different methods in ml-2k data sets.}
-  \label{fig:ml_2k_recall}
+  \includegraphics[width=3.3in]{./img/fig_recall}\\
+  \caption{Recall for different methods.}
+  \label{fig:recall}
 \end{figure}
-\begin{figure}[H]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_ml_10m_recall}\\
-  \caption{Recall for different methods in ml-10m data sets.}
-  \label{fig:ml_10m_recall}
-\end{figure}
-\begin{figure}[H]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_lastfm_recall}\\
-  \caption{Recall for different methods in lastfm data sets.}
-  \label{fig:lastfm_recall}
-\end{figure}
-\begin{figure}[H]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_delicious_recall}\\
-  \caption{Recall for different methods in delicious data sets.}
-  \label{fig:delicious_recall}
-\end{figure}
-%\begin{figure}[H]
-%  \centering
-%  % Requires \usepackage{graphicx}
-%  \includegraphics[width=2.5in]{./img/fig_ml_2k_times}\\
-%  \caption{Time for ml-2k data set.}
-%  \label{fig:ml_2k_times}
-%\end{figure}
-%\begin{figure}[H]
-%  \centering
-%  % Requires \usepackage{graphicx}
-%  \includegraphics[width=2.5in]{./img/fig_ml_10m_times}\\
-%  \caption{Time for ml-10m data set.}
-%  \label{fig:ml_10m_times}
-%\end{figure}
-%\begin{figure}[H]
-%  \centering
-%  % Requires \usepackage{graphicx}
-%  \includegraphics[width=2.5in]{./img/fig_lastfm_times}\\
-%  \caption{Time for lastfm data set.}
-%  \label{fig:lastfm_times}
-%\end{figure}
-%\begin{figure}[H]
-%  \centering
-%  % Requires \usepackage{graphicx}
-%  \includegraphics[width=2.5in]{./img/fig_delicious_times}\\
-%  \caption{Time for delicious data sets.}
-%  \label{fig:delicious_times}
-%\end{figure}
-\begin{figure}[]
+\begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=3.25in]{./img/fig_times}\\
@@ -691,7 +642,7 @@ and the time consuming shown in ~\Fig{times}.
 \subsubsection{Sampling with scores}
 The score we introduced in \Eqn{score} in used for the pre-sorting strategy.
 We use a budget $t' = s/10$ to do sampling on data lastfm.
-The recall shown in \Fig{budget}.
+The recall shown in \Fig{budget}, and the time saved is drawn in \Fig{times}.
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
@@ -699,7 +650,14 @@ The recall shown in \Fig{budget}.
   \caption{Recall for different methods in delicious data sets with budget $t'=s/10$.}
   \label{fig:budget}
 \end{figure}
-Compare with the result in \Fig{lastfm_recall}, we can notice that the scores of coordinate
+\begin{figure}[ht]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{./img/fig_lastfm_times_budget}\\
+  \caption{Recall for different methods in delicious data sets with budget $t'=s/10$.}
+  \label{fig:time_budget}
+\end{figure}
+Compare with the result in \Fig{recall}, we can notice that the scores of coordinate
 do save the orders.
 \subsubsection{Sampling for queries}
 We use the coordinates pools to save the computation.
