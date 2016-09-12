@@ -114,7 +114,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *pb = (double *)malloc(Brow*sizeof(double));
 	memset( pa, 0, Arow*sizeof(double));
 	memset( pb, 0, Brow*sizeof(double));
-	std::map<point2D, double> IrJc;
+	//std::map<point2D, double> IrJc;
+	TPoint2DMap IrJc;
 	size_t offset = 0;
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){

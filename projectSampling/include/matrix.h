@@ -66,6 +66,19 @@ public:
 	uint x;
 	uint y;
 };
+struct hashFunc2d{
+    size_t operator()(const point2D &k) const{
+    size_t h1 = std::hash<uint>()(k.x);
+    size_t h2 = std::hash<uint>()(k.y);
+    return (h2 ^ (h1 << 1));
+    }
+};
+struct equalsFunc2d{
+  bool operator()( const point2D& lhs, const point2D& rhs ) const{
+    return (lhs.x == rhs.x) && (lhs.y == rhs.y);
+  }
+};
+typedef std::unordered_map<point2D, double, hashFunc2d, equalsFunc2d> TPoint2DMap;
 
 class point3D
 {

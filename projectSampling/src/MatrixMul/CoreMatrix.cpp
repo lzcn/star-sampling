@@ -139,7 +139,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
-	std::map<point2D, double> IrJc;
+	//std::map<point2D, double> IrJc;
+	TPoint2DMap IrJc;
 	offset = 0;
 	for(uint r = 0; r < rankSize; ++r){
 		for(size_t s = 0; s < freq_r[r]; ++s){
