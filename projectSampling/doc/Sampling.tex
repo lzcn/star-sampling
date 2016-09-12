@@ -19,7 +19,7 @@ Email: \{yanghu,eezeng\}@uestc.edu.cn
 }
 %
 %\usepackage{amsfonts}
-\usepackage{mathrsfs}
+%\usepackage{mathrsfs}
 \usepackage{amsthm,amsmath,amssymb}
 % \usepackage{bm}
 \usepackage{stmaryrd}
@@ -43,7 +43,7 @@ Email: \{yanghu,eezeng\}@uestc.edu.cn
 %\usepackage[mathscr]{eucal}
 \newcommand{\T}[1]{\mathcal{#1}}
 
-\newcommand{\KT}[1]{\left\llbracket #1 \right\rrbracket}
+\newcommand{\KT}[1]{\llbracket #1 \rrbracket}
 
 %% -------
 %% Vector
@@ -92,8 +92,8 @@ Email: \{yanghu,eezeng\}@uestc.edu.cn
 
 \newcommand{\coord}{(i_1,i_2,\ldots,i_N)}
 \newcommand{\WeightR}{\Nrocl{1}{r}\ldots\Nrocl{N}{r}}
-\newcommand{\predx}{\widehat{x}_{\V{i}}}
-\newcommand{\predxn}{\widehat{x}_{\V{i},n}}
+\newcommand{\predx}{\hat{x}_{\V{i}}}
+\newcommand{\predxn}{\hat{x}_{\V{i},n}}
 
 \newtheorem{definition}{Definition}
 \newtheorem{lemma}{Lemma}
@@ -105,12 +105,12 @@ Email: \{yanghu,eezeng\}@uestc.edu.cn
 \section{Abstract}
 The technique of matrix/tensor factorization has been used widely to describe the 
 interaction between objects in the application of recovering missing entries.
-And the finding the most relevant of two or more objects is the central concerns.
+And finding the most relevant of two or more objects is the central concerns.
 Since the target matrix/tensor is not obtain directly in application, instead,
 sets of instance vectors are the output for data representation.
-It is need to search in all possibilities to find the related objects.
+It is need to search in all possibilities to find the most related objects.
 However, the number of instances is always in vast scale, 
-the naive full search is time-consuming.
+and the naive full search is time-consuming.
 In this work, we study the problem of efficiently
 identifying the top entries of a tensor via sampling method.
 
@@ -212,34 +212,18 @@ When compared to previous approach for matrix sampling, our methods require much
 
 \subsection{Notations}
 
-We use the norm $\norm{*}{1}$ operation refereed in diamond sampling.
+We use the norm $\norm{\cdot}{1}$ operation refereed in diamond sampling.
 For a vector $\V{v}\in \mathbb{R}^n$ or a matrix $\M{M}\in \mathbb{R}^{m\times n}$.
 It is defined as:
-\[
+\begin{align}
+    \label{eq:norm}
     \norm{\V{v}}{1} = \sum_{i=1}^{n}|v_i|
     \ \  {\rm and} \ \
     \norm{\M{M}}{1} = \sum_{i=1}^{m}\sum_{j=1}^{n}|m_{ij}|
-\]
+\end{align}
 
 
 \section{Core Sampling}
-The CP decomposition is a special case of Tucker decomposition
-when the core tensor is a diagonal tensor and the entries along the superdiagonal are ones.
-The core tensor indicates the interaction between factor matrices.
-For CP model, we represent the core tensor by $R$ vertices and call it core partition,
-and all factor matrices are adjoined to that partition.
-More details are shown in this subsection via graph representation.
-
-\subsection{Graph Presentation for Factor Matrices}
-Consider one of the factor matrix $\Mn{A}{n}$ in \Eqn{CPDecomposition}
-with size $L_n \times R$,
-it is represented by a weighted bipartite graph shown within the dash-dot box on ~\Fig{GraphMatrices}.
-The lower partition, simply named $n$-th factor partition, has $L_n$ vertices referred to $v^n_{i_n}$
-and the $R$ vertices in core partition to $v^c_r$.
-The weight of edge $e^n_{i_nr} = \{v^{n}_{i_n},v^c_r\}$ is set to $a^{(n)}_{i_nr}$.
-Further, the $N$ factor matrices share the core partition.
-So those $N$ factor matrices are represented by a weighted (N+1)-partite graph.
-In the lower part of ~\Fig{GraphMatrices}, we have $N$ partitions of vertices.
 \begin{figure}[t]
   \centering
   % Requires \usepackage{graphicx}
@@ -247,306 +231,165 @@ In the lower part of ~\Fig{GraphMatrices}, we have $N$ partitions of vertices.
   \caption{Graph Presentation of Factor Matrices}
   \label{fig:GraphMatrices}
 \end{figure}
-\subsection{Sampling Mechanism}
-
-We start our sampling algorithm from the core partition
-by assigning a particular probability to each vertices,
-then we sample the index $r$ with designed distribution.
-After the vertex $v^c_r$ has been sampled,
-we continuely sample $N$ vertices $v^{n}_{i_n}$ from each factor partitions
-basing on the weight of edge.
-In addition, we assign a score to the coordinate $\coord$ that has been sampled.
-We do $s$ iterations to get a set of coordinate-value pairs.
-The probabilities are designed to make the expectation of estimation value $\widehat{x}_\V{i}$ 
-after sampling be the actual prediction $x_\V{i}$ in scale.
-%The sampling method is shown in \Alg{CoreSampling} and will be explained in details
-%in this subsections.
-%\begin{algorithm}[ht]
-%    \caption{Core Sampling with factor matrixes}
-%    \label{alg:CoreSampling}
-%    Given factor matrix $\M{A}^{(n)}\in \mathbb{R}^{L_n\times R}, n = 1,2,\ldots,N$.\\
-%    Let $s$ be the number of samples.
-%    \begin{algorithmic}[1]
-%    \For{$r\in{1,2,\ldots,R}$}
-%    \State $w_r \leftarrow \Nrocl{1}{r}\norm{\Vacol{2}}{1}\ldots\Nrocl{N}{r}$
-%    \label{line:Weight}
-%    \EndFor
-%    \For{$ \ell = 1,\ldots,s$}
-%    \State Sample $r$ with probability $w_r/\norm{\V{W}}{1}$
-%    \label{line:CorePartition}
-%    \For {$n = 1,...,N$}
-%    \label{line:ItemPartitionFor}
-%    \State Sample $i_n$ with probability $|\anr{n}{r}|/\norm{\Vacol{n}}{1}$
-%    \EndFor
-%    \label{line:ItemPartitionEnd}
-%    \State
-%    \label{line:Scoring}
-%        $\score{\ell} \leftarrow sgn(\anr{1}{r}\cdots\anr{N}{r})$
-%    \If {$\V{i}=\coord$ has not been sampled}
-%    \State  Create $\predx \leftarrow \score{\ell} $
-%    \Else
-%    \State $\predx \leftarrow \predx + \score{\ell}$
-%    \EndIf
-%    \EndFor
-%    \label{line:ScoringEnd}
-%    \end{algorithmic}
-%\end{algorithm}
-
-\subsubsection{Probabilities}
-The weights we designed for vertices in core partition are:
+\subsection{Sampling basic}
+The idea of the randomized approach is 
+to sample the entries of the tensor according to some probability distribution 
+so that the larger the entry, the more probable it is picked. 
+To achieve this, we use a (N+1)-partite graph to represent the factor matrices
+$\Mn{A}{1},\ldots,\Mn{A}{N}$ in \Eqn{CPDecomposition}.
+Consider one of the factor matrix $\Mn{A}{n}\in \mathbb{R}^{L_n \times R}$,
+it is represented by a weighted bipartite graph shown within the dash-dot box on ~\Fig{GraphMatrices}.
+We first use $R$ nodes indexed by $r\in[R]$ to denote the $R$ columns in the matrices. 
+We use the notion $[R]$ to denote $\{1,\ldots,R\}$. 
+These nodes constitute the core partition of the graph. 
+Then for each $\textbf{A}^{(n)}\in\mathbb{R}^{L_n\times R}$, $L_n$ nodes, 
+indexed by $i_n\in[L_n]$, are used to represent the rows. 
+They constitute a peripheral partition. 
+Edge $(i_n,r)$ exists if the entry $a_{i_nr}^{(n)}$ is nonzero.
+To sample an entry, we sequentially pick each of its indices. 
+We start the sampling from the core partition. 
+We first assign some weights to the nodes in the core partition. 
+For $r\in[R]$, let
 \[
     w_r = \WeightR
 \]
-%which is shown in ~\AlgLine{CoreSampling}{Weight}.
-
-So in each iteration, we sample the index $r$
-with probability $w_r/\norm{\V{w}}{1}$.
-%(~\AlgLine{CoreSampling}{CorePartition}).
-Then repeat $N$ times,
-walk form the vertex $v^c_r$ to $N$-th factor partitions with probability
-$|\anr{n}{r}|/\norm{\Vacol{n}}{1}$,
-%(~\AlgLines{CoreSampling}{ItemPartitionFor}{ItemPartitionEnd}),
-after which vertices $i_1,\ldots,i_N$ are sampled.
-In one iteration, we use $\epsilon_{\V{i},r}$ to represent the event that
-the coordinate $\V{i}$ and $r$ have been sampled,
-and event $\epsilon_{\V{i}}$ for coordinate $\V{i}$ occurred.
-\subsubsection{Scores}
-We highlight a point that the scores we assigned to sampled indexes are used for approximation.
-For finding task, we can just record the coordinate that has been sampled.
-We use scores for the completeness of our algorithms.
-The score for occurred coordinate $\V{i} $ is:
+where $\norm{\cdot}{1}$is defined in \Eqn{norm}. 
+We sample the nodes in core partition with probability $w_r/\norm{\V{W}}{1}$. 
+After one core node is chosen, 
+$N$ peripheral nodes, one from each peripheral partition, are picked, 
+where the index $i_n$ is drawn with probability $|\anr{n}{r}|/\norm{\Vacol{n}}{1}$. 
+After an index set $\V{i}=(i_1,\ldots,i_N)$ is obtained, 
+a score is computed that
 \[
 \score{\ell}  = sgn(\anr{1}{r}\cdot\anr{2}{r}\cdots\anr{N}{r})
 \]
-where $\ell$ is the $\ell$-th iteration.
-If this coordinate has not been sampled previously,
-create a container $\predx = \score{\ell}$.
-Otherwise, increase $\predx$ by $\score{\ell}$.
-%(~\AlgLines{CoreSampling}{Scoring}{ScoringEnd}).
-For $\V{i}$ that not be sampled in $\ell$-th turn,
-we can assume that $\score{\ell}=0$,
-so that the final estimation value of each coordinate is
-\begin{equation}\label{eq:score}
-\predx = \sum_{\ell=1}^{s} \score{\ell}
-\end{equation}
+where $\ell$ denotes the $\ell$-th sample. 
+If the index $\boldsymbol{i}$ has not been sampled before, 
+a container is created with $\predx = \score{\ell}$. 
+Otherwise, we increase $\predx$ by $\score{\ell}$. 
+The procedure is shown in \Alg{CoreSampling}
 
-\subsection{Extract Top-$t$ Largest Values}
-After sampling, we get a set of coordinates with estimation value $\predx$,
-denoted by
+Let $\Psi_p = \{\V{i}_p|p = 1,2,\ldots,P\}$ 
+denote the set of unique indices that have been sampled. 
+$P\leq s$ since some $\boldsymbol{i}$ may be picked more than once. 
+There are two strategies for identifying the $t$ largest entries from the samples. 
+In the first one, 
+we directly compute the exact entry value for each sample in $\Psi_{p}$ using \Eqn{CPValue}
+and then find the $t$ largest ones. 
+Inspired by previous works, in the second strategy, 
+we utilize the scores $\predx$ obtained during sampling. 
+Computing the exact entry value using \Eqn{CPValue} for all sampled indices 
+would be time consuming when is $R$ and $N$ are large, 
+while the load for computing $\predx$ is much lighter. 
+Moreover, as we show through theoretical analysis later, 
+the expectation of $\predx$ is proportional to the exact value $x_{\V{i}}$. 
+Therefore, we can use these estimated scores to filter out the relatively small ones 
+and only compute the exact values for a subset of the sampled indices. 
+Specifically, we denote the subset by $\Psi_{t'},t'>t$, 
+that contains $t'$ indices corresponding to the $t'$ largest $\predx$, i.e.
 \[
-    \Psi_p = \{\V{i}_p|p = 1,2,\ldots,P\}
-\]
-The size of $\Psi_p$ is $P$.
-Since $\V{i}$ may occurred more than once, $P$ is always less or equal to $s$.
-
-There are two strategies for extracting top-$t$ largest values.
-The naive strategy is computing all actual values of coordinates in $\Psi_p$,
-and extract the top-$t$ largest actual values via sorting.
-We call it the full-computing strategy.
-The other one is called pre-sorting strategy,
-which cooperates with the estimation value $\predx$.
-It sort the coordinates in $\Psi_p$ according to scores $\widehat{x}_{\V{i}_p}$
-and extract the top-$t'$ coordinates which gives
-\[
-    \Psi_{t'} = \{ \V{i} | \predx \geq \widehat{x}_{\V{i'}},
+    \Psi_{t'} = \{ \V{i} | \predx \geq \hat{x}_{\V{i'}},
                            \forall i'\in \Psi_{p} \backslash \Psi_{t'}
                 \}
-\]  with size $|\Psi_{t'}| = t'\geq t$.
-Then the full-computing strategy is carried out among $\Psi_{t'}$.
-Then we compute the actual value $x_{\V{i}}$ of $\V{i}$ in set $\Psi_{t'}$.
+\] 
+Then the exact values  are computed only for $\boldsymbol{i}$ in $\Psi_{t'}$. 
+And the $t$ indices with the largest $x_{\V{i}}$ are extracted.
 
-%And the final top-$t$ largest value's coordinates will be
-%\[
-%    \Psi_{t} =
-%                \{ \V{i} | x_{\V{i}}\geq x_{\V{i'}},
-%                           \forall i' \in \Psi_{t'} \backslash \Psi_{t}
-%                \}
-%\]
-The use of budget $t'$ is a tradeoff between accuracy and computation.
-The recall of full-computing strategy is determined by
-the probability $p(\epsilon_{\V{i}})$ of coordinate $\V{i}$ in each iteration.
-For the task of finding one coordinate, it is a binomial distribution$\sim B(s,p(\epsilon_{\V{i}}))$.
-So the higher probability $p(\epsilon_{\V{i}})$ of largest elements is,
-the more likely it will be sampled finally,
-and thus the higher recall will be.
-The pre-sorting strategy do save computation,
-however, the recall will less than the full-computing in statistical.
-That ideal case is that the final score keeps the same order of actual values.
+The chose of $t'$ is a tradeoff between accuracy and computation. 
+The recall of the first direct computing strategy is determined by the probability 
+that indices of the largest entries are sampled during each iteration. 
+The higher the probabilities for the top entries, the more likely they will be sampled 
+and thus the higher the recall. 
+The second strategy will save some computation. 
+However, since the scores are only estimations of the true entry values, 
+some orders between the entries may not be kept 
+that some top entries may be missed during filtering, 
+which will lead to a slightly lower recall than the first strategy.
 
-\subsection{Extension of Core Partition}
-The occurrence probability $p(\epsilon_{\V{i}})$ determine the upper bound of recall.
-So we focus on the factor $p(\epsilon_{\V{i}})$ for significantly improving the performance.
-To do so, we introduce the core partition extension to sampled the index pair $(r,r')$,
-instead of one index $r$.
-
-We expend the core partition into $2$ dimension with size $R\times R$.
-The vertices after extension are represented by $v^c_{r,r'}$.
-And the same sampling framework is used to find the coordinates $\V{i}$.
-That is start from the expended core partition by sampling the vertex $v^c_{r,r'}$
-and then the $\coord$ under $(r,r')$.
-Similarly, for the hign dimension extension,
-we extend the core partition into $k$ dimension.
-For convience, we call it ${\rm core}^k$ extension,
-thus the original sampling method is the simplest one named as ${\rm core}^1$.
-The vertices in ${\rm core}^k$ partition is represented by $v^c_{\V{r}}$,
-where $\V{r}$ is short for $(r_1,r_2,\ldots,r_k)$.
-The details for realizing ${\rm core}^k$ will be introuced in following.
-
-Fistly, we assign a weight to each vertex $v^c_\V{r}$ in the ${\rm core}^k$ partition:
-\[
-w_{\V{r}} = \norm{\VnC{e}{1}{*\V{r}}}{1}\cdots\norm{\VnC{e}{N}{*\V{r}}}{1}
-\]\
-where
-\[
-\norm{\VnC{e}{n}{*\V{r}}}{1} = \sum_{i_n}|\anr{n}{r_1}\cdots\anr{n}{r_k}|
-\]
-The algorithm for ${\rm core}^k$ sampling is shown in \Alg{CoreExtensionSampling}.
-We can see that the extension in core partition equals to expanding
-the factor matrix $\Mn{A}{n}\in\mathbb{R}^{L_n\times R}$
-to a new extension matrix $\Mn{E}{n}\in\mathbb{R}^{L_n\times R^k}$,
-whose elements satisfy
-\[
-\Sca{e}{n}{\V{r}} = \anr{n}{r_1}\cdots\anr{n}{r_n}
-\]
-Using the original core sampling to deal with the extension matrices obtains same results.
-The ${\rm core}^k$ sampling makes the probability $p(\epsilon_{\V{i}})$ of coordinate proportioning to $x^k_{\V{i}}$.
 \begin{algorithm}[ht]
-    \caption{${\rm Core}^k$ Sampling with factor matrixes}
-    \label{alg:CoreExtensionSampling}
+    \caption{Core Sampling with factor matrixes}
+    \label{alg:CoreSampling}
     Given factor matrix $\M{A}^{(n)}\in \mathbb{R}^{L_n\times R}, n = 1,2,\ldots,N$.\\
-    Let $s$ be the number of samples, $k$ for the extension order.
+    Let $s$ be the number of samples.
     \begin{algorithmic}[1]
-    \For{$\V{r}\in{\underbrace{R\times \cdots \times R}_{k}}$}
-    \For{$n = 1,...,N$}
-    \State $\norm{\VnC{e}{n}{*\V{r}}}{1} = \sum_{i_n}|\anr{n}{r_1}\cdots\anr{n}{r_k}|$
-    \EndFor
-    \State $w_{\V{r}} = \norm{\VnC{e}{1}{*\V{r}}}{1}\cdots\norm{\VnC{e}{N}{*\V{r}}}{1}$
+    \For{$r\in{1,2,\ldots,R}$}
+    \State $w_r \leftarrow \Nrocl{1}{r}\norm{\Vacol{2}}{1}\ldots\Nrocl{N}{r}$
+    \label{line:Weight}
     \EndFor
     \For{$ \ell = 1,\ldots,s$}
-    \State Sample $\V{r}$ with probability $w_\V{r}/\norm{\V{W}}{1}$
+    \State Sample $r$ with probability $w_r/\norm{\V{W}}{1}$
+    \label{line:CorePartition}
     \For {$n = 1,...,N$}
-    \State Sample $i_n$ with probability $|\Sca{e}{n}{\V{r}}|/\norm{\VnC{e}{n}{*\V{r}}}{1}$
+    \label{line:ItemPartitionFor}
+    \State Sample $i_n$ with probability $|\anr{n}{r}|/\norm{\Vacol{n}}{1}$
     \EndFor
+    \label{line:ItemPartitionEnd}
     \State
-        $\score{\ell} \leftarrow sgn(\Sca{e}{1}{\V{r}}\cdots\Sca{e}{N}{\V{r}})$
+    \label{line:Scoring}
+        $\score{\ell} \leftarrow sgn(\anr{1}{r}\cdots\anr{N}{r})$
     \If {$\V{i}=\coord$ has not been sampled}
     \State  Create $\predx \leftarrow \score{\ell} $
     \Else
     \State $\predx \leftarrow \predx + \score{\ell}$
     \EndIf
     \EndFor
+    \label{line:ScoringEnd}
     \end{algorithmic}
 \end{algorithm}
 
-\section{Core Sampling for Queries}
-In recommendation system,
-it is also required to find every the top-$t$ relevant items for a set of users.
-For consistency,
-say $\M{A}^{(1)}$ stands for the querying users,
-and the rest $N-1$ matrices $\M{A}^{(n)},n=2,\ldots,N$ are for items.
-Each row in matrix $\M{A}^{(1)}$ represents a particular user vector $\V{u}$.
-And the $N-1$ order tenor in ~\Eqn{RankTensorCP}
-represents the predicted ranking score of this user for all item combinations.
-\begin{equation}\label{eq:RankTensorCP}
-\T{X}_{\V{u}} \approx \KT{\V{u},\Mn{A}{2},\cdots,\Mn{A}{N}} 
-\end{equation}
-It is an exception to replace one factor matrix by a single vector in \Eqn{CPDecomposition}.
-However, when we have a lots of queries to process,
-the previous users will have useful informations for the next user to do sampling.
-The most noted one is that
-the probabilitied on walking form core partition to factor partitions are same for all users.
-And the biggest difference between two users is the weight of vertices in core partition,
-in other word,
-the frequency number $c_{\V{r}}$ of each $v^c_{\V{r}}$ is expected to be sampled.
-We define $m$ coordinates pools $\V{g}_1,\V{g}_2,\ldots,\V{g}_{m}$ to save the occurred $\V{i}$ for the next user.
-For ${\rm core}^k$ extension $m = R^k$,
-and the algorithm for query sampling is show in ~\Alg{QuerySampling}.
+\subsection{Theoretical Analysis}
 
-\begin{algorithm}[ht]
-    \caption{Finding top-$t$ tuples for a query}
-    \label{alg:QuerySampling}
-        Given factor matrix $\M{A}^{(n)}\in \mathbb{R}^{L_n\times R}, n = 1,2,\ldots,N$.
-        And $\M{A}^{(1)}$ is the set of quering users.
-        Let $s$ be the number of samples, $m=R^k$.
-    \begin{algorithmic}[1]
-    \State Initialize $m$ empty pools $\V{g}_1,\V{g}_2,\ldots,\V{g}_m$
-    \State Initialize $c_{\V{r}} = 0$ for all $\V{r}$.
-    \For {$i_1 =1,2,\ldots,L_1$}
-    \State Let query $\V{u}=\VnC{a}{1}{i_1*}$
-    \ForAll{$\V{r}$}
-    \State $w_\V{r} = |u_{r_1}\cdots u_{r_k}|$
-    \EndFor
-    \For {$\ell = 1,\ldots,s$}
-    \State Sample $\V{r}$ with probability $w_\V{r}/\norm{\V{W}}{1}$.
-    \label{line:Indexes}
-    \State  Increment $c_{\V{r}}$.
-    \EndFor
-    \ForAll {$\V{r}$}
-    \If {$c_\V{r} > |\V{g}_\V{r}|$ }
-    \State Sample $c_{\V{r}} - |\V{g}_{\V{r}}|$ coordinates into $\V{g}_{\V{r}}$.
-    \EndIf
-    \State Use $c_{\V{r}}$ coordinates in $\V{g}_{\V{r}}$ and compute scores.
-    \EndFor
-    \State Post-processing for finding top-$t$ tuples of $\V{u}$.
-    \EndFor
-    \end{algorithmic}
-\end{algorithm}
-\section{Theoretical Analysis}
-
-Until now, we just give the result without any proofs.
-In this section,
-we give the probabilities of coordinates $p(\epsilon_{\V{i}})$, 
-the expectation of scores in our algorithms and two useful error bounds.
-
-\subsection{Probability of Coordinates}
-In each iteration, one vertex $v^c_{\V{r}}$ from ${\rm core}^k$ partition,
-and $N$ vertices from other partitions will be sampled.
-And notations $\epsilon_{\V{i},\V{r}}$ and $\epsilon_{\V{i}}$ are the corresponding random events.
+In this subsection, we provides a theoretical analysis of our sampling algorithms. 
+In one iteration, we use $\epsilon_{\V{i},r}$ to represent the event that
+the coordinate $\V{i}$ and $r$ have been sampled,
+and event $\epsilon_{\V{i}}$ for coordinate $\V{i}$ occurred.
+We first analyze the probability $p(\epsilon_{\V{i}})$ that an entry is sampled by the sampling algorithms and then the expectation of the scores we computed during sampling. We also prove error bound on our estimate.
 
 \begin{lemma}\label{lem:Probability}
-    Suppose all factor matrices are nonnegative.
-    In $core^k$ sampling, $p(\epsilon_{\V{i}})$ equals to $x^k_{\V{i}}/\norm{\V{w}}{1}$.
+    Suppose all factor matrices are nonnegative,
+    $p(\epsilon_{\V{i}})$ equals to $x_{\V{i}}/\norm{\V{w}}{1}$.
 \end{lemma}
 \begin{proof}
 The probability $\epsilon_{\V{i}}$ is the marginal distribution of $p(\epsilon_{\V{i},r})$,
 so we have:
 \begin{align*}
 p(\epsilon_{\V{i}})
-& = \sum_{\V{r}} p(\epsilon_{\V{i},\V{r}}) \\
-%& = \sum_{\V{r}} p({\rm pick\ }\V{r})p({\rm pick\ }i_1|\V{r})\cdots p({\rm pick\ }i_N|\V{r})\\
-& = \sum_{\V{r}} \frac{w_{\V{r}}}{\norm{\V{W}}{1}}
-    \frac{|\Sca{e}{1}{\V{r}}|}{\norm{\VnC{e}{n}{*\V{r}}}{1}}\ldots\frac{|\Sca{e}{N}{\V{r}}|}{\norm{\VnC{e}{N}{*\V{r}}}{1}}\\
-& = \sum_{\V{r}} \frac{\Sca{e}{1}{\V{r}}\cdots\Sca{e}{N}{\V{r}}}{\norm{\V{W}}{1}}\\
-& = \sum_{r}\frac{(\anr{1}{r}\cdots\anr{N}{r})^k}{\norm{\V{W}}{1}}
-  = \frac{x^k_{\V{i}}}{\norm{\V{w}}{1}}
+& = \sum_{r} p(\epsilon_{\V{i},r}) \\
+%& = \sum_{r} p({\rm pick\ }r)p({\rm pick\ }i_1|r)\cdots p({\rm pick\ }i_N|r)\\
+& = \sum_{r} \frac{w_{r}}{\norm{\V{W}}{1}}
+    \frac{|\Sca{a}{1}{r}|}{\norm{\VnC{a}{n}{*r}}{1}}\ldots\frac{|\Sca{a}{N}{r}|}{\norm{\VnC{a}{N}{*r}}{1}}\\
+& = \sum_{r} \frac{\Sca{a}{1}{r}\cdots\Sca{a}{N}{r}}{\norm{\V{W}}{1}}
+  = \frac{x_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
 \end{proof}
-The probability vector $\V{w}$ is different when different $k$ is used.
 
-\subsection{Expectation of Scores}
-In this part, we show the expectation of scores is an approximation of actual value in scale.
+\subsubsection{Expectation of Scores}
+For $\V{i}$ that not be sampled in $\ell$-th turn,
+we can assume that $\score{\ell}=0$,
+so that the final approximation value of each coordinate is
+\begin{equation}\label{eq:score}
+\predx = \sum_{\ell=1}^{s} \score{\ell}
+\end{equation}
+
 \begin{lemma}\label{lem:Expectation}
-The expectation of approximation $\widehat{x}_{\V{i}}$ in $core^k$ sampling equals to $sx^k_{\V{i}}/\norm{\V{w}}{1}$.
+The expectation of $\predx$ equals to $sx_{\V{i}}/\norm{\V{w}}{1}$.
 \end{lemma}
 \begin{proof}
     The approximation value is shown in ~\Eqn{score},
     with the independence of $\score{\ell}$ in different iterations $\ell$,
-    the expectation of $\widehat{x}_{\V{i}}$ is:
+    the expectation of $\hat{x}_{\V{i}}$ is:
 \begin{align*}
 \mathbb{E}[\predx]
-& = \sum_{\ell=1}^{s}\mathbb{E}[\score{\ell}] = \sum_{\ell=1}^{s}\sum_{\V{r}} p(\epsilon_{\V{i},\V{r}})\score{\ell} \\
-& = s\sum_{\V{r}} \frac{|\enr{1}{r}\cdots\enr{N}{r}|}{\norm{\V{W}}{1}}
-                  sgn(\enr{1}{r}\cdots\enr{N}{r})\\
-& = s\sum_{\V{r}} \frac{\enr{1}{r}\cdots\enr{N}{r}}{\norm{\V{W}}{1}}\\
-& = s\sum_{r}\frac{(\anr{1}{r}\cdots\anr{N}{r})^k}{\norm{\V{W}}{1}}
-= \frac{sx^k_{\V{i}}}{\norm{\V{w}}{1}}
+& = \sum_{\ell=1}^{s}\mathbb{E}[\score{\ell}] = \sum_{\ell=1}^{s}\sum_{r} p(\epsilon_{\V{i},r})\score{\ell} \\
+& = s\sum_{r} \frac{|\anr{1}{r}\cdots\anr{N}{r}|}{\norm{\V{W}}{1}}
+                  sgn(\anr{1}{r}\cdots\anr{N}{r})\\
+& = s\sum_{r} \frac{\anr{1}{r}\cdots\anr{N}{r}}{\norm{\V{W}}{1}}
+  = \frac{sx_{\V{i}}}{\norm{\V{w}}{1}}
 \end{align*}
 \end{proof}
-By \Lem{Expectation}, we notice that the approximation after sampling
-is an estimation of the actual prediction value.
-So we can use the $\widehat{x}_{\V{i}}$ to approximate the actual values $\V{x}_{\V{i}}$.
 
-\subsection{Error Bounds}
+\subsubsection{Error Bounds}
+There are two error bounds showing how many samples we demand to get a reasonable result. 
 \begin{theorem}\label{theo:ObservationBound}
 Fix error probability $\sigma \in (0,1)$.
 Assuming all entries in factor matrices are nonnegative.
@@ -563,18 +406,18 @@ can used to approximate ${\rm Prob}(x\geq1)$.
 That is ${\rm Prob}(x\geq1) = 1-{\rm Prob}(x=0)\approx 1-e^{-sp(\epsilon_{\V{i}})} \geq 1-\sigma$,
 which gives $s \geq \ln(1/\sigma)/p(\epsilon_{\V{i}})$.
 \end{proof}
-%The $p(\epsilon_{\V{i}})$ of ${\rm core}^k$ sampling is shown in \Lem{Probability}.
+%The $p(\epsilon_{\V{i}})$ of core$^k$ sampling is shown in \Lem{Probability}.
 %So with the high order extension $k$, the recall will increase when we fix the number of sample.
 \begin{theorem}\label{theo:Bound}
 Fix $\delta > 0$ and error probability $\sigma \in (0,1)$.
 Assuming all entries in factor matrices are nonnegative.
-In $core^k$ sampling, if the number of samples
+If the number of samples
 \[
-    s \geq 3\norm{\V{w}}{1}\log{(2/\sigma)}/(\delta^2 x^k_{\V{i}})
+    s \geq 3\norm{\V{w}}{1}\log{(2/\sigma)}/(\delta^2 x_{\V{i}})
 \]
 then
 \[
-    Pr(|\predx\norm{\V{W}}{1}/s - x^k_{\V{i}}| > \delta x^k_{\V{i}}) \leq \sigma
+    Pr(|\predx\norm{\V{W}}{1}/s - x_{\V{i}}| > \delta x_{\V{i}}) \leq \sigma
 \]
 \end{theorem}
 
@@ -587,27 +430,130 @@ The Chernoff bounds for the sum of Poisson trials shows for any $0 <\delta <1 $:
 \[
     Pr[|\predx - \mu|\geq\delta\mu)] \leq 2\exp{(-\mu\delta^2/3)}
 \]
-where $\mu=\mathbb{E}[\predx]=(sx^k_{\V{i}})/\norm{\V{W}}{1}$.
+where $\mu=\mathbb{E}[\predx]=(sx_{\V{i}})/\norm{\V{W}}{1}$.
 And by the choice of $s$, we have
 $\mu\leq 3\log{(2/\sigma)/\delta^2}$.
 Then
 \[
-    Pr[|\predx-sx^k_{\V{i}}/\norm{\V{W}}{1}|\geq\delta sx^k_{\V{i}}/\norm{\V{W}}{1}] \leq \sigma
+    Pr[|\predx-sx_{\V{i}}/\norm{\V{W}}{1}|\geq\delta sx_{\V{i}}/\norm{\V{W}}{1}] \leq \sigma
 \]
 multiplying by $\norm{\V{W}}{1}/s$ inside the ${\rm Pr}[\cdot]$ gives
 \[
-    Pr(|\predx\norm{\V{W}}{1}/s - x^k_{\V{i}}| > \delta x^k_{\V{i}}) \leq \sigma
+    Pr(|\predx\norm{\V{W}}{1}/s - x_{\V{i}}| > \delta x_{\V{i}}) \leq \sigma
 \]
 \end{proof}
-The ~\Theo{ObservationBound} and ~\Theo{Bound} show that shows that
-to reach a reasonable result of finding or estimate the value $x^k_{\V{i}}$,
-the demand samples for ${\rm core}^k$ sampling is $s\approx \norm{\V{w}}{1}/x_{\V{i}}^k$.
+\Theo{ObservationBound} and \Theo{Bound} show that
+to reach a reasonable result of finding or estimate the value $x_{\V{i}}$,
+the demand samples for core sampling is $s\approx \norm{\V{w}}{1}/x_{\V{i}}$.
+\section{Extension of the basic sampling}
+
+The upper bound of the recall we can obtain 
+depends on the probability distribution for sampling the entries. 
+To achieve better performance, 
+we should improve this distribution by amplifying the odds for the top entries.
+
+Instead of sampling one node $r$ from the core partition, 
+we can pick a pair of nodes $(r,r')$ from the core partition, 
+where $r'$ is sampled with replacement. 
+Then conditioned on $(r,r')$, we sample $N$ nodes, 
+indexed by $(i_1,\ldots,i_N)$ from the peripheral partitions. 
+More generally, we can pick $k$ nodes $(r_1,r_2,\ldots,r_k)$ from the core partition 
+and then draw $N$ peripheral nodes. 
+We name this strategy star$^k$ sampling. 
+The method discussed in previous section is a special case with $k=1$.
+
+By sampling $k$ nodes with replacement from the core partition, we virtually create $R^k$ compound nodes, indexed by $\boldsymbol{r}=(r_1,\ldots,r_k)$. These compound nodes constitute a new partition called core$^k$ partition. To assign probabilities for picking the compound nodes and probabilities for picking a peripheral node given a compound nodes, we extend each factor matrix $\textbf{A}^{(n)}$ with size $L_n\times R$ to a new matrix $\textbf{E}^{(n)}$ with size $L_n\times R^k$. The entries of $\textbf{E}^{(n)}$ are obtained by
+\begin{align}
+\Sca{e}{n}{\V{r}} = \anr{n}{r_1}\cdots\anr{n}{r_k}
+\end{align}
+where we use $\boldsymbol{r}$ to index the columns of $\textbf{E}^{(n)}$. The weight we assign to the compound node $\boldsymbol{r}$ is
+\begin{align}
+w_{\V{r}} = \norm{\VnC{e}{1}{*\V{r}}}{1}\cdots\norm{\VnC{e}{N}{*\V{r}}}{1}
+\end{align}
+with $\mathbf{e}_{\boldsymbol{r}}^{(n)}$ being the an column of $\textbf{E}^{(n)}$ indexed by $\boldsymbol{r}$ and
+\begin{align}
+\norm{\VnC{e}{n}{*\V{r}}}{1} = \sum_{i_n}|\anr{n}{r_1}\cdots\anr{n}{r_k}|
+\end{align}
+The sampling procedure is similar with \Alg{CoreSampling} and we summarize it in \Alg{CoreExtensionSampling}. 
+In star$^k$ sampling, the probability that entry $\boldsymbol{i}$ is sampled is proportional to $x_{\boldsymbol{i}}^k$. Therefore, in star$^k$ sampling, more focus will be put on the top entries.
+
+Note that in the diamond sampling method for matrix, they also sampled two nodes from the core partition. However, the second node $r'$ was sampled after the indices $i_1$ and $i_2$ were picked and none extension of the factor matrices were introduced. As a result, only the estimation $\predx$ was improved but not the probability of picking the top entries.
+
+\begin{algorithm}[ht]
+    \caption{Core$^k$ Sampling with factor matrixes}
+    \label{alg:CoreExtensionSampling}
+    Given factor matrix $\M{A}^{(n)}\in \mathbb{R}^{L_n\times R}, n = 1,2,\ldots,N$.\\
+    Let $s$ be the number of samples, $k$ for the extension order.
+    \begin{algorithmic}[1]
+    \For{$\V{r}\in{\underbrace{R\times \cdots \times R}_{k}}$}
+    \For{$n = 1,...,N$}
+    \State $\norm{\VnC{e}{n}{*\V{r}}}{1} \leftarrow \sum_{i_n}|\anr{n}{r_1}\cdots\anr{n}{r_k}|$
+    \EndFor
+    \State $w_{\V{r}} \leftarrow \norm{\VnC{e}{1}{*\V{r}}}{1}\cdots\norm{\VnC{e}{N}{*\V{r}}}{1}$
+    \EndFor
+    \For{$ \ell = 1,\ldots,s$}
+    \State Sample $\V{r}$ with probability $w_\V{r}/\norm{\V{W}}{1}$
+    \label{line:nodes}
+    \For {$n = 1,...,N$}
+    \State Sample $i_n$ with probability $|\Sca{e}{n}{\V{r}}|/\norm{\VnC{e}{n}{*\V{r}}}{1}$
+    \EndFor
+    \State
+        $\score{\ell} \leftarrow sgn(\Sca{e}{1}{\V{r}}\cdots\Sca{e}{N}{\V{r}})$
+    \If {$\V{i}=\coord$ has not been sampled}
+    \State  Create $\predx \leftarrow \score{\ell} $
+    \Else
+    \State $\predx \leftarrow \predx + \score{\ell}$
+    \EndIf
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+\section{Core Sampling for Queries}
+
+In this section, we present an algorithm for efficiently identifying top entries in sub-arrays of a tensor, which is of particular interest for recommender systems. Without loss of generality, we assume that the first factor matrix $\textbf{A}^{(1)}$ corresponds to users, with each row characterizing a single user. For user $\V{u}=\VnC{a}{1}{i_1*}$, we are interested in top entries in the (N-1)-order tensor $\T{X}_u$, whose CP decomposition is
+\begin{align}
+    \T{X}_{\V{u}} \approx \KT{\V{u},\Mn{A}{2},\cdots,\Mn{A}{N}} 
+\end{align}
+
+To generate recommendations for multiple users, an naive approach is to run the above sampling algorithm independently for different users. However, this is totally unnecessary. We find that for different users, only the probabilities for sampling nodes from the core partition are different. In the following step, they share the same distribution for sampling the peripheral nodes. Based on this observation, for each node in the core partition, we build a pool containing indices $\boldsymbol{i}=(i_2,\ldots,i_N)$ that have been picked give that core node. For a new user, when a core node is chosen, we can directly use the indices kept in its pool and only sample new $\boldsymbol{i}$ when necessary. By sharing indices among users, a huge number of samples can be saved. This procedure is illustrated in~\Alg{QuerySampling}.
+
+\begin{algorithm}[ht]
+    \caption{Finding top-$t$ tuples for a query}
+    \label{alg:QuerySampling}
+        Given factor matrix $\M{A}^{(n)}\in \mathbb{R}^{L_n\times R}, n = 1,2,\ldots,N$.
+        And $\M{A}^{(1)}$ is the set of quering users.
+        Let $s$ be the number of samples, $m=R^k$.
+    \begin{algorithmic}[1]
+    \State Initialize $m$ empty pools $\V{g}_1,\V{g}_2,\ldots,\V{g}_m$
+    \State Initialize $c_{\V{r}} = 0$ for all $\V{r}$.
+    \For {$i_1 =1,2,\ldots,L_1$}
+    \State Let query $\V{u}=\VnC{a}{1}{i_1*}$
+    \ForAll{$\V{r}$}
+    \State $w_\V{r} \leftarrow |u_{r_1}\cdots u_{r_k}|$
+    \EndFor
+    \For {$\ell = 1,\ldots,s$}
+    \State Sample $\V{r}$ with probability $w_\V{r}/\norm{\V{W}}{1}$.
+    \label{line:Indexes}
+    \State  Increment $c_{\V{r}}$.
+    \EndFor
+    \ForAll {$\V{r}$}
+    \If {$c_\V{r} > |\V{g}_\V{r}|$ }
+    \State Sample $c_{\V{r}} - |\V{g}_{\V{r}}|$ coordinates into $\V{g}_{\V{r}}$.
+    \EndIf
+    \State Use $c_{\V{r}}$ coordinates in $\V{g}_{\V{r}}$ and compute scores.
+    \EndFor
+    \State Post-processing for finding top-$t$ tuples of $\V{u}$.
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
 \section{Fast Implementation}
-In this section, we introduce some implementing details to get improvements.
+In this section, we introduce some implementing details to get improvements for sampling.
 \subsection{Core Partiton Sampling}
-During sampling we samples only one vertex $v^c_\V{r}$ in each iteration.
-%like ~\AlgLine{CoreSampling}{CorePartition} and ~\AlgLine{QuerySampling}{Indexes}.
-In practice, instead of sampling $v^c_\V{r}$, we sample the frequency $c_\V{r}$,
+During sampling we samples only one compound nodes $\V{r}$ in each iteration,
+like \AlgLine{CoreExtensionSampling}{nodes} and \AlgLine{QuerySampling}{Indexes}.
+In practice, instead of sampling specific compound nodes $\V{r}$, 
+we sample the frequency $c_\V{r}$ based on the work of Cohen et al,
 so that the expectation $c_\V{r}$ is $\mu_{c_\V{r}}=sw_\V{r}/\norm{\V{w}}{1}$.
 The distribution of $c_\V{r}$ is:
 \begin{equation*}c_\V{r}=
@@ -621,12 +567,12 @@ The distribution of $c_\V{r}$ is:
     \right.
 \end{equation*}
 It requires $O(R^k)$ complexity comparing $O(sk\log{R})$
-for sampling $s$ vertices in ${\rm core}^k$ partition.
+for sampling $s$ vertices in core$^k$ partition.
 \subsection{Extension of Core Partition}
-Using the extension matrices has the same result of ${\rm core}^k$ sampling,
-and when $k$ is small it will be computation saving but storage-costing.
+Using the extension matrices has the same result of core$^k$ sampling,
+and when $k$ is small it will be computation saving.
 Each extension matrix takes extra $O(L_nR^k)$ storage,
-the same storage costing for ${\rm core}^k$ sampling without optimizing.
+the same storage costing for core$^k$ sampling without optimizing.
 Utilizing the frequency sampling, we do save the storage in memory.
 Firstly, $O(R^k)$ in storage is needed for sampling the $c_\V{r}$.
 And for each vertex $v^c_{\V{r}}$,
@@ -645,7 +591,7 @@ We evaluate our algorithms on some real date sets:
 DeliciousBookmarks
 \footnote{http://www.delicious.com}(delicious for short),
 Last.FM\footnote{http://www.lastfm.com}(lastfm),
-MovieLens+IMDb\footnote{http://www.imdb.com }/
+MovieLens\footnote{http://www.grouplens.org}+IMDb\footnote{http://www.imdb.com }/
 Rotten Tomatoes\footnote{http://www.rottentomatoes.com}(ml-2k).
 Those data sets are released in the framework of the 2nd International Workshop (HetRec2011).
 And one larger data sets of MovieLens\cite{Harper2015}:ml-10m.
@@ -654,8 +600,9 @@ We use 5-core of each data set in which all user, item and tag occurred at least
 We use the algorithm in \cite{Rendle_RTF} to train each data set under CP model.
 The factor size $R$ is set to $64$.
 After training, we get three factor matrices for user, item and tag.
+We didn't limit the factor matrices to be nonnegative.
 The statistics of data is shown in ~\Table{Data}.
-\begin{table}[t]
+\begin{table}[]
   \centering
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
@@ -672,8 +619,8 @@ The statistics of data is shown in ~\Table{Data}.
 \end{table}
 
 \subsection{Recall and Time Consuming}
-We use the maximum budget which is the full-strategy
-to show the performance of our ${\rm core}^k$ sampling algorithms on finding top-$t$ values.
+We use the maximum of $t'$
+to show the performance of our core$^k$ sampling algorithms on finding top-$t$ values.
 For each number of samples, we do $10$ times experiments independently,
 and the average result is used.
 The recall of each data set is show in ~\Figs{ml_2k_recall}{delicious_recall}
@@ -681,28 +628,28 @@ and the time consuming shown in ~\Fig{times}.
 \begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 0 650 200]{./img/fig_ml_2k_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_ml_2k_recall}\\
   \caption{Recall for different methods in ml-2k data sets.}
   \label{fig:ml_2k_recall}
 \end{figure}
 \begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 0 650 200]{./img/fig_ml_10m_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_ml_10m_recall}\\
   \caption{Recall for different methods in ml-10m data sets.}
   \label{fig:ml_10m_recall}
 \end{figure}
 \begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 0 650 200]{./img/fig_lastfm_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_lastfm_recall}\\
   \caption{Recall for different methods in lastfm data sets.}
   \label{fig:lastfm_recall}
 \end{figure}
 \begin{figure}[H]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in,viewport = 0 0 650 200]{./img/fig_delicious_recall}\\
+  \includegraphics[width=3.3in,viewport = 0 10 650 200]{./img/fig_delicious_recall}\\
   \caption{Recall for different methods in delicious data sets.}
   \label{fig:delicious_recall}
 \end{figure}
@@ -734,58 +681,41 @@ and the time consuming shown in ~\Fig{times}.
 %  \caption{Time for delicious data sets.}
 %  \label{fig:delicious_times}
 %\end{figure}
-\begin{figure}[H]
+\begin{figure}[]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{./img/fig_times}\\
+  \includegraphics[width=3.25in]{./img/fig_times}\\
   \caption{Time for all data sets.}
   \label{fig:times}
 \end{figure}
-\subsection{Sampling with Budgets}
+\subsubsection{Sampling with scores}
 The score we introduced in \Eqn{score} in used for the pre-sorting strategy.
-We use a budget $t' = s/10$ to do sampiling on data lastfm.
+We use a budget $t' = s/10$ to do sampling on data lastfm.
 The recall shown in \Fig{budget}.
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
-  \includegraphics[width=3.3in]{./img/fig_lastfm_recall_budget}\\
+  \includegraphics[width=3.25in,viewport = 0 10 650 200]{./img/fig_lastfm_recall_budget}\\
   \caption{Recall for different methods in delicious data sets with budget $t'=s/10$.}
   \label{fig:budget}
 \end{figure}
 Compare with the result in \Fig{lastfm_recall}, we can notice that the scores of coordinate
 do save the orders.
-\subsection{Sampling for Queries}
+\subsubsection{Sampling for queries}
 We use the coordinates pools to save the computation.
-And ${\rm core}^2$ extension is uesd 
+And core$^2$ extension is uesd 
 to find the top-$100$ largerst values for queries on date set lastfm.
 The recall and time of each queries on shown in ~\Fig{Queries}.
 \begin{figure}[ht]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=3in]{./img/fig_queries}\\
-  \caption{Recall and time for queries in date set lastfm with $s=10^5$.
+  \caption{Recall and time for queries in date set lastfm with $s=10^6$.
            For better visualization,
            we show every $10$ queries in processing.}
   \label{fig:Queries}
 \end{figure}
-\subsection{Estimation of Values}
-By \Theo{Bound}, we gives the error bound of estimate the actual prediction values.
-We show the performance on data set lastfm with ${\rm core}^3$ sampling and $s=10^8$.
-Since the score $\widehat{x}_{\V{i}}$ is an estimation of $sx^3_{\V{i}}/\norm{\V{w}}{1}$,
-we draw the result of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
-We show the top-$10^4$ pairs with largest scores in ~\Fig{Est}.
-We can notice that there are several actual values that have the same approximation values.
-This is because the sampling algorothm will only distinguish the value with certain gap.
-With high order of extension, this gap will be small. 
-\begin{figure}[ht]
-  \centering
-  % Requires \usepackage{graphicx}
-  \includegraphics[width=3in]{./img/fig_lastfm_est}\\
-  \caption{Plot of pairs $(\norm{\V{w}}{1}\widehat{x}_{\V{i}}/s,x^3_{\V{i}})$.
-          The deshed line is the reference for equality.}
-  \label{fig:Est}
-\end{figure}
-\subsection{Comparison with Diamond Sampling}
+\subsubsection{Comparison with diamond sampling}
 To compare our algorithm with diamond sampling, we use item and tag matrices.
 For each user, we multiply the user vector into item matrix
 to get user-oriented factor matrices.
@@ -793,7 +723,29 @@ We evalute the average recall and time-consuming for those users.
 And the budget of $t'=s/10$ is used since the diamond sampling only consider the result with budgets.
 The result of comparison is shown in \Fig{Comparison_recall} and \Fig{Comparison_time}.
 
-\begin{figure}[ht]
+\subsection{Estimation of Values}
+By \Theo{Bound}, we give the error bound of estimating the actual values.
+We show the performance on data set lastfm with core$^3$ sampling and $s=10^8$.
+Since the score $\hat{x}_{\V{i}}$ is an estimation of $sx^3_{\V{i}}/\norm{\V{w}}{1}$,
+we draw the result of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+We show the top-$10^4$ pairs with largest scores in ~\Fig{Est}.
+We can notice that there are several actual values that have the same approximation values.
+This is because the sampling algorothm will only distinguish the value with certain gap.
+With high order of extension, this gap will be small. 
+\section{Conclusion}
+In this paper propose a method for finding top-$t$ values within CP model.
+After which we point out that by the extension of core partiton, 
+we can get the $n$-the order estimation and reach the high probability of finding one coordinate.
+\begin{figure}[t]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{./img/fig_lastfm_est}\\
+  \caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+          The deshed line is the reference for equality.}
+  \label{fig:Est}
+\end{figure}
+
+\begin{figure}[t]
   \centering
   % Requires \usepackage{graphicx}
   \includegraphics[width=3in]{./img/fig_comparision_recall}\\
@@ -801,7 +753,7 @@ The result of comparison is shown in \Fig{Comparison_recall} and \Fig{Comparison
   \label{fig:Comparison_recall}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
 % Requires \usepackage{graphicx}
     \includegraphics[width=3in]{./img/fig_comparison_times}\\
@@ -809,10 +761,7 @@ The result of comparison is shown in \Fig{Comparison_recall} and \Fig{Comparison
 \label{fig:Comparison_time}
 \end{figure}
 
-\section{Conclusion}
-In this paper propose a method for finding top-$t$ values within CP model.
-After which we point out that by the extension of core partiton, 
-we can get the $n$-the order estimation and reach the high probability of finding one coordinate.
+
 \bibliography{IIP}
 \bibliographystyle{aaai}
 \end{document}
