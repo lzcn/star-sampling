@@ -25,7 +25,11 @@
 %Email: zhilu@std.uestc.edu.cn\\
 %Email: \{yanghu,eezeng\}@uestc.edu.cn
 %}
-
+\author{AAAI Press\\
+Association for the Advancement of Artificial Intelligence\\
+2275 East Bayshore Road, Suite 160\\
+Palo Alto, California 94303\\
+}
 %% -------
 %% Scalar
 %% -------
@@ -220,7 +224,7 @@ When compared to previous approach for matrix sampling, our methods require much
   \caption{Graph representation of factor matrices}
   \label{fig:GraphMatrices}
 \end{figure}
-\subsection{Basic sampling method}
+\subsection{Basic Sampling Method}
 The idea of the randomized approach is 
 to sample the entries of the tensor according to some probability distribution 
 so that the larger the entry, the more probable it is picked. 
@@ -433,7 +437,7 @@ multiplying $\norm{\V{W}}{1}/s$ inside ${\rm Pr}[\cdot]$ gives
 \end{proof}
 
 
-\section{Extension of the basic sampling method}
+\section{Extension of the Basic Sampling Method}
 The recall we can obtain heavily depends on 
 the probability distribution for sampling the entries. 
 To achieve better performance, 
@@ -511,7 +515,7 @@ but not the probability of picking the top entries.
     \end{algorithmic}
 \end{algorithm}
 
-\subsection{Sampling for users}
+\subsection{Sampling for Multiple Users}
 In this subection, 
 we present an algorithm for efficiently identifying top entries in sub-arrays of a tensor,
 which is of particular interest for recommender systems. 
@@ -690,15 +694,16 @@ we notice that using prefiltering leads to a slightly lower recall but less comp
 In~\Fig{Queries}, we show the performance of~\Alg{QuerySampling} 
 applied for collaborative filtering, 
 where the samples are shared among different users. 
-Here Core$^2$ sampling is used to find the top-100 largest entries for the lastfm data set. 
+Here Core$^2$ sampling is used to find the top-100 largest entries for the lastfm data set
+and $s$ is set to $10^6$. 
 We can see that only for the first few users we need some time to get the samples 
 and build the sample pools. 
 After that, the computation time for a new user is much reduced.
 \begin{figure}[!]
   \centering
-  \includegraphics[width=2.5in]{./img/fig_lastfm_queries}\\
+  \includegraphics[width=2.7in]{./img/fig_lastfm_queries}\\
   \caption{Recall and time results of~\Alg{QuerySampling} for the lastfm data set.
-           For better visualization, we show every $10$ queries in processing.}
+           For better visualization, we show one result for every $10$ users.}
   \label{fig:Queries}
 \end{figure}
 \subsubsection{Comparison to Diamond Sampling}
