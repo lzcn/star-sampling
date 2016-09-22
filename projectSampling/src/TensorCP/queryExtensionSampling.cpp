@@ -61,6 +61,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// extension for matrices
 	//-------------------------
 	start = clock();
+	Matrix AT(mxGetN(prhs[0]),mxGetM(prhs[0]));
+	Matrix BT(mxGetN(prhs[1]),mxGetM(prhs[1]));
+	Matrix CT(mxGetN(prhs[2]),mxGetM(prhs[2]));
+	for(uint r = 0 ; r < rankSize; ++r){
+		for (uint i = 0; i < MatA.row; ++i) {
+			AT(r,i) = MatA(i,r);
+		}
+		for (uint j = 0; j < MatB.row; ++j) {
+			BT(r,j) = MatB(j,r);
+		}
+		for (uint k = 0; k < MatC.row; ++k) {
+			CT(r,k) = MatC(k,r);
+		}
+	}
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
 	double *Bex = (double*)malloc(mxGetM(prhs[1])*rankSizeExt*sizeof(double));
 	double *Cex = (double*)malloc(mxGetM(prhs[2])*rankSizeExt*sizeof(double));
@@ -110,8 +124,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		start = clock();
 		for (uint r = 0; r < rankSizeExt; ++r){
 			weight[r] = abs(MatAex.GetElement(i,r));
-			//weight[r] *= MatBex.SumofCol[r];
-			//weight[r] *= MatCex.SumofCol[r];
+			weight[r] *= MatBex.SumofCol[r];
+			weight[r] *= MatCex.SumofCol[r];
 			SumofW += weight[r]; 
 		}
 		finish = clock();
@@ -129,7 +143,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			else
 				freq_r[r] = (size_t)floor(c);
 		}
-		std::map<point3D, double> IrJc;
+		//std::map<point3D, double> IrJc;
+		TPoint3DMap IrJc;
 		for(uint r = 0; r < rankSizeExt; ++r){
 			if(freq_r[r] > subWalk[r].size()){
 				size_t remain = freq_r[r] - subWalk[r].size();
@@ -175,7 +190,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		
 		std::vector<pidx3d> sortVec;
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
-			double true_value = MatrixRowMul(tempSortedVec[t].first, MatA, MatB, MatC);
+			double true_value = MatrixColMul(tempSortedVec[t].first, AT, BT, CT);
 			sortVec.push_back(std::make_pair(tempSortedVec[t].first,true_value));
 		}
 		sort(sortVec.begin(),sortVec.end(),compgt<pidx3d>);
