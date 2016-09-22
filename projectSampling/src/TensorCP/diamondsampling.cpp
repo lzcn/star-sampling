@@ -145,7 +145,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	}
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
-	std::map<point3D, double> IrJc;
+	TPoint3DMap IrJc;
 	for (size_t s = 0; s < NumSample ; ++s){
 		uint i = IdxI[s];
 		uint j = IdxJ[s];
