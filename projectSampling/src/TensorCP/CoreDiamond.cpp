@@ -198,8 +198,24 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		uint r = IdxR[s];
 		double u = MatAex(rankSizeExt - 1,i)*((double)rand()/(double)RAND_MAX);
 		uint rp = binary_search_once((MatAex.element + i*rankSizeExt),Arow - 1,u);
+		uint rm = r / rankSize;
+		uint rn = r % rankSize;
+		uint rpm = rp / rankSize;
+		uint rpn = rp % rankSize;
 		// Update the element in coordinate
-		IrJc[point3D(i, j, k)] += sgn(MatAex(r,i))*sgn(MatBex(j,r))*sgn(MatCex(k,r))*sgn(MatAex(rp,i))*MatBex(j,rp)*MatCex(k,rp);
+		// abs(EA(r,i))
+		double temp = abs(A[rm * Arow + i] * A[rn * Arow + i]);
+		// abs(EB(j,r))
+		temp *= abs(B[rm * Brow + j] * B[rn * Brow + j]);
+		// abs(EC(k,r))
+		temp *= abs(C[rm * Crow + k] * C[rn * Crow + k]);
+		// abs(EA(rp,i))
+		temp *= abs(A[rpm * Arow + i] * A[rpn * Arow + i]);
+		// EB(j,rp)
+		temp *= B[rpm * Brow + j] * B[rpn * Brow + j];
+		// EC(k,rp)
+		temp *= C[rpm * Crow + k] * C[rpn * Crow + k];
+		IrJc[point3D(i, j, k)] += temp;
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
