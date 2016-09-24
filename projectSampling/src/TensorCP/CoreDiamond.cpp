@@ -197,20 +197,20 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		uint k = IdxK[s];
 		uint r = IdxR[s];
 		double u = MatAex(rankSizeExt - 1,i)*((double)rand()/(double)RAND_MAX);
-		uint rp = binary_search_once((MatAex.element + i*rankSizeExt),Arow - 1,u);
+		uint rp = binary_search_once((MatAex.element + i*rankSizeExt),rankSizeExt - 1,u);
 		uint rm = r / rankSize;
 		uint rn = r % rankSize;
 		uint rpm = rp / rankSize;
 		uint rpn = rp % rankSize;
 		// Update the element in coordinate
-		// abs(EA(r,i))
-		double temp = abs(A[rm * Arow + i] * A[rn * Arow + i]);
-		// abs(EB(j,r))
-		temp *= abs(B[rm * Brow + j] * B[rn * Brow + j]);
-		// abs(EC(k,r))
-		temp *= abs(C[rm * Crow + k] * C[rn * Crow + k]);
-		// abs(EA(rp,i))
-		temp *= abs(A[rpm * Arow + i] * A[rpn * Arow + i]);
+		// sgn(EA(r,i))
+		double temp = sgn(A[rm * Arow + i] * A[rn * Arow + i]);
+		// sgn(EB(j,r))
+		temp *= sgn(B[rm * Brow + j] * B[rn * Brow + j]);
+		// sgn(EC(k,r))
+		temp *= sgn(C[rm * Crow + k] * C[rn * Crow + k]);
+		// sgn(EA(rp,i))
+		temp *= sgn(A[rpm * Arow + i] * A[rpn * Arow + i]);
 		// EB(j,rp)
 		temp *= B[rpm * Brow + j] * B[rpn * Brow + j];
 		// EC(k,rp)
