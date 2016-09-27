@@ -1,0 +1,356 @@
+\documentclass[letterpaper]{article}
+% Required Packages
+\usepackage{aaai17}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{amsthm,amsmath,amssymb}
+\usepackage{stmaryrd}
+\usepackage{paralist}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+%\pdfinfo{
+%/Title (Core Sampling for Top t Retrial Processing)
+%/Author (Zhi Lu,Yang Hu,Zeng Bing)
+%/Keywords ()
+%}
+\title{A Sampling Technique for Approximate Maximum Search in Tensor\\Supplementary Material}
+%\author{Zhi Lu \and Yang Hu \and Bing Zeng\\
+%School of Electronic Engineering, University of Electronic Science and Technology of China\\
+%Email: zhilu@std.uestc.edu.cn\\
+%Email: \{yanghu,eezeng\}@uestc.edu.cn
+%}
+\author{AAAI Press\\
+Association for the Advancement of Artificial Intelligence\\
+2275 East Bayshore Road, Suite 160\\
+Palo Alto, California 94303\\
+}
+%% -------
+%% Scalar
+%% -------
+\newcommand{\Sca}[3]{{#1}^{(#2)}_{i_#2#3}}%Scalar with superscript and subscript
+% entries in factor matrices 
+\newcommand{\anr}[2]{\Sca{a}{#1}{#2}}
+% entries in extension factor matrices 
+\newcommand{\enr}[2]{\Sca{e}{#1}{\V{#2}}}
+% score for {#1}-turn
+\newcommand{\score}[1]{\xi_{\V{i},#1}}
+%% -------
+%% Tensor
+%% -------
+\newcommand{\T}[1]{\mathcal{#1}}
+\newcommand{\KT}[1]{\llbracket #1 \rrbracket}
+%% -------
+%% Vector
+%% -------
+\newcommand{\V}[1]{{\boldsymbol{{\MakeLowercase{#1}}}}}
+% Vector with superscript and subscript
+\newcommand{\ColVec}[3]{\V{#1}^{(#2)}_{#3}}
+\newcommand{\NormColA}[2]{\norm{\ColVec{a}{#1}{*#2}}{1}}
+\newcommand{\NormColE}[2]{\norm{\ColVec{e}{#1}{*\V{#2}}}{1}}
+\newcommand{\RowVecA}[1]{\V{a}^{(#1)}_{i_#1*}}
+\newcommand{\ColVecA}[1]{\V{a}^{(#1)}_{*r}}
+% others
+\newcommand{\coord}{(i_1,i_2,\ldots,i_N)}
+\newcommand{\WeightR}{\NormColA{1}{r}\ldots\NormColA{N}{r}}
+\newcommand{\predx}{\hat{x}_{\V{i}}}
+\newcommand{\predxn}{\hat{x}_{\V{i},n}}
+
+%% -------
+%% Matrix
+%% -------
+\newcommand{\M}[1]{{\textbf{{\MakeUppercase{#1}}}}}
+\newcommand{\FacMat}[2]{\M{#1}^{(#2)}}
+% p-norm
+\newcommand{\norm}[2]{\|#1\|_{#2}}
+%% ------------
+%% reference
+%% ------------
+% reference:definition
+\newcommand{\Def}[1]{Definition~\ref{def:#1}}
+% reference:equation
+\newcommand{\Eqn}[1]{Eq.(\ref{eq:#1})}
+% reference:figure
+\newcommand{\Fig}[1]{Figure~\ref{fig:#1}}
+\newcommand{\Figs}[2]{Figure~\ref{fig:#1}$\sim$\ref{fig:#2}}
+% reference:table
+\newcommand{\Table}[1]{Table~\ref{table:#1}}
+% reference:lemma
+\newcommand{\Lem}[1]{Lemma~\ref{lem:#1}}
+% reference:theorem
+\newcommand{\Theo}[1]{Theorem~\ref{theo:#1}}
+% reference:property
+\newcommand{\Prop}[1]{Property~\ref{prop:#1}}
+% reference:algorithm
+\newcommand{\Alg}[1]{Algorithm~\ref{alg:#1}}
+\newcommand{\AlgLine}[2]{line~\ref{line:#2} of Algorithm~\ref{alg:#1}}
+\newcommand{\AlgLines}[3]{lines~\ref{line:#2}--\ref{line:#3} of Algorithm~\ref{alg:#1}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+
+\begin{document}
+\maketitle
+\section{Theoretical Analysis}
+
+In each iteration, 
+we sample one compound node, indexed by $\boldsymbol{r}$, 
+from the Core$^k$ partition and $N$ nodes, 
+indexed by $\boldsymbol{i}$, from the peripheral partitions. 
+Let $\epsilon_{\boldsymbol{i},\boldsymbol{r}}$ 
+denote the event of choosing $\boldsymbol{r}$ 
+and $\boldsymbol{i}$, $\epsilon_{\boldsymbol{i}}$ denote that of choosing $\boldsymbol{i}$.
+We analyze the probability $p(\epsilon_{\V{i}})$ and the expectation of the scores in Core$^k$ sampling,
+We also prove error bound on Core$^k$ sampling.
+
+\subsection{Probability of Coordinates}
+\begin{lemma}\label{lem:Probability}
+    Suppose that all elements of the factor matrix $\M{A}^{(n)}, n\in[N]$ are nonnegative. 
+    In Core$^k$ sampling, We have $p(\epsilon_{\V{i}})$ equals to $x^k_{\V{i}}/\norm{\V{w}}{1}$.
+\end{lemma}
+\begin{proof}
+The probability $p(\epsilon_{\V{i}})$ is the marginal distribution of $p(\epsilon_{\V{i},\V{r}})$,
+so we have:
+\begin{align*}
+p(\epsilon_{\V{i}})
+& = \sum_{\V{r}} p(\epsilon_{\V{i},\V{r}}) \\
+%& = \sum_{\V{r}} p({\rm pick\ }\V{r})p({\rm pick\ }i_1|\V{r})\cdots p({\rm pick\ }i_N|\V{r})\\
+& = \sum_{\V{r}} \frac{w_{\V{r}}}{\norm{\V{W}}{1}}
+    \frac{|\Sca{e}{1}{\V{r}}|}{\norm{\ColVec{e}{n}{*\V{r}}}{1}}\ldots\frac{|\Sca{e}{N}{\V{r}}|}{\norm{\ColVec{e}{N}{*\V{r}}}{1}}\\
+& = \sum_{\V{r}} \frac{\Sca{e}{1}{\V{r}}\cdots\Sca{e}{N}{\V{r}}}{\norm{\V{W}}{1}}\\
+& = \frac{(\sum_{r}\anr{1}{r}\cdots\anr{N}{r})^k}{\norm{\V{W}}{1}}
+  = \frac{x^k_{\V{i}}}{\norm{\V{w}}{1}}
+\end{align*}
+\end{proof}
+
+Let $c_{\V{i},\ell}$ be a random variable that if $\V{i}$ is the index tuple 
+being picked in the l-th iteration, $c_{\V{i},\ell}=\score{\ell}$. 
+Otherwise $c_{\V{i},\ell}=0$. 
+The final score $\predx$ can be written as
+\begin{equation}\label{eq:score}
+\predx = \sum_{\ell=1}^{s} c_{\V{i},\ell}
+\end{equation}
+\begin{lemma}\label{lem:Expectation}
+The expectation of approximation $\hat{x}_{\V{i}}$ in Core$^k$ sampling equals to $sx^k_{\V{i}}/\norm{\V{w}}{1}$.
+\end{lemma}
+\begin{proof}
+    $c_{\V{i},\ell}$ are i.i.d for fixed $\V{i}$ and varing $\ell$. 
+    The expectation of $\predx$ is:
+\begin{align*}
+\mathbb{E}[\predx]
+& = \sum_{\ell=1}^{s}\mathbb{E}[c_{\V{i},\ell}] = \sum_{\ell=1}^{s}\sum_{\V{r}} p(\epsilon_{\V{i},\V{r}})\score{\ell} \\
+& = s\sum_{\V{r}} \frac{|\enr{1}{r}\cdots\enr{N}{r}|}{\norm{\V{W}}{1}}
+                  sgn(\enr{1}{r}\cdots\enr{N}{r})\\
+& = s\sum_{\V{r}} \frac{\enr{1}{r}\cdots\enr{N}{r}}{\norm{\V{W}}{1}}\\
+& = s\frac{(\sum_{r}\anr{1}{r}\cdots\anr{N}{r})^k}{\norm{\V{W}}{1}}
+= \frac{sx^k_{\V{i}}}{\norm{\V{w}}{1}}
+\end{align*}
+\end{proof}
+
+\subsection{Error Bounds}
+\begin{theorem}\label{theo:Bound}
+Fix $\delta > 0$ and error probability $\sigma \in (0,1)$.
+Assuming all entries in factor matrices are nonnegative.
+In Core$^k$ sampling, if the number of samples
+\[
+    s \geq 3\norm{\V{w}}{1}\log{(2/\sigma)}/(\delta^2 x^k_{\V{i}})
+\]
+then
+\[
+    Pr(|\predx\norm{\V{W}}{1}/s - x^k_{\V{i}}| > \delta x^k_{\V{i}}) \leq \sigma
+\]
+\end{theorem}
+
+\begin{proof}
+Since  $c_{\V{i},1},\cdots,c_{\V{i},s}$
+are independent random variables taking values in $\{0,1\}$.
+So $\predx$ is the sum of independent Poisson trials(Bernoulli trials are the special case).
+The Chernoff bounds on the sum of Poisson trials shows, for any $0 <\delta <1 $:
+\[
+    Pr(|\predx - \mu|\geq\delta\mu) \leq 2\exp{(-\mu\delta^2/3)}
+\]
+where $\mu=\mathbb{E}[\predx]=sx^k_{\V{i}}/\norm{\V{W}}{1}$ in Core$^k$ sampling.
+And by the choice of $s$, we have
+$\mu\leq 3\log{(2/\sigma)/\delta^2}$.
+Then
+\[
+    Pr(|\predx-sx^k_{\V{i}}/\norm{\V{W}}{1}|\geq\delta sx^k_{\V{i}}/\norm{\V{W}}{1}) \leq \sigma
+\]
+multiplying $\norm{\V{W}}{1}/s$ inside ${\rm Pr}[\cdot]$ gives
+\[
+    Pr(|\predx\norm{\V{W}}{1}/s - x^k_{\V{i}}| > \delta x^k_{\V{i}}) \leq \sigma
+\]
+\end{proof}
+
+\section{More Experiments Results}
+
+\subsection{Use Prefiltering}
+We evaluate the performance of using $\predx$ for prefilting with $t'=s/10$. 
+The results for the rest data sets are shown in~\Figs{ml_2k_budget}{delicious_budget}. 
+We show the ratio of time used by $t'=s/10$ to that used by $t'=s$.
+\begin{figure}[H]
+    \centering   
+    \subfigure[]{
+        \label{fig:a}    
+        \includegraphics[width=3in]{./img/fig_ml_2k_recall_budget} 
+    }    
+    \subfigure[]{
+        \label{fig:b}    
+        \includegraphics[width=2.7in]{./img/fig_ml_2k_times_budget}    
+    }    
+\caption{Recall and time of using prefiltering on data set ml-2k. 
+        (a) Recall (b) Time.}
+\label{fig:ml_2k_budget}    
+\end{figure}
+\begin{figure}[H]
+    \centering   
+    \subfigure[]{
+        \label{fig:a}    
+        \includegraphics[width=3in]{./img/fig_ml_10m_recall_budget} 
+    }    
+    \subfigure[]{
+        \label{fig:b}    
+        \includegraphics[width=2.7in]{./img/fig_ml_10m_times_budget}    
+    }    
+\caption{Recall and time of using prefiltering on data set ml-10m. 
+        (a) Recall (b) Time.}
+\label{fig:ml_10m_budget}    
+\end{figure}
+\begin{figure}[H]
+    \centering   
+    \subfigure[]{
+        \label{fig:a}    
+        \includegraphics[width=3in]{./img/fig_delicious_recall_budget} 
+    }    
+    \subfigure[]{
+        \label{fig:delicious_budget:b}    
+        \includegraphics[width=2.7in]{./img/fig_delicious_times_budget}    
+    }    
+\caption{Recall and time of using prefiltering on data set delicious. 
+        (a) Recall (b) Time.}
+\label{fig:delicious_budget}    
+\end{figure}
+Those results all illustrate that using prefiltering leads to a slightly lower recall but less
+computation. However, if we do not use the prefiltering strategy, we can save the time on computing the scores.
+So, when $s$ is small and the extension order is high, the computation prefiltering strategy saves may live beyond the pay for computing scores,
+which is shown in~\Fig{delicious_budget:b}.
+\subsection{Sampling for Collaborative Filtering}
+In~\Figs{ml_2k_queries}{delicious_queries}, we show the performance of sampling methods for multiple users.
+Here Core$^2$ sampling is used to find the top-100 largest entries for the rest data sets.
+$s$ is set to $10^6$.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=2.7in]{./img/fig_ml_2k_queries}\\
+  \caption{Recall and time results for the ml-2k data set.
+           For better visualization, we show one result for every $5$ users.}
+  \label{fig:ml_2k_queries}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=2.7in]{./img/fig_ml_10m_queries}\\
+  \caption{Recall and time results for the ml-10m data set.
+           For better visualization, we show one result for every $10$ users.}
+  \label{fig:ml_10m_queries}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=2.7in]{./img/fig_delicious_queries}\\
+  \caption{Recall and time results for the delicious data set.
+           For better visualization, we show one result for every $10$ users.}
+  \label{fig:delicious_queries}
+\end{figure}
+
+\subsection{Comparison to Diamond Sampling}
+
+We compare our algorithms with diamond sampling~\cite{BaPiKoSe15} 
+for finding the top entries in the product of two matrices. 
+The recalls and the time consumed by the sampling algorithms for the rest data sets
+in~\Figs{ml_2k_comparison_recall}{delicious_comparison_time}.
+$t'$ is set to $s/10$. 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=3in,viewport = 00 20 460 265]{./img/fig_ml_2k_comparision_recall}\\
+  \caption{Comparison with diamond sampling for the ml-2k data set.}
+  \label{fig:ml_2k_comparison_recall}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2.7in,viewport = 0 10 450 180]{./img/fig_ml_2k_comparison_times}\\
+    \caption{Running time for the experiments in~\Fig{ml_2k_comparison_recall}.}
+\label{fig:ml_2k_comparison_time}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=3in,viewport = 00 20 460 265]{./img/fig_ml_10m_comparision_recall}\\
+  \caption{Comparison with diamond sampling for the ml-10m data set.}
+  \label{fig:ml_10m_comparison_recall}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2.7in,viewport = 0 10 450 180]{./img/fig_ml_10m_comparison_times}\\
+    \caption{Running time for the experiments in~\Fig{ml_10m_comparison_recall}.}
+\label{fig:ml_10m_comparison_time}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=3in,viewport = 00 20 460 265]{./img/fig_delicious_comparision_recall}\\
+  \caption{Comparison with diamond sampling for the delicious data set.}
+  \label{fig:delicious_comparison_recall}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=2.7in,viewport = 0 10 450 180]{./img/fig_delicious_comparison_times}\\
+    \caption{Running time for the experiments in~\Fig{delicious_comparison_recall}.}
+\label{fig:delicious_comparison_time}
+\end{figure}
+
+\subsection{Accuracy of the Scores}
+The $\predx$ is an estimation of $sx^k_{\V{i}}/\norm{\V{w}}{1}$ in Core$^k$ extension.
+We experimentally validate this analysis.
+We test on the lastfm data set with $k=3$ and $s=10^8$.
+The $x$ and $y$ axes correspond to $\norm{\V{w}}{1}\hat{x}_{\V{i}}/s$ and $x^3_{\V{i}}$ respectively. 
+Only the $10^4$ pairs with largest actual values that be sampled are shown in~\Figs{ml_2k_est}{delicious_est}.
+\begin{figure}[H]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{./img/fig_ml_2k_est}\\
+  \caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+          The deshed line is the reference for equality.}
+  \label{fig:ml_2k_est}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{./img/fig_ml_10m_est}\\
+  \caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+          The deshed line is the reference for equality.}
+  \label{fig:ml_10m_est}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{./img/fig_lastfm_est}\\
+  \caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+          The deshed line is the reference for equality.}
+  \label{fig:lastfm_est}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  % Requires \usepackage{graphicx}
+  \includegraphics[width=3in]{./img/fig_delicious_est}\\
+  \caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+          The deshed line is the reference for equality.}
+  \label{fig:delicious_est}
+\end{figure}
+
+As expected, the points concentrate around the diagonal, 
+which confirmed with the theoretical result.
+\bibliography{IIP}
+\bibliographystyle{aaai}
+\end{document}
