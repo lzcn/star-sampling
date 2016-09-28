@@ -163,8 +163,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------------------
 	std::vector<pidx3d> tempSortedVec;
 	std::vector<pidx3d> sortVec;
-	std::map<point3D, double>::iterator mapItr;
-	for (mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
+	for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	start = clock();
