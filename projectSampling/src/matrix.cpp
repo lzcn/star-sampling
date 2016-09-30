@@ -197,7 +197,23 @@ double Matrix::GetElement(uint i, uint j){
 double Matrix::GetColSum(uint column){
 	return SumofCol[column];
 }
-
+void Matrix::transpose(double *pr){
+	for(uint r = 0 ; r < row; ++r){
+		for (uint c = 0; c < col; ++c){
+			element[c*row + r] = pr[r*col + c];
+		}
+	}
+}
+void Matrix::accumulation(double *pr){
+	for (uint c = 0; c < col; ++c){
+		double sum = 0.0;
+		size_t offset = c*row;
+		for(uint r = 0 ; r < row; ++r){
+			sum += abs(pr[offset +r]);
+			element[c*row + r] = sum;
+		}
+	}
+}
 uint Matrix::randRow(uint n){
 	double x,temp;
 	x = SumofCol[n]*((double)rand()/(double)RAND_MAX);
