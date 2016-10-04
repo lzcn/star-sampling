@@ -1,26 +1,4 @@
-/*
-	Extension Sampling with three factor matrices
-	usage:
-	[value, time, indexes] =  extensionSampling(A, B, C, budget, samples, top_t);
-
-	* Variables input:
-		A:	size: (L1, R)
-		B:  size: (L2, R)
-		C:  size: (L3, R)
-		samples: numbers of samples
-		top_t : find the top_t value in tensor
-
-		* Variables output:
-			value: size: (top_t, 1)
-						 the top_t value 
-			time: time consuming during the sampling
-			indexes: size (top_t, 3)
-							 the indexes of the corresponding value	
-		Author : Zhi Lu
-*/
-
 #include <vector>
-#include <map>
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -76,10 +54,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Core^2 Sampling:");
-	mexPrintf("- Top:%d ",top_t);
-	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
-	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......\n");mexEvalString("drawnow");
+	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d\n",top_t,(int)log10(NumSample),(int)log10(budget));
+	mexEvalString("drawnow");
 	// compute the extension for matrices
 	start = clock();
 	double *Aex = (double*)malloc(mxGetM(prhs[0])*rankSizeExt*sizeof(double));
@@ -125,7 +101,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the initialization phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("%f during the initialization phase.\n",duration);
+	mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
@@ -176,7 +153,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sampling phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("%f during the sampling phase.\n",duration);
+	mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
@@ -205,7 +183,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
-	mexPrintf("%f during the sorting phase.\n",duration);mexEvalString("drawnow");
+	mexPrintf("%f during the sorting phase.\n",duration);
+	mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------

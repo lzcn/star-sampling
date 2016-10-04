@@ -1,27 +1,4 @@
-/*
-	Equality Sampling with three factor matrices
-	usage:
-	[value, time, indexes] =  equalitySampling(A, B, C, budget, samples, top_t);
-
-	* Variables input:
-		A:	size: (L1, R)
-		B:  size: (L2, R)
-		C:  size: (L3, R)
-		budget: use top-t' values to do pre-sorting
-		samples: numbers of samples
-		top_t : find the top_t value in tensor
-
-	* Variables output:
-		value: size: (top_t, 1)
-					 the top_t value 
-		time: time consuming during the sampling
-		indexes: size (top_t, 3)
-						 the indexes of the corresponding value	
-		Author : Zhi Lu
-*/
-
 #include <vector>
-#include <map>
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -72,10 +49,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
 	uint64_T* indexes = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Core^1 Sampling:");
-	mexPrintf("- Top:%d ",top_t);
-	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
-	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");mexEvalString("drawnow");
+	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d\n",top_t,(int)log10(NumSample),(int)log10(budget));
+	mexEvalString("drawnow");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------

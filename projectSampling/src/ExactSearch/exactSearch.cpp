@@ -1,13 +1,3 @@
-/*
-    exhaustive search for tensor given factor matrices
-    factor matrices has the same row size, which is the 
-    dimension of feature vector.
-    [value, time] = exact_search(A1,A1,...,AN,top_t)
-    it will return the top_t value in the tensor,
-    and the time during computing
-    Author : Zhi Lu
-*/
-
 #include <list>
 #include <vector>
 #include <algorithm>
@@ -28,11 +18,7 @@ double ColMul(const uint *curIdx, double **p, uint rank, uint numMat){
     }
     return ans;
 }
-/*
-    matrices has the same row size
-    find the top_t elements in tensor
-    [value, time] = exact_search(A1,A1,...,AN,top_t)
-*/
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
     clock_t start, finish;

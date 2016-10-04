@@ -1,17 +1,3 @@
-/*
-    Exhaustive search for three factor matrices factor matrices.
-    [value, time, cordinates] = exactSearchThreeOrderTrensor(A, B, C, top_t)
-    Inputs:
-        A, B, C: factor matrices, same row dimension.
-        top_t : the top_t value to find
-    Outputs: 
-        value: size (top_t,1)
-        time:
-        coordinates: size (top_t,3)
-    
-    Author : Zhi Lu
-*/
-
 #include <list>
 #include <ctime>
 
@@ -41,7 +27,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     for (int i = 0; i < 3; ++i){
         max[i] = mxGetN(prhs[i]);
     }
-    mexPrintf("Start Exhaustive Search...\n");mexEvalString("drawnow");
+    mexPrintf("Start Exhaustive Search...\n");
+    mexEvalString("drawnow");
     progressbar(0);
     start = clock();
     SubIndex index(3,max);
