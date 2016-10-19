@@ -5,14 +5,6 @@
 #include "matrix.h"
 #include "utilmex.h"
 
-/*
-    all matrices must has the same row dimension
-    [value, time] = queryFullSearch(A,B,C,kNN);
-    A:R x number of queries,
-    B:R x Lb,
-    C:R x Lc,
-    value:knn x number of queries
-*/
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {   
     clock_t start, finish;
@@ -32,7 +24,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //---------------------
     // Start full search
     //---------------------
-    mexPrintf("Starting Exhaustive Search for Queries......\n");mexEvalString("drawnow");
+    mexPrintf("Starting Exhaustive Search for Queries......\n");
+    mexEvalString("drawnow");
     uint *maxIdx = (uint*)malloc(NumMat * sizeof(uint));
     maxIdx[0] = mxGetN(prhs[1]);
     maxIdx[1] = mxGetN(prhs[2]);

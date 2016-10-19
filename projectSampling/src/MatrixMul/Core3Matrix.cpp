@@ -1,5 +1,4 @@
 #include <vector>
-#include <map>
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -53,10 +52,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Core^3 Sampling:");
-	mexPrintf("- Top:%d ",top_t);
-	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
-	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......\n");mexEvalString("drawnow");
+	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d\n",top_t,(int)log10(NumSample),(int)log10(budget));
+	mexEvalString("drawnow");
 	// compute the extension for matrices
 	//-------------------------------------
 	// Compute weight

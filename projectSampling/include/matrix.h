@@ -130,6 +130,8 @@ public:
 	double GetElement(uint i, uint j);
 	double GetColSum(uint column);
 	double& operator()(uint i, uint j) const { return element[j*row +i]; }
+	void transpose(double *pr);
+	void accumulation(double *pr);
 	// return m with probability abs(M_{m,n})/SumofCol(n)
 	uint randRow(uint n);
 	// return n with probability abs(M_{m,n})/SumofRow(m)

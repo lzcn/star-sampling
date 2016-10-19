@@ -57,10 +57,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
 	mexPrintf("Starting Diamond Sampling:");
-	mexPrintf("- Top:%d ",top_t);
-	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
-	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");
+	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d\n",top_t,(int)log10(NumSample),(int)log10(budget));
+	mexEvalString("drawnow");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
@@ -114,7 +112,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		offset += freq_r[r];
 	}
 	// sample rp and  get score
-	std::map<point2D, double> IrJc;
+	TPoint2DMap IrJc;
 	for (size_t s = 0; s < NumSample ; ++s){
 		uint r = IdxR[s];
 		uint i = IdxI[s];
@@ -132,9 +130,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------------------
 	std::vector<pidx2d> sortVec;
 	std::vector<pidx2d> tempSortedVec;
-	std::map<point2D, double>::iterator mapItr;
 	// sort the sampled value
-	for (mapItr = IrJc.begin(); mapItr != IrJc.end() ; ++mapItr){
+	for (auto mapItr = IrJc.begin(); mapItr != IrJc.end() ; ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
 	start = clock();

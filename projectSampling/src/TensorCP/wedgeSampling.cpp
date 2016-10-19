@@ -35,11 +35,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	*tsec = duration;
 	plhs[2] = mxCreateNumericMatrix(top_t, 3, mxUINT64_CLASS, mxREAL);
 	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);	
-	mexPrintf("Starting Dimaond Sampling:");
-	mexPrintf("- Top-%d ",top_t);
-	mexPrintf("- Samples:1e%d ",(int)log10(NumSample));
-	mexPrintf("- Budget:1e%d ",(int)log10(budget));
-	mexPrintf("......");mexEvalString("drawnow");
+	mexPrintf("Starting Wedge Sampling:");
+	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d\n",top_t,(int)log10(NumSample),(int)log10(budget));
+	mexEvalString("drawnow");
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
