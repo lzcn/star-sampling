@@ -1,4 +1,3 @@
-
 %% bare_jrnl_compsoc.tex
 %% V1.4b
 %% 2015/08/26
@@ -89,7 +88,7 @@
 \usepackage{paralist}
 \usepackage{indentfirst}
 \usepackage{graphicx}
-\usepackage{subfigure}
+%\usepackage{subfigure}
 
 % *** CITATION PACKAGES ***
 %
@@ -191,10 +190,10 @@
 
 
 
-
+% TOD: Use algorithmic to rewrite all algorithms
 % *** SPECIALIZED LIST PACKAGES ***
 %
-%$\usepackage{algorithmic}
+% \usepackage{algorithmic}
 % algorithmic.sty was written by Peter Williams and Rogerio Brito.
 % This package provides an algorithmic environment fo describing algorithms.
 % You can use the algorithmic environment in-text or within a figure
@@ -215,7 +214,7 @@
 
 % *** ALIGNMENT PACKAGES ***
 %
-%\usepackage{array}
+\usepackage{array}
 % Frank Mittelbach's and David Carlisle's array.sty patches and improves
 % the standard LaTeX2e array and tabular environments to provide better
 % appearance and additional user controls. As the default LaTeX2e table
@@ -235,11 +234,11 @@
 
 
 % *** SUBFIGURE PACKAGES ***
-%\ifCLASSOPTIONcompsoc
-%  \usepackage[caption=false,font=footnotesize,labelfont=sf,textfont=sf]{subfig}
-%\else
-%  \usepackage[caption=false,font=footnotesize]{subfig}
-%\fi
+\ifCLASSOPTIONcompsoc
+  \usepackage[caption=false,font=footnotesize,labelfont=sf,textfont=sf]{subfig}
+\else
+  \usepackage[caption=false,font=footnotesize]{subfig}
+\fi
 % subfig.sty, written by Steven Douglas Cochran, is the modern replacement
 % for subfigure.sty, the latter of which is no longer maintained and is
 % incompatible with some LaTeX packages including fixltx2e. However,
@@ -630,9 +629,9 @@ In this work, we study the problem of efficiently identifying the top entries wi
 Take the recommender systems for example.
 While traditional focus is on the user-item matrix/tensor
 which is required for data representation in many emerging settings
-such as context-aware recommendation~\cite{},
+such as context-aware recommendation~\cite{?},
 where contextual information like time and location is considered,
-and set-based recommendation~\cite{HuYiLa15,Rendle_PITF,KoYe09},
+and collaborative filtering recommender\cite{HuYiLa15,Rendle_PITF,KoYe09}
 where the object to be recommended is a set of items that interact with each other.
 Following the most common paradigm, we assume that the tensor can be decomposed into some factors,
 which can be estimated from the observed entries by some learning algorithms.
@@ -809,7 +808,7 @@ And we hope to see the improvement for serendipity in applications need to find 
 %% increase table row spacing, adjust to taste
 %\renewcommand{\arraystretch}{1.3}
 % if using array.sty, it might be a good idea to tweak the value of
-% \extrarowheight as needed to properly center the text within the cells
+% \extrL_aheight as needed to properly center the text within the cells
 %\caption{An Example of a Table}
 %\label{table_example}
 %\centering
@@ -842,17 +841,37 @@ And we hope to see the improvement for serendipity in applications need to find 
 In this section, we will propose a basic sampling for finding the top-$N$ entries in tensor, after which, a advanced sampling approach will be introduced .
 
 % TODO: More explanation figures high dimension
-\begin{figure}[!ht]
+% TODO: More detialed captions
+\begin{figure*}[!ht]
 	\centering
-	% Requires \usepackage{graphicx}
-	\includegraphics[viewport = 0 20 240 130]{./img/fig_graph_factor_matrices}\\
-	\caption{Graph representation of factor matrices}
+	\subfloat[]{
+		\includegraphics{img/fig_graph_factor_matrices_a}
+		\label{fig:GraphMatrices:a}
+	}
+	\qquad
+	\subfloat[]{
+		\includegraphics{img/fig_graph_factor_matrices_b}
+		\label{fig:GraphMatrices:b}
+	}
+	\subfloat[]{
+		\includegraphics{img/fig_graph_factor_matrices_c}
+		\label{fig:GraphMatrices:c}
+	}
+	\caption{Graph representation of factor matrices and sampling mechanism.}
 	\label{fig:GraphMatrices}
-\end{figure}
+\end{figure*}
+
+%\begin{figure}[!ht]
+%	\centering
+%	% Requires \usepackage{graphicx}
+%	\includegraphics[viewport = 0 20 240 130]{./img/fig_graph_factor_matrices}\\
+%	\caption{Graph representation of factor matrices}
+%	\label{fig:GraphMatrices}
+%\end{figure}
 
 \subsection{Basic Sampling Method}
 
-The idea of randomized approach is to sample the entries in a tensor according to some probability distribution so that the larger one entry is the more probable it is picked. To achieve this, we use a (N+1)-partite graph to represent the factor matrices $\FacMat{A}{1},\ldots,\FacMat{A}{N}$ in \Eqn{CPDecomposition}. Consider one of the matrix $\FacMat{A}{n}\in \mathbb{R}^{L_n \times R}$, it is represented by a bipartite graph shown within the dash-dot box in ~\Fig{GraphMatrices}.
+The idea of randomized approach is to sample the entries in a tensor according to some probability distribution so that the larger one entry is the more probable it is picked. To achieve this, we use a (N+1)-partite graph to represent the factor matrices $\FacMat{A}{1},\ldots,\FacMat{A}{N}$ in \Eqn{CPDecomposition}. Consider one of the matrix $\FacMat{A}{n}\in \mathbb{R}^{L_n \times R}$, it is represented by a bipartite graph shown within the dash-dot box in ~\Fig{GraphMatrices:a}.
 We first use $R$ nodes indexed by $r\in[R]$ to denote the $R$ columns of it, $[R]$ denotes $\{1,\ldots,R\}$. These nodes are also shared by other factor matrices. They constitute the core partition. We then use $L_n$ nodes, indexed by $i_n\in [L_n]$, to represent the rows of $\FacMat{A}{n}$. They constitute a peripheral partition. Edge $(i_n,r)$ exists if the entry $\anr{n}{r}$ is nonzero.
 
 To sample an entry, we sequentially pick each of its indices starting from the core partition. We first assign some weights to the nodes in core partition. For $r\in[R]$, let
@@ -861,10 +880,10 @@ w_r = \WeightR
 \end{equation}
 where $\|\cdot\|$ denotes 1-norm of the vector.
 We sample the nodes in core partition with probability $w_r/\norm{\V{W}}{1}$.
-After one core node is chosen,
+After one core node is chosen, shown in ~\Fig{GraphMatrices:b},
 $N$ peripheral nodes, one from each peripheral partition, are picked,
 where the index $i_n$ is drawn with probability $|\anr{n}{r}|/\norm{\ColVecA{n}}{1}$.
-After an index tuple $\V{i}=\coord$ is obtained,
+After an index tuple $\V{i}=\coord$, as depicted shematically in ~\Fig{GraphMatrices:c}, is obtained,
 a score is computed that
 \begin{align}
 \score{\ell}  = sgn(\anr{1}{r}\cdot\anr{2}{r}\cdots\anr{N}{r})
@@ -995,6 +1014,7 @@ The final score $\predx$ can be written as
 \end{proof}
 
 \subsubsection{Error Bounds}
+% TODO: delete theorem 1
 We derive two error bounds, which suggest the number of samples required to get reasonable results.
 \begin{theorem}\label{theo:ObservationBound}
 	Fix error probability $\sigma \in (0,1)$.
@@ -1054,42 +1074,144 @@ We derive two error bounds, which suggest the number of samples required to get 
 % TODO: Figure for the Extension of Core Partitions
 
 The recall we can obtain heavily depends on the probability distribution for sampling the entries. To achieve better performance, we should improve this distribution by amplifying the odds for the top entries.
+\begin{figure}[tph!]
+	\centering
+	\includegraphics[]{img/ExtensionOfCorePartition}
+	\caption{Extension of core partition}
+	\label{fig:ExtensionOfCorePartition}
+\end{figure}
 
 Instead of sampling one node $r$ from the core partition,
-we can pick a pair of nodes $(r,r')$ from some extended core partition,
-where $r'$ is sampled with replacement.
-Then conditioned on $(r,r')$, we sample $N$ nodes,
-indexed by $(i_1,\ldots,i_N)$ from the peripheral partitions.
-More generally, we can pick $k$ nodes $(r_1,r_2,\ldots,r_k)$ from the extended core partition
+we can still pick one but compound node $(r,r')$ from some extended core partition,
+in which the number of nodes is expanded to $R^2$.
+Then conditioned on $(r,r')$, we sample $N$ nodes  
+indexed by $(i_1,\ldots,i_N)$ from the peripheral partitions as depicted in ~\Fig{ExtensionOfCorePartition}. However the weight or probability $p(i_n,(r,r'))$ of the edge $((r,r'),i_n)$ connecting the node $(r,r')$ and $i_n$ need to be computed so that the expectation will meet actual value.
+
+More generally, we can pick $k$ compound nodes $(r_1,r_2,\ldots,r_k)$ from the extended core partition
 and then draw $N$ peripheral nodes.
 We name this strategy Core$^k$ sampling.
 The method discussed in previous section is a special case with $k=1$.
 
-By sampling $k$ nodes with replacement from the core partition,
+By sampling $k$ nodes from the core partition,
 we virtually create $R^k$ compound nodes,
 indexed by $\V{r}=(r_1,\ldots,r_k)$.
 These compound nodes constitute a new partition called Core$^k$ partition.
-To assign probabilities for picking the compound nodes and probabilities for picking a peripheral node given a compound nodes,
-we extend each factor matrix $\FacMat{A}{n}$ with size $L_n\times R$ to a new matrix $\M{E}^{(n)}$ with size $L_n\times R^k$.
-The entries of $\M{E}^{(n)}$ are obtained by
+To assign probabilities for picking the compound nodes and probabilities for picking a peripheral node given a compound nodes, we propose formula for the weight of edge that connecting $\V{r}$ and $i_n$ as follows:
+% will be we extend each factor matrix $\FacMat{A}{n}$ with size $L_n\times R$ to a new matrix $\M{E}^{(n)}$ with size $L_n\times R^k$.
+% The entries of $\M{E}^{(n)}$ are obtained by
 \begin{align}
 \enr{n}{r} = \anr{n}{r_1}\cdots\anr{n}{r_k}
 \end{align}
-where we use $\V{r}$ to index the columns of $\M{E}^{(n)}$. And the weight we assign to the compound node $\V{r}$ is
+and immediately, the weight for a compound nodes $\V{r}$ is:
+%where we use $\V{r}$ to index the columns of $\M{E}^{(n)}$. And the weight we assign to the compound node $\V{r}$ is
 \begin{align}
 w_{\V{r}} = \NormColE{1}{r}\cdots\NormColE{N}{r}
 \end{align}
-with $\V{e}_{*\V{r}}^{(n)}$ being the column of $\M{E}^{(n)}$ indexed by $\V{r}$ and
+where $\V{e}_{*\V{r}}^{(n)}$ is the weight vector drawn for the $n$-th peripheral partition and its  1-norm is:
+%with $\V{e}_{*\V{r}}^{(n)}$ being the column of $\M{E}^{(n)}$ indexed by $\V{r}$ and
 \begin{align}
 \NormColE{n}{r} = \sum_{i_n}|\anr{n}{r_1}\cdots\anr{n}{r_k}|
 \end{align}
+If we straighten the nodes in Core$^k$ partition to one dimension with $b(\V{r})$ indicating the position, then Core$^k$ sampling strategy will be the same as basic algorithm acting on a set of matrices, presumably, called $\M{E}^{(n)}$.
+The $b(\V{r})$-th column of $\M{E}^{(n)}$ is $\V{e}_{*b(\V{r})}^{(n)} = [e_{1,\V{r}}^{(n)},\cdots,e_{L_n,\V{r}}^{(n)}]^T$.
+The alternative explanation help us to implement the sampling approach.
+
+\subsection{Theoretical Analysis}
+
 The sampling procedure is similar with \Alg{CoreSampling}
 and we summarize it in \Alg{CoreExtensionSampling}.
-We prove that in Core$^k$ sampling,
+In this part, we prove that in Core$^k$ sampling,
 the probability that entry $\V{i}$ is sampled is proportional to $x_{\V{i}}^k$
 and the expectation of $\predx$ is also proportional to the $k$-th power of $x_{\V{i}}$.
-(Due to space limit, we put the proofs in supplementary material.)
 Therefore, in Core$^k$ extension, more focus will be put on the top entries.
+
+In each iteration, 
+we sample one compound node, indexed by $\boldsymbol{r}$, 
+from the Core$^k$ partition and $N$ nodes, 
+indexed by $\boldsymbol{i}$, from the peripheral partitions. 
+Let $\epsilon_{\boldsymbol{i},\boldsymbol{r}}$ 
+denote the event of choosing $\boldsymbol{r}$ 
+and $\boldsymbol{i}$, $\epsilon_{\boldsymbol{i}}$ denote that of choosing $\boldsymbol{i}$.
+We then analyze the probability $p(\epsilon_{\V{i}})$ and the expectation of the scores in Core$^k$ sampling, we also prove error bound on Core$^k$ sampling.
+
+\subsubsection{Probability of Coordinates}
+\begin{lemma}\label{lem:Probability}
+	Suppose that all elements of the factor matrix $\M{A}^{(n)}, n\in[N]$ are nonnegative. 
+	In Core$^k$ sampling, We have $p(\epsilon_{\V{i}})$ equals to $x^k_{\V{i}}/\norm{\V{w}}{1}$.
+\end{lemma}
+\begin{proof}
+	The probability $p(\epsilon_{\V{i}})$ is the marginal distribution of $p(\epsilon_{\V{i},\V{r}})$,
+	so we have:
+	\begin{align*}
+	p(\epsilon_{\V{i}})
+	& = \sum_{\V{r}} p(\epsilon_{\V{i},\V{r}}) \\
+	%& = \sum_{\V{r}} p({\rm pick\ }\V{r})p({\rm pick\ }i_1|\V{r})\cdots p({\rm pick\ }i_N|\V{r})\\
+	& = \sum_{\V{r}} \frac{w_{\V{r}}}{\norm{\V{W}}{1}}
+	\frac{|\Sca{e}{1}{\V{r}}|}{\norm{\ColVec{e}{n}{*\V{r}}}{1}}\ldots\frac{|\Sca{e}{N}{\V{r}}|}{\norm{\ColVec{e}{N}{*\V{r}}}{1}}\\
+	& = \sum_{\V{r}} \frac{\Sca{e}{1}{\V{r}}\cdots\Sca{e}{N}{\V{r}}}{\norm{\V{W}}{1}}\\
+	& = \frac{(\sum_{r}\anr{1}{r}\cdots\anr{N}{r})^k}{\norm{\V{W}}{1}}
+	= \frac{x^k_{\V{i}}}{\norm{\V{w}}{1}}
+	\end{align*}
+\end{proof}
+
+Let $c_{\V{i},\ell}$ be a random variable that if $\V{i}$ is the index tuple 
+being picked in the l-th iteration, $c_{\V{i},\ell}=\score{\ell}$. 
+Otherwise $c_{\V{i},\ell}=0$. 
+The final score $\predx$ can be written as
+\begin{equation}\label{eq:score}
+\predx = \sum_{\ell=1}^{s} c_{\V{i},\ell}
+\end{equation}
+\begin{lemma}\label{lem:Expectation}
+	The expectation of approximation $\hat{x}_{\V{i}}$ in Core$^k$ sampling equals to $sx^k_{\V{i}}/\norm{\V{w}}{1}$.
+\end{lemma}
+\begin{proof}
+	$c_{\V{i},\ell}$ are i.i.d for fixed $\V{i}$ and varing $\ell$. 
+	The expectation of $\predx$ is:
+	\begin{align*}
+	\mathbb{E}[\predx]
+	& = \sum_{\ell=1}^{s}\mathbb{E}[c_{\V{i},\ell}] = \sum_{\ell=1}^{s}\sum_{\V{r}} p(\epsilon_{\V{i},\V{r}})\score{\ell} \\
+	& = s\sum_{\V{r}} \frac{|\enr{1}{r}\cdots\enr{N}{r}|}{\norm{\V{W}}{1}}
+	sgn(\enr{1}{r}\cdots\enr{N}{r})\\
+	& = s\sum_{\V{r}} \frac{\enr{1}{r}\cdots\enr{N}{r}}{\norm{\V{W}}{1}}\\
+	& = s\frac{(\sum_{r}\anr{1}{r}\cdots\anr{N}{r})^k}{\norm{\V{W}}{1}}
+	= \frac{sx^k_{\V{i}}}{\norm{\V{w}}{1}}
+	\end{align*}
+\end{proof}
+
+\subsubsection{Error Bounds}
+\begin{theorem}\label{theo:Bound}
+	Fix $\delta > 0$ and error probability $\sigma \in (0,1)$.
+	Assuming all entries in factor matrices are nonnegative.
+	In Core$^k$ sampling, if the number of samples
+	\[
+	s \geq 3\norm{\V{w}}{1}\log{(2/\sigma)}/(\delta^2 x^k_{\V{i}})
+	\]
+	then
+	\[
+	Pr(|\predx\norm{\V{W}}{1}/s - x^k_{\V{i}}| > \delta x^k_{\V{i}}) \leq \sigma
+	\]
+\end{theorem}
+
+\begin{proof}
+	Since  $c_{\V{i},1},\cdots,c_{\V{i},s}$
+	are independent random variables taking values in $\{0,1\}$.
+	So $\predx$ is the sum of independent Poisson trials(Bernoulli trials are the special case).
+	The Chernoff bounds on the sum of Poisson trials shows, for any $0 <\delta <1 $:
+	\[
+	Pr(|\predx - \mu|\geq\delta\mu) \leq 2\exp{(-\mu\delta^2/3)}
+	\]
+	where $\mu=\mathbb{E}[\predx]=sx^k_{\V{i}}/\norm{\V{W}}{1}$ in Core$^k$ sampling.
+	And by the choice of $s$, we have
+	$\mu\leq 3\log{(2/\sigma)/\delta^2}$.
+	Then
+	\[
+	Pr(|\predx-sx^k_{\V{i}}/\norm{\V{W}}{1}|\geq\delta sx^k_{\V{i}}/\norm{\V{W}}{1}) \leq \sigma
+	\]
+	multiplying $\norm{\V{W}}{1}/s$ inside ${\rm Pr}[\cdot]$ gives
+	\[
+	Pr(|\predx\norm{\V{W}}{1}/s - x^k_{\V{i}}| > \delta x^k_{\V{i}}) \leq \sigma
+	\]
+\end{proof}
 
 Note that in the diamond sampling method for matrix~\cite{BaPiKoSe15},
 they also sampled two nodes from the core partition.
@@ -1102,9 +1224,9 @@ but not the probability of picking the top entries.
 	\caption{Core$^k$ sampling}
 	\label{alg:CoreExtensionSampling}
 	Given factor matrix $\FacMat{A}{n}\in \mathbb{R}^{L_n\times R}, n = 1,2,\ldots,N$.\\
-	Let $s$ be the number of samples, $k$ for the extension order.
+	Let $s$ be the number of samples, $k$ for the extension order.$[R]^k$ denotes all the
 	\begin{algorithmic}[1]
-		\For{$\V{r}\in{\underbrace{R\times \cdots \times R}_{k}}$}
+		\For{$\V{r}\in{\underbrace{[R]\times \cdots \times [R]}_{k}}$}
 		\For{$n = 1,...,N$}
 		\State $\NormColE{n}{r} \leftarrow \sum_{i_n}|\anr{n}{r_1}\cdots\anr{n}{r_k}|$
 		\EndFor
@@ -1166,7 +1288,7 @@ This procedure is illustrated in~\Alg{QuerySampling}.
 		\For {$i_1 =1,2,\ldots,L_1$}
 		\State Let the current user be $\V{u}=\RowVecA{1}$
 		\ForAll{$\V{r}=(r_1,\ldots,r_k)$}
-		\State $w_\V{r} \leftarrow |u_{r_1}\cdots u_{r_k}|$
+		\State $w_\V{r} \leftarrow |u_{r_1}\cdots u_{r_k}|\NormColE{2}{r} \cdots \NormColE{N}{r}$
 		\EndFor
 		\For {$\ell = 1,\ldots,s$}
 		\State Sample $\V{r}$ with probability $w_\V{r}/\norm{\V{W}}{1}$.
@@ -1292,14 +1414,9 @@ Compared with the results in~\Fig{recall} and~\Fig{time},
 we notice that prefiltering leads to a slightly lower recall but less computation.
 \begin{figure}[H]
 	\centering
-	\subfigure[]{
-		\label{fig:a}
-		\includegraphics[width=3in]{./img/fig_lastfm_recall_budget}
-	}
-	\subfigure[]{
-		\label{fig:b}
-		\includegraphics[width=2.7in]{./img/fig_lastfm_times_budget}
-	}
+	\subfloat[a]{\includegraphics[width=3in]{./img/fig_lastfm_recall_budget}}
+	\qquad
+	\subfloat[b]{\includegraphics[width=2.7in]{./img/fig_lastfm_times_budget}}
 	\caption{Recall and time of using prefiltering.
 		(a) Recall (b) Time.
 		We show the ratio of time used by $t'=s/10$ to that used by $t'=s$.}
@@ -1349,10 +1466,51 @@ This is reasonable since the score $\hat{x}_{\V{i}}$ it computed is proportional
 However, Core$^2$ and Core$^3$ extensions achieve higher recalls than diamond sampling with the same number of samples.
 This illustrates the advantage of augmenting the sampling probability to higher power of the entry magnitude.
 
+\subsubsection{Accuracy of the Scores}
+The $\predx$ is an estimation of $sx^k_{\V{i}}/\norm{\V{w}}{1}$ in Core$^k$ extension.
+We experimentally validate this analysis.
+We test on the lastfm data set with $k=3$ and $s=10^8$.
+The $x$ and $y$ axes correspond to $\norm{\V{w}}{1}\hat{x}_{\V{i}}/s$ and $x^3_{\V{i}}$ respectively. 
+Only the $10^4$ pairs with largest actual values that be sampled are shown in~\Figs{ml_2k_est}{delicious_est}.
+\begin{figure}[H]
+	\centering
+	% Requires \usepackage{graphicx}
+	\includegraphics[width=3in]{./img/fig_ml_2k_est}\\
+	\caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+		The deshed line is the reference for equality.}
+	\label{fig:ml_2k_est}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	% Requires \usepackage{graphicx}
+	\includegraphics[width=3in]{./img/fig_ml_10m_est}\\
+	\caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+		The deshed line is the reference for equality.}
+	\label{fig:ml_10m_est}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	% Requires \usepackage{graphicx}
+	\includegraphics[width=3in]{./img/fig_lastfm_est}\\
+	\caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+		The deshed line is the reference for equality.}
+	\label{fig:lastfm_est}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	% Requires \usepackage{graphicx}
+	\includegraphics[width=3in]{./img/fig_delicious_est}\\
+	\caption{Plot of pairs $(\norm{\V{w}}{1}\hat{x}_{\V{i}}/s,x^3_{\V{i}})$.
+		The deshed line is the reference for equality.}
+	\label{fig:delicious_est}
+\end{figure}
+
+As expected, the points concentrate around the diagonal, 
+which confirmed with the theoretical result.
 
 
-
-
+\section{}
+\section{Conclusion}
 
 
 

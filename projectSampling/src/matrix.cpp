@@ -3,11 +3,6 @@
 #include "matrix.h"
 
 
-double sgn(double x){ return (x < 0 ? -1:1); }
-double sgn_foo(double x){ return (x < 0 ? -1:1); }
-/*
-	class for point2D
-*/
 point2D::point2D(uint i, uint j){
 	x = i;
 	y = j;
@@ -37,9 +32,7 @@ bool point2D::operator > (const point2D &toCmp)const{
 	return false;
 }
 
-/*
-	class for point3D
-*/
+
 point3D::point3D(uint i, uint j, uint k){
 	x = i;
 	y = j;
@@ -79,9 +72,7 @@ bool point3D::operator > (const point3D &toCmp)const{
 	}
 	return false;	
 }
-/*
-	class for pointND
-*/
+
 pointND::pointND(uint *p, uint n){
 	coord = p;
 	num = n;
@@ -99,9 +90,7 @@ bool pointND::operator < (const pointND &toCmp)const{
 	else
 		return false;
 }
-/*
-	class for matrix
-*/
+
 Matrix::Matrix(uint r, uint c){
 	row = r;
 	col = c;

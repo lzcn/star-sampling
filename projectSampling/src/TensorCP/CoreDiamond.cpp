@@ -22,9 +22,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
 	double *C = mxGetPr(prhs[2]);
-	uint Arow = mxGetM(prhs[0]);
-	uint Brow = mxGetM(prhs[1]);
-	uint Crow = mxGetM(prhs[2]);
+	uint L_a = mxGetM(prhs[0]);
+	uint L_b = mxGetM(prhs[1]);
+	uint L_c = mxGetM(prhs[2]);
 	start = clock();
 	Matrix MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]), MATRIX_NONE_SUM);
 	Matrix MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]), MATRIX_NONE_SUM);
@@ -76,11 +76,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(Cex, 0, mxGetM(prhs[2])*rankSizeExt*sizeof(double));
 	// compute the extension matrices
 	// extension for matrix A
-	for(uint i = 0; i < Arow; ++i){
+	for(uint i = 0; i < L_a; ++i){
 		double sum = 0;
 		for (uint m = 0; m < rankSize; ++m){
 			for (uint n = 0; n < rankSize; ++n){
-				sum += abs(A[m * Arow + i] * A[n * Arow + i]);
+				sum += abs(A[m * L_a + i] * A[n * L_a + i]);
 				Aex[m * rankSize + n + i*rankSizeExt] = sum;
 			}
 		}
@@ -90,15 +90,15 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			size_t r = m * rankSize + n;
 			double sum = 0.0;
 			// extension for matrix B
-			for(uint j = 0; j < Brow; ++j){
-				sum += abs(B[m * Brow + j] * B[n * Brow + j]);
-				Bex[r * Brow + j] = sum;
+			for(uint j = 0; j < L_b; ++j){
+				sum += abs(B[m * L_b + j] * B[n * L_b + j]);
+				Bex[r * L_b + j] = sum;
 			}
 			// extension for matrix C
 			sum = 0;
-			for(uint k = 0; k < Crow; ++k){
-				sum += abs(C[m * Crow + k] * C[n * Crow + k]);
-				Cex[r * Crow + k] = sum;
+			for(uint k = 0; k < L_c; ++k){
+				sum += abs(C[m * L_c + k] * C[n * L_c + k]);
+				Cex[r * L_c + k] = sum;
 			}
 		}
 	}
@@ -113,18 +113,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// Compute weight
 	//-------------------------------------
 	double SumofW = 0;
-	double *weight = (double*)malloc(Arow*rankSizeExt*sizeof(double));
-	memset(weight, 0, Arow*rankSizeExt*sizeof(double));
+	double *weight = (double*)malloc(L_a*rankSizeExt*sizeof(double));
+	memset(weight, 0, L_a*rankSizeExt*sizeof(double));
 	start = clock();
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
-				for(uint i = 0; i < Arow; ++i){
+				for(uint i = 0; i < L_a; ++i){
 					size_t r = m * rankSize + n;
-					double tempW = abs(A[m * Arow + i] * A[n * Arow + i]);
+					double tempW = abs(A[m * L_a + i] * A[n * L_a + i]);
 					tempW *= MatAex(rankSizeExt - 1, i);
-					tempW *= MatBex(Brow - 1, r);
-					tempW *= MatCex(Crow - 1, r);
-					weight[r*Arow + i] = tempW; 
+					tempW *= MatBex(L_b - 1, r);
+					tempW *= MatCex(L_c - 1, r);
+					weight[r*L_a + i] = tempW; 
 					SumofW += tempW;
 				}
 		}
@@ -156,9 +156,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t offset = 0;
 	for (uint r = 0; r < rankSizeExt; ++r){
 		// sample j
-		binary_search( freq_r[r], (IdxJ + offset), Brow, (MatBex.element + r*Brow));
+		binary_search( freq_r[r], (IdxJ + offset), L_b, (MatBex.element + r*L_b));
 		// sample k
-		binary_search( freq_r[r], (IdxK + offset), Crow, (MatCex.element + r*Crow));
+		binary_search( freq_r[r], (IdxK + offset), L_c, (MatCex.element + r*L_c));
 		offset += freq_r[r];
 	}
 	finish = clock();
@@ -183,17 +183,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		uint rpn = rp % rankSize;
 		// Update the element in coordinate
 		// sgn(EA(r,i))
-		double temp = sgn(A[rm * Arow + i] * A[rn * Arow + i]);
+		double temp = sgn(A[rm * L_a + i] * A[rn * L_a + i]);
 		// sgn(EB(j,r))
-		temp *= sgn(B[rm * Brow + j] * B[rn * Brow + j]);
+		temp *= sgn(B[rm * L_b + j] * B[rn * L_b + j]);
 		// sgn(EC(k,r))
-		temp *= sgn(C[rm * Crow + k] * C[rn * Crow + k]);
+		temp *= sgn(C[rm * L_c + k] * C[rn * L_c + k]);
 		// sgn(EA(rp,i))
-		temp *= sgn(A[rpm * Arow + i] * A[rpn * Arow + i]);
+		temp *= sgn(A[rpm * L_a + i] * A[rpn * L_a + i]);
 		// EB(j,rp)
-		temp *= B[rpm * Brow + j] * B[rpn * Brow + j];
+		temp *= B[rpm * L_b + j] * B[rpn * L_b + j];
 		// EC(k,rp)
-		temp *= C[rpm * Crow + k] * C[rpn * Crow + k];
+		temp *= C[rpm * L_c + k] * C[rpn * L_c + k];
 		IrJc[point3D(i, j, k)] += temp;
 	}
 	finish = clock();

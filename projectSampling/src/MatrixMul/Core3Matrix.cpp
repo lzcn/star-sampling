@@ -17,12 +17,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	uint rankSize = (uint)mxGetN(prhs[0]);
 	uint rankSizeExt = rankSize * rankSize * rankSize;
-	uint Arow = (uint)mxGetM(prhs[0]);
-	uint Brow = (uint)mxGetM(prhs[1]);
+	uint L_a = (uint)mxGetM(prhs[0]);
+	uint L_b = (uint)mxGetM(prhs[1]);
 	// original matrices
 	start = clock();
-	Matrix MatA(Arow, rankSize, mxGetPr(prhs[0]), MATRIX_NONE_SUM);
-	Matrix MatB(Brow, rankSize, mxGetPr(prhs[1]), MATRIX_NONE_SUM);
+	Matrix MatA(L_a, rankSize, mxGetPr(prhs[0]), MATRIX_NONE_SUM);
+	Matrix MatB(L_b, rankSize, mxGetPr(prhs[1]), MATRIX_NONE_SUM);
 	Matrix AT(mxGetN(prhs[0]),mxGetM(prhs[0]));
 	Matrix BT(mxGetN(prhs[1]),mxGetM(prhs[1]));
 	for(uint r = 0 ; r < rankSize; ++r){
@@ -66,12 +66,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for (uint n = 0; n < rankSize; ++n){
 			for (uint h = 0; h < rankSize; ++h){
 					double p = 0.0;
-					for(uint i = 0; i < Arow; ++i){
+					for(uint i = 0; i < L_a; ++i){
 						p += abs(MatA(i,m)*MatA(i,n)*MatA(i,h));
 					}
 					// extension for matrix B
 					double q = 0.0;
-					for(uint j = 0; j < Brow; ++j){
+					for(uint j = 0; j < L_b; ++j){
 						q += abs(MatB(j,m)*MatB(j,n)*MatB(j,h));
 					}
 					// extension for matrix C
@@ -107,10 +107,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	uint *IdxJ = (uint*)malloc(SumCr*sizeof(uint));
 	memset(IdxJ, 0, SumCr*sizeof(uint));
 	// sample indexes
-	double *pa = (double *)malloc(Arow*sizeof(double));
-	double *pb = (double *)malloc(Brow*sizeof(double));
-	memset( pa, 0, Arow*sizeof(double));
-	memset( pb, 0, Brow*sizeof(double));
+	double *pa = (double *)malloc(L_a*sizeof(double));
+	double *pb = (double *)malloc(L_b*sizeof(double));
+	memset( pa, 0, L_a*sizeof(double));
+	memset( pb, 0, L_b*sizeof(double));
 	//std::map<point2D, double> IrJc;
 	TPoint2DMap IrJc;
 	size_t offset = 0;
@@ -118,18 +118,18 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		for (uint n = 0; n < rankSize; ++n){
 			for (uint h = 0; h < rankSize; ++h){
 				double sum_a = 0.0;
-				for(uint i = 0; i < Arow; ++i){
+				for(uint i = 0; i < L_a; ++i){
 					sum_a += abs(MatA(i,m)*MatA(i,n)*MatA(i,h));
 					pa[i] = sum_a;
 				}
 				double sum_b = 0.0;
-				for(uint j = 0; j < Brow; ++j){
+				for(uint j = 0; j < L_b; ++j){
 					sum_b += abs(MatB(j,m)*MatB(j,n)*MatB(j,h));
 					pb[j] = sum_b;
 				}
 				size_t r = m*rankSize*rankSize + n*rankSize + h;
-				binary_search(freq_r[r], (IdxI + offset), Arow, pa);
-				binary_search(freq_r[r], (IdxJ + offset), Brow, pb);
+				binary_search(freq_r[r], (IdxI + offset), L_a, pa);
+				binary_search(freq_r[r], (IdxJ + offset), L_b, pb);
 				offset += freq_r[r];
 			}
 		}
