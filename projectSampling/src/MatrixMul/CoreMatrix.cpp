@@ -90,25 +90,25 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(IdxJ, 0, SumCr*sizeof(uint));
 	double *pdfa = (double*)malloc(MatA.row*sizeof(double));
 	double *pdfb = (double*)malloc(MatB.row*sizeof(double));
-	uint Arow = MatA.row;
-	uint Brow = MatB.row;
+	uint L_a = MatA.row;
+	uint L_b = MatB.row;
 	// sample indexes
 	size_t offset = 0;
 	for (uint r = 0; r < rankSize; ++r){
 		// sample i
 		double sum = 0;
-		for(uint i = 0; i < Arow; i++){
+		for(uint i = 0; i < L_a; i++){
 			sum += abs(MatA(i,r));
 			pdfa[i] = sum;
 		}
-		binary_search(freq_r[r], (IdxI + offset), Arow, pdfa);
+		binary_search(freq_r[r], (IdxI + offset), L_a, pdfa);
 		// sample j
 		sum = 0;
-		for(uint i = 0; i < Brow; i++){
+		for(uint i = 0; i < L_b; i++){
 			sum += abs(MatB(i,r));
 			pdfb[i] = sum;
 		}
-		binary_search(freq_r[r], (IdxJ + offset), Brow, pdfb);
+		binary_search(freq_r[r], (IdxJ + offset), L_b, pdfb);
 		offset += freq_r[r];
 	}
 

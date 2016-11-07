@@ -101,13 +101,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				uint *IdxK = (uint*)malloc(remain*sizeof(uint));
 				memset(IdxJ, 0, remain*sizeof(uint));
 				memset(IdxK, 0, remain*sizeof(uint));
-				vose_alias(remain, IdxJ, \
-					MatB.row, \
-					(MatB.element + r*MatB.row), \
+				vose_alias(remain, IdxJ,
+					MatB.row,
+					(MatB.element + r*MatB.row),
 					MatB.SumofCol[r]);
-				vose_alias(remain, IdxK, \
-					MatC.row, \
-					(MatC.element + r*MatC.row), \
+				vose_alias(remain, IdxK,
+					MatC.row,
+					(MatC.element + r*MatC.row),
 					MatC.SumofCol[r]);
 				for(uint p = 0; p < remain; ++p){
 					subWalk[r].push_back(point2D(IdxJ[p],IdxK[p]));

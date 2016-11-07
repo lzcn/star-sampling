@@ -20,8 +20,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	// original matrices
 	double *A = mxGetPr(prhs[0]);
 	double *B = mxGetPr(prhs[1]);
-	uint Arow = mxGetM(prhs[0]);
-	uint Brow = mxGetM(prhs[1]);
+	uint L_a = mxGetM(prhs[0]);
+	uint L_b = mxGetM(prhs[1]);
 	start = clock();
 	Matrix MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]), MATRIX_NONE_SUM);
 	Matrix MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]), MATRIX_NONE_SUM);
@@ -68,15 +68,15 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			size_t r = m*rankSize + n;
 			// extension for matrix A
 			double sum = 0;
-			for(uint i = 0; i < Arow; ++i){
-				sum += abs(A[m * Arow + i] * A[n * Arow + i]);
-				Aex[r * Arow + i] = sum;
+			for(uint i = 0; i < L_a; ++i){
+				sum += abs(A[m * L_a + i] * A[n * L_a + i]);
+				Aex[r * L_a + i] = sum;
 			}
 			// extension for matrix B
 			sum = 0;
-			for(uint j = 0; j < Brow; ++j){
-				sum += abs(B[m * Brow + j] * B[n * Brow + j]);
-				Bex[r * Brow + j] = sum;
+			for(uint j = 0; j < L_b; ++j){
+				sum += abs(B[m * L_b + j] * B[n * L_b + j]);
+				Bex[r * L_b + j] = sum;
 			}
 		}
 	}
@@ -94,8 +94,8 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(weight, 0, rankSizeExt*sizeof(double));
 	start = clock();
 	for (uint r = 0; r < rankSizeExt; ++r){
-		weight[r] = MatAex(Arow - 1, r);
-		weight[r] *= MatBex(Brow - 1, r);
+		weight[r] = MatAex(L_a - 1, r);
+		weight[r] *= MatBex(L_b - 1, r);
 		SumofW += weight[r]; 
 	}
 	finish = clock();
@@ -127,9 +127,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	size_t offset = 0;
 	for (uint r = 0; r < rankSizeExt; ++r){
 		// sample i
-		binary_search( freq_r[r], (IdxI + offset), Arow, (MatAex.element + r*Arow));
+		binary_search( freq_r[r], (IdxI + offset), L_a, (MatAex.element + r*L_a));
 		// sample j
-		binary_search( freq_r[r], (IdxJ + offset), Brow, (MatBex.element + r*Brow));
+		binary_search( freq_r[r], (IdxJ + offset), L_b, (MatBex.element + r*L_b));
 		// sample k
 		offset += freq_r[r];
 	}

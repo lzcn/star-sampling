@@ -5,7 +5,7 @@
 # Doc Directory
 /projectSampling/_drafts
 /projectSampling/doc/img
-
+/projectSampling/doxygen/
 ## Data Directory
 projectSampling/data
 projectSampling/others
