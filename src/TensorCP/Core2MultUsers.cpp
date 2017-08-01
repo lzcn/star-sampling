@@ -36,12 +36,13 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	plhs[0] = mxCreateDoubleMatrix(knn, NumQueries, mxREAL);
 	double *knnValue = mxGetPr(plhs[0]);
 	// sampling time for each query
-	plhs[1] = mxCreateDoubleMatrix(NumQueries, 4, mxREAL);	
+	plhs[1] = mxCreateDoubleMatrix(NumQueries, 1, mxREAL);	
 	double *SamplingTime = mxGetPr(plhs[1]);
 	memset(SamplingTime, 0, NumQueries*sizeof(double));
-	mexPrintf("Central Sampling for Queries:");
+	mexPrintf("Core^2 Sampling for MultiUsers:");
 	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d,Number of Queries:%d\n",knn,(int)log10(NumSample),(int)log10(budget),NumQueries);
 	mexEvalString("drawnow");
+	progressbar(0);
 	//-------------------------
 	// extension for matrices
 	//-------------------------
@@ -61,12 +62,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			size_t r = m * rankSize + n;
-			double sum = 0;
 			for(uint i = 0; i < L_a; ++i){
-				sum += abs(A[m * L_a + i] * A[n * L_a + i]);
-				Aex[r * L_a + i] = sum;
+				Aex[r * L_a + i] = abs(A[m * L_a + i] * A[n * L_a + i]);
 			}
-			sum = 0;
+			double sum = 0;
 			for(uint j = 0; j < L_b; ++j){
 				sum += abs(B[m * L_b + j] * B[n * L_b + j]);
 				Bex[r * L_b + j] = sum;
@@ -100,17 +99,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//-----------------------
 	// Sampling the Indexes
 	//-----------------------
-	progressbar(0);
 	std::vector<std::vector<point2D>> subWalk(rankSizeExt);
+	double SumofW = 0.0;
 	for(uint i = 0; i < NumQueries; ++i){
 		clearprogressbar();
 		progressbar((double)i/NumQueries);
-		double SumofW = 0.0;
 		start = clock();
+        SumofW = 0.0;
 		for (uint r = 0; r < rankSizeExt; ++r){
-			weight[r] = MatAex(L_a - 1, r);
-			weight[r] *= MatBex(L_b - 1, r);
-			weight[r] *= MatCex(L_c - 1, r);
+			weight[r] = MatAex(i,r);
+			weight[r] *= MatBex(L_b-1,r);
+			weight[r] *= MatCex(L_c-1,r);
 			SumofW += weight[r]; 
 		}
 		finish = clock();
@@ -128,41 +127,40 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			else
 				freq_r[r] = (size_t)floor(c);
 		}
-		finish = clock();
-		SamplingTime[NumQueries + i] = (double)(finish - start)/CLOCKS_PER_SEC;
-		//std::map<point3D, double> IrJc;
 		TPoint3DMap IrJc;
-		for(uint r = 0; r < rankSizeExt; ++r){
-			start = clock();
-			if(freq_r[r] > subWalk[r].size()){
-				size_t remain = freq_r[r] - subWalk[r].size();
-				// sample indexes
-				binary_search( remain, IdxJ, L_b,(MatBex.element + r*L_b));
-				binary_search( remain, IdxK, L_c,(MatCex.element + r*L_c));
-			    for(uint p = 0; p < remain; ++p){
-					subWalk[r].push_back(point2D(IdxJ[p],IdxK[p]));
-				}
-			}
-			finish = clock();
-			SamplingTime[NumQueries + i] += (double)(finish - start)/CLOCKS_PER_SEC;
-			start = clock();
-			for(size_t m = 0; m < freq_r[r]; ++m){
-				uint idxJ = (subWalk[r])[m].x;
-				uint idxK = (subWalk[r])[m].y;
-				IrJc[point3D(i,idxJ,idxK)] += sgn(MatAex(i,r))*sgn(MatBex(idxJ,r))*sgn(MatCex(idxK,r));
-			}
-			finish = clock();
-			SamplingTime[2*NumQueries + i] = (double)(finish - start)/CLOCKS_PER_SEC;
+        for(uint m = 0; m < rankSize; ++m){
+    		for(uint n = 0; n < rankSize; ++n){
+                size_t r = m * rankSize + n;
+			    if(freq_r[r] > subWalk[r].size()){
+                    size_t remain = freq_r[r] - subWalk[r].size();
+				    // sample indexes
+				    binary_search(remain, IdxJ, L_b, (MatBex.element + r*L_b));
+				    binary_search(remain, IdxK, L_c, (MatCex.element + r*L_c));
+			        for(uint p = 0; p < remain; ++p){
+					   subWalk[r].push_back(point2D(IdxJ[p],IdxK[p]));
+			        }
+			    }
+			    for(size_t p = 0; p < freq_r[r]; ++p){
+				    uint idxJ = (subWalk[r])[p].x;
+				    uint idxK = (subWalk[r])[p].y;
+                    int score = sgn(AT(i,m))*sgn(AT(i,n));
+                    score *= sgn(BT(idxJ,m))*sgn(BT(idxJ,n));
+                    score *= sgn(CT(idxK,m))*sgn(CT(idxK,n));
+				    IrJc[point3D(i,idxJ,idxK)] += (double)score;
+			    }
+            }
 		}
+		finish = clock();
+		SamplingTime[i] += (double)(finish - start)/CLOCKS_PER_SEC;
 		//-----------------------------------
 		//sort the values have been sampled
 		//-----------------------------------
-		start = clock();
 		std::vector<pidx3d> tempSortedVec;
 		std::vector<pidx3d> sortVec;
 		for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr) {
 			tempSortedVec.push_back(std::make_pair(mapItr->first, mapItr->second));
 		}
+		start = clock();
 		sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx3d>);
 		for(size_t t = 0; t < tempSortedVec.size() && t < budget; ++t){
 			double true_value = MatrixColMul(tempSortedVec[t].first, AT, BT, CT);
@@ -170,7 +168,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}
 		sort(sortVec.begin(),sortVec.end(),compgt<pidx3d>);
 		finish = clock();
-		SamplingTime[3*NumSample + i] = (double)(finish-start)/CLOCKS_PER_SEC;
+		SamplingTime[i] += (double)(finish-start)/CLOCKS_PER_SEC;
 		for(size_t s = 0; s < sortVec.size() && s < knn; ++s){
 			knnValue[i*knn + s] = sortVec[s].second;
 		}

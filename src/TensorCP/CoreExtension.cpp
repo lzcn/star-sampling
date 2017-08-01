@@ -11,8 +11,7 @@
 
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-	clock_t start,finish;
-	double duration;
+	clock_t start;
 	srand(unsigned(time(NULL)));
 	//--------------------
 	// Initialization
@@ -156,10 +155,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					uint idxi = IdxI[offset];
 					uint idxj = IdxJ[offset];
 					uint idxk = IdxK[offset];
-					int value = sgn(AT(m,idxi)) * sgn(AT(n,idxi));
-					value *= sgn(BT(m,idxj)) * sgn(BT(n,idxj));
-					value *= sgn(CT(m,idxk)) * sgn(CT(n,idxk));
-					IrJc[point3D(idxi, idxj, idxk)] += (double)value;
+					int score = sgn(AT(m,idxi)) * sgn(AT(n,idxi));
+					score *= sgn(BT(m,idxj)) * sgn(BT(n,idxj));
+					score *= sgn(CT(m,idxk)) * sgn(CT(n,idxk));
+					IrJc[point3D(idxi, idxj, idxk)] += (double)score;
 				}
 			}
 		}

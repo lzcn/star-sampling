@@ -15,23 +15,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	//--------------------
 	// Initialization
 	//--------------------
-	start = clock();
 	uint rankSize = mxGetN(prhs[0]);
-	// get factor matrices
-	Matrix MatA(mxGetM(prhs[0]),mxGetN(prhs[0]),mxGetPr(prhs[0]),MATRIX_COL_SUM);
-	Matrix MatB(mxGetM(prhs[1]),mxGetN(prhs[1]),mxGetPr(prhs[1]),MATRIX_COL_SUM);
-	Matrix AT(mxGetN(prhs[0]),mxGetM(prhs[0]));
-	Matrix BT(mxGetN(prhs[1]),mxGetM(prhs[1]));
-	for(uint r = 0 ; r < rankSize; ++r){
-		for (uint i = 0; i < MatA.row; ++i) {
-			AT(r,i) = MatA(i,r);
-		}
-		for (uint j = 0; j < MatB.row; ++j) {
-			BT(r,j) = MatB(j,r);
-		}
-	}
-	finish = clock();
-	duration = (double)(finish-start) / CLOCKS_PER_SEC;
+	uint rankSizeExt = rankSize * rankSize;
+	uint L_a = mxGetM(prhs[0]);
+	uint L_b = mxGetM(prhs[1]);
+	double *A = mxGetPr(prhs[0]);
+	double *B = mxGetPr(prhs[1]);
+    Matrix AT(rankSize, L_a);
+    Matrix BT(rankSize, L_b);
 	// the budget
 	const size_t budget = (size_t)mxGetPr(prhs[2])[0];
 	// number of samples
@@ -40,42 +31,70 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	const uint top_t = (uint)mxGetPr(prhs[4])[0];
 	// result of sampling
 	plhs[0] = mxCreateDoubleMatrix(top_t, 1, mxREAL);
-	double *values = mxGetPr(plhs[0]);
+	double *plhs_result = mxGetPr(plhs[0]);
 	// time duration sampling
 	plhs[1] = mxCreateDoubleMatrix(1, 1, mxREAL);
 	double *tsec = mxGetPr(plhs[1]);
 	*tsec = duration;
 	// indexes of values
 	plhs[2] = mxCreateNumericMatrix(top_t, 2, mxUINT64_CLASS, mxREAL);
-	uint64_T* indexes = (uint64_T*)mxGetData(plhs[2]);
-	mexPrintf("Starting Core^1 Sampling:");
+	uint64_T* plhs_pr = (uint64_T*)mxGetData(plhs[2]);
+	mexPrintf("Starting Core^2 Sampling:");
 	mexPrintf("Top:%d,Samples:1e%d,Budget:1e%d\n",top_t,(int)log10(NumSample),(int)log10(budget));
 	mexEvalString("drawnow");
+	// compute the extension for matrices
+    start = clock();
+    AT.transpose(A);
+    BT.transpose(B);
+	double *Aex = (double*)malloc(L_a*rankSizeExt*sizeof(double));
+	double *Bex = (double*)malloc(L_b*rankSizeExt*sizeof(double));
+	memset(Aex, 0, mxGetM(prhs[0])*rankSizeExt*sizeof(double));
+	memset(Bex, 0, mxGetM(prhs[1])*rankSizeExt*sizeof(double));
+	// compute the extension matrices
+	for (uint m = 0; m < rankSize; ++m){
+		for (uint n = 0; n < rankSize; ++n){
+			size_t r = m*rankSize + n;
+			// extension for matrix A
+			double sum = 0;
+			for(uint i = 0; i < L_a; ++i){
+				sum += abs(A[m * L_a + i] * A[n * L_a + i]);
+				Aex[r * L_a + i] = sum;
+			}
+			// extension for matrix B
+			sum = 0;
+			for(uint j = 0; j < L_b; ++j){
+				sum += abs(B[m * L_b + j] * B[n * L_b + j]);
+				Bex[r * L_b + j] = sum;
+			}
+		}
+	}
+	// extension matrices
+	Matrix MatAex(L_a, rankSizeExt, Aex, MATRIX_NONE_SUM);
+	Matrix MatBex(L_b, rankSizeExt, Bex, MATRIX_NONE_SUM);
 	//-------------------------------------
 	// Compute weight
 	//-------------------------------------
-	start = clock();
 	double SumofW = 0;
-	double *weight = (double*)malloc(rankSize*sizeof(double));
-	memset(weight, 0, rankSize*sizeof(double));
-	double tempW = 0;
-	for (uint r = 0; r < rankSize; ++r){
-		weight[r] = MatA.SumofCol[r];
-		weight[r] *= MatB.SumofCol[r];
+	double *weight = (double*)malloc(rankSizeExt*sizeof(double));
+	memset(weight, 0, rankSizeExt*sizeof(double));
+	for (uint r = 0; r < rankSizeExt; ++r){
+		weight[r] = MatAex(L_a - 1, r);
+		weight[r] *= MatBex(L_b - 1, r);
 		SumofW += weight[r]; 
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tsec += duration;
+	*tsec = duration;
+	mexPrintf("%f during the initialization phase.\n",duration);
+	mexEvalString("drawnow");
 	//-------------------------
 	// Do Sampling
 	//-------------------------
-
 	start = clock();
 	size_t SumCr = 0;
-	size_t *freq_r = (size_t *)malloc(rankSize*sizeof(size_t));
-	memset( freq_r, 0, rankSize*sizeof(size_t));
-	for (uint r = 0; r < rankSize; ++r){
+	size_t *freq_r = (size_t *)malloc(rankSizeExt*sizeof(size_t));
+	memset( freq_r, 0, rankSizeExt*sizeof(size_t));
+	for (uint r = 0; r < rankSizeExt; ++r){
 		double u = (double)rand()/(double)RAND_MAX;
 		double c = (double)NumSample*weight[r]/SumofW;
 		if(u < (c - floor(c)))
@@ -88,95 +107,78 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	memset(IdxI, 0, SumCr*sizeof(uint));
 	uint *IdxJ = (uint*)malloc(SumCr*sizeof(uint));
 	memset(IdxJ, 0, SumCr*sizeof(uint));
-	double *pdfa = (double*)malloc(MatA.row*sizeof(double));
-	double *pdfb = (double*)malloc(MatB.row*sizeof(double));
-	uint L_a = MatA.row;
-	uint L_b = MatB.row;
 	// sample indexes
 	size_t offset = 0;
-	for (uint r = 0; r < rankSize; ++r){
-		// sample i
-		double sum = 0;
-		for(uint i = 0; i < L_a; i++){
-			sum += abs(MatA(i,r));
-			pdfa[i] = sum;
-		}
-		binary_search(freq_r[r], (IdxI + offset), L_a, pdfa);
-		// sample j
-		sum = 0;
-		for(uint i = 0; i < L_b; i++){
-			sum += abs(MatB(i,r));
-			pdfb[i] = sum;
-		}
-		binary_search(freq_r[r], (IdxJ + offset), L_b, pdfb);
+	for (uint r = 0; r < rankSizeExt; ++r){
+		binary_search( freq_r[r], (IdxI + offset), L_a, (MatAex.element + r*L_a));
+		binary_search( freq_r[r], (IdxJ + offset), L_b, (MatBex.element + r*L_b));
 		offset += freq_r[r];
 	}
-
 	// compute update value and saved in map<pair, value>
 	// use map IrJc to save the sampled values
 	//std::map<point2D, double> IrJc;
 	TPoint2DMap IrJc;
 	offset = 0;
-	for(uint r = 0; r < rankSize; ++r){
-		for(size_t s = 0; s < freq_r[r]; ++s){
-			uint idxi = IdxI[offset];
-			uint idxj = IdxJ[offset];
-			IrJc[point2D(idxi, idxj)] += sgn(MatA(idxi,r)) * sgn(MatB(idxj,r));
-			++offset;
+	for (uint m = 0; m < rankSize; ++m){
+		for (uint n = 0; n < rankSize; ++n){
+			size_t r = m*rankSize + n;
+			for(size_t s = 0; s < freq_r[r]; ++s,++offset){
+				uint idxi = IdxI[offset];
+				uint idxj = IdxJ[offset];
+				int socre = sgn(AT(m,idxi)) * sgn(AT(n,idxi));
+				socre *=  sgn(BT(m,idxj))* sgn(BT(n,idxj));
+				IrJc[point2D(idxi, idxj)] += socre;
+			}
 		}
 	}
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
+	mexPrintf("%f during the sampling phase.\n",duration);
+	mexEvalString("drawnow");
 	//-----------------------------------
 	//sort the values have been sampled
 	//-----------------------------------
-	// for pre-sort
+	// for pre sort
+	start = clock();
 	std::vector<pidx2d> tempSortedVec;
-	// sort by actual value
 	std::vector<pidx2d> sortVec;
 	// push the value into a vector for sorting
 	for (auto mapItr = IrJc.begin(); mapItr != IrJc.end(); ++mapItr){
 		tempSortedVec.push_back(std::make_pair(mapItr->first,mapItr->second));
 	}
-	start = clock();
 	sort(tempSortedVec.begin(), tempSortedVec.end(), compgt<pidx2d>);
-	finish = clock();
-	duration = (double)(finish-start) / CLOCKS_PER_SEC;
-	*tsec += duration;
-	start = clock();
-	double true_value = 0;
-	// compute the top-t' (budget) actual value
 	for(size_t m = 0; m < tempSortedVec.size() && m < budget; ++m){
-		true_value = MatrixColMul(tempSortedVec[m].first, AT, BT);
-		sortVec.push_back(std::make_pair(tempSortedVec[m].first,true_value));
+		double true_value = MatrixColMul(tempSortedVec[m].first, AT, BT);
+		sortVec.push_back(std::make_pair(tempSortedVec[m].first, true_value));
 	}
 	// sort the vector according to the actual value
 	sort(sortVec.begin(), sortVec.end(), compgt<pidx2d>);
 	finish = clock();
 	duration = (double)(finish-start) / CLOCKS_PER_SEC;
 	*tsec += duration;
- 	
+	mexPrintf("%f during the sorting phase.\n",duration);
+	mexEvalString("drawnow");
 	//--------------------------------
 	// Converting to Matlab
 	//--------------------------------
 	// value
-	for(size_t m = 0; m < sortVec.size() && m < top_t; ++m){
+	for(uint m = 0; m < sortVec.size() && m < top_t; ++m){
 		//value
-		values[m] = sortVec[m].second;
+		plhs_result[m] = sortVec[m].second;
 		//i
-		indexes[m] = (sortVec[m].first.x + 1);
+		plhs_pr[m] = (sortVec[m].first.x + 1);
 		//j
-		indexes[m + top_t] = (sortVec[m].first.y + 1);
+		plhs_pr[m + top_t] = (sortVec[m].first.y + 1);
 	}
 	mexPrintf("Done!\n");
 	//---------------
 	// free
 	//---------------
-	free(pdfa);
-	free(pdfb);
+	free(weight);
 	free(IdxI);
 	free(IdxJ);
 	free(freq_r);
-	free(weight);
+	free(Aex);
+	free(Bex);
 }

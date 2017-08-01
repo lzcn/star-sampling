@@ -1,18 +1,23 @@
 ##---------------------
 ## My Customization
 ##---------------------
-
+# Lib and Bin 
+/lib
+/bin
 # Doc Directory
-/projectSampling/_drafts
-/projectSampling/doc/img
-/projectSampling/doxygen/
+/_drafts
+/doc/img
+/doxygen/
 ## Data Directory
-projectSampling/data
-projectSampling/others
-
+data
+others
+## ctags files
+.*.swp
 # Experiment directiory
-projectSampling/experiments
+experiments
 
+# Third Party Source
+/src/BPTF/
 
 ##==========================
 ## Windows image file caches

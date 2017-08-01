@@ -62,7 +62,6 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	double SumofW = 0;
 	double *weight = (double*)malloc(rankSizeExt*sizeof(double));
 	memset(weight, 0, rankSizeExt*sizeof(double));
-	start = clock();
 	for (uint m = 0; m < rankSize; ++m){
 		for (uint n = 0; n < rankSize; ++n){
 			for (uint h = 0; h < rankSize; ++h){
@@ -152,12 +151,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //-----------------------------------------
 	start = clock();
 	TPoint3DMap IrJc;
-	offset = 0;
 	if(budget >= NumSample){
 		for(size_t i = 0; i < TotalS; ++i){
 			IrJc[point3D(IdxI[i], IdxJ[i], IdxK[i])] = 1.0;
 		}
 	}else{
+	    offset = 0;
 		for (uint m = 0; m < rankSize; ++m){
 			for (uint n = 0; n < rankSize; ++n){
 				for (uint h = 0; h < rankSize; ++h){

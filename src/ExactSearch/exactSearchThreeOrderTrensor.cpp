@@ -18,13 +18,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const uint top_t = (uint)mxGetPr(prhs[3])[0];
     const uint numMat = 3;
     // matrices
-    Matrix A(mxGetM(prhs[0]), L_a, mxGetPr(prhs[0]), MATRIX_NONE_SUM);
-    Matrix B(mxGetM(prhs[1]), L_b, mxGetPr(prhs[1]), MATRIX_NONE_SUM);
-    Matrix C(mxGetM(prhs[2]), L_c, mxGetPr(prhs[2]), MATRIX_NONE_SUM);
+    Matrix A(rankSize, L_a, mxGetPr(prhs[0]), MATRIX_NONE_SUM);
+    Matrix B(rankSize, L_b, mxGetPr(prhs[1]), MATRIX_NONE_SUM);
+    Matrix C(rankSize, L_c, mxGetPr(prhs[2]), MATRIX_NONE_SUM);
     // varibales for progress bar
-    double total = L_a*L_b*L_c;
+    double total = mxGetN(prhs[0])*mxGetN(prhs[1])*mxGetN(prhs[2]);
     double progress = 0;
-    double flag = 0;
+    uint flag = 0;
     // list for top values and coordinates
     std::list<double> listTop;
     std::list<point3D> listIdx;
@@ -33,24 +33,21 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     uint *max = (uint*)malloc(numMat*sizeof(uint));
     memset(max, 0, numMat*sizeof(uint));
     for (int i = 0; i < numMat; ++i){
-        max[i] = mxGetN(prhs[i]);
+        max[i] = (uint)mxGetN(prhs[i]);
     }
     SubIndex index(numMat, max);
     mexPrintf("Start Exhaustive Search...\n");
     mexEvalString("drawnow");
     progressbar(0);
     start = clock();
-    for(uint count = 0; count < top_t && !index.isDone(); ++index){
+    for(uint count = 0; count < top_t && !index.isDone(); ++count){
         double temp = MatrixColMul(A, B, C,
-                        index.getIdx()[0],
-                        index.getIdx()[1],
-                        index.getIdx()[2]);
+                        index.getIdx()[0], index.getIdx()[1], index.getIdx()[2]);
         tempVec.push_back(std::make_pair(
                                 point3D(index.getIdx()[0],
                                         index.getIdx()[1],
-                                        index.getIdx()[2]),
-                                temp));
-        ++count;
+                                        index.getIdx()[2]),temp));
+        ++index;
         progress += 1;
     }
     sort(tempVec.begin(), tempVec.end(), compgt<pidx3d>);

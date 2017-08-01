@@ -122,7 +122,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				uint idxi = IdxI[offset];
 				uint idxj = IdxJ[offset];
 				uint idxk = IdxK[offset];
-				IrJc[point3D(idxi, idxj, idxk)] += sgn(MatA(idxi,r)) * sgn(MatB(idxj,r)) * sgn(MatC(idxk,r));
+				IrJc[point3D(idxi, idxj, idxk)] += sgn(AT(r,idxi)) * sgn(BT(r,idxj)) * sgn(CT(r,idxk));
 				++offset;
 			}
 		}
