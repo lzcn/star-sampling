@@ -1,24 +1,7 @@
-##---------------------
-## My Customization
-##---------------------
-# Lib and Bin 
-/lib
 /bin
-# Doc Directory
-/_drafts
-/doc/img
-/doxygen/
-## Data Directory
-data
-others
-## ctags files
-.*.swp
-# Experiment directiory
-experiments
-
-# Third Party Source
-/src/BPTF/
-
+/data
+/doc
+/.vscode
 ##==========================
 ## Windows image file caches
 ##==========================
@@ -245,7 +228,7 @@ pythontex-files-*/
 # Simulink Code Generation
 slprj/
 
-# auto folder when using emacs and auctex 
+# auto folder when using emacs and auctex
 /auto/*
 
 ##------------------------------

@@ -13,7 +13,7 @@ for n = 1: length(paths)
     load(fullfile(path,'User.mat'));
     load(fullfile(path,'Item.mat'));
     load(fullfile(path,'Tag.mat'));
-    % exhaustive search 
+    % exhaustive search
     [topValue, fullTime, topIndexes] = exactSearchThreeOrderTrensor(User,Item,Tag,top_t);
     % save the result
     save(fullfile(path,'topValue.mat'),'topValue');
