@@ -4,9 +4,9 @@
 #include <ctime>
 #include <vector>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   clock_t start, finish;
@@ -26,11 +26,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   uint L_c = mxGetM(prhs[2]);
   start = clock();
   FactorMat MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]),
-              MATRIX_NONE_SUM);
+                 MATRIX_NONE_SUM);
   FactorMat MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]),
-              MATRIX_NONE_SUM);
+                 MATRIX_NONE_SUM);
   FactorMat MatC(mxGetM(prhs[2]), mxGetN(prhs[2]), mxGetPr(prhs[2]),
-              MATRIX_NONE_SUM);
+                 MATRIX_NONE_SUM);
   FactorMat AT(mxGetN(prhs[0]), mxGetM(prhs[0]));
   FactorMat BT(mxGetN(prhs[1]), mxGetM(prhs[1]));
   FactorMat CT(mxGetN(prhs[2]), mxGetM(prhs[2]));

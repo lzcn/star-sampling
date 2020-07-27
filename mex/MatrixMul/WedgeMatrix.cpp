@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   clock_t start, finish;
   double duration;
@@ -32,9 +32,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   //--------------------
   start = clock();
   FactorMat MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]),
-              MATRIX_COL_SUM);
+                 MATRIX_COL_SUM);
   FactorMat MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]),
-              MATRIX_COL_SUM);
+                 MATRIX_COL_SUM);
   const size_t budget = (size_t)mxGetPr(prhs[2])[0];
   const size_t NumSample = (size_t)mxGetPr(prhs[3])[0];
   const uint top_t = (uint)mxGetPr(prhs[4])[0];

@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "include/utils.h"
 
 #include "mex.h"
 
@@ -227,4 +227,3 @@ IndexCounter &IndexCounter::operator++() {
   }
   return *this;
 }
-

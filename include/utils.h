@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include <ctime>
+
 #include "common.h"
 /**
  * @biref compute the sign of x

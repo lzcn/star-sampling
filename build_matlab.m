@@ -1,4 +1,4 @@
-function output = myFun(action)
+function output = build_matlab(action)
 path = pwd;
 src_path = fullfile(path, 'src');
 bin_path = fullfile(path, 'bin');

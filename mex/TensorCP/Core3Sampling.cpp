@@ -5,9 +5,9 @@
 #include <map>
 #include <vector>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   clock_t start;

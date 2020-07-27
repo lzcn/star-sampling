@@ -11,9 +11,9 @@
 #include <map>
 #include <vector>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 /*
         diamond sampling for matrix
         A's size: Rank x M
@@ -29,9 +29,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   //--------------------
   start = clock();
   FactorMat MatA(mxGetM(prhs[0]), mxGetN(prhs[0]), mxGetPr(prhs[0]),
-              MATRIX_COL_SUM);
+                 MATRIX_COL_SUM);
   FactorMat MatB(mxGetM(prhs[1]), mxGetN(prhs[1]), mxGetPr(prhs[1]),
-              MATRIX_COL_SUM);
+                 MATRIX_COL_SUM);
   FactorMat BT(mxGetN(prhs[1]), mxGetM(prhs[1]));
   uint rankSize = mxGetM(prhs[0]);
   for (uint r = 0; r < rankSize; ++r) {
@@ -71,7 +71,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   start = clock();
   for (uint r = 0; r < MatA.n_row; ++r) {
     for (uint i = 0; i < MatA.n_col; ++i) {
-      double tempW = abs(MatA(r, i)) * MatA.col_abs_sum[i] * MatB.col_abs_sum[r];
+      double tempW =
+          abs(MatA(r, i)) * MatA.col_abs_sum[i] * MatB.col_abs_sum[r];
       weight[r * MatA.n_col + i] = tempW;
       SumofW += tempW;
     }

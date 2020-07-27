@@ -3,10 +3,10 @@
 #include <map>
 #include <set>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/random.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "random.h"
-#include "utils.h"
 
 double diff_y_pred(DenseMat &U, DenseMat &I, DenseMat &T, uint u, uint i,
                    uint pos, uint neg) {

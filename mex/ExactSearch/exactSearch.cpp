@@ -3,9 +3,9 @@
 #include <list>
 #include <vector>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 
 double ColMul(const uint *curIdx, double **p, uint rank, uint numMat) {
   double ans = 0.0;

@@ -1,6 +1,7 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <algorithm>
 #include <list>
 #include <map>
 #include <string>

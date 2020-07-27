@@ -1,5 +1,4 @@
-#include "random.h"
-
+#include "include/random.h"
 
 double rnd::gamrnd(double alpha) {
   assert(alpha > 0);
@@ -133,7 +132,7 @@ int rnd::sample_sort(size_t s, size_t *dst, size_t n, double *pdf, double sum) {
   for (size_t i = 0; i < s; ++i) {
     rand_u.push_back(sum * ((double)randn() / (double)RAND_MAX));
   }
-  sort(rand_u.begin(), rand_u.end());
+  std::sort(rand_u.begin(), rand_u.end());
   size_t ind = 0;
   double prob_accum = abs(pdf[0]);
   for (size_t i = 0; i < s; ++i) {

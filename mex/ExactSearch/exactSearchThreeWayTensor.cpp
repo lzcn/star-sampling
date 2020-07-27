@@ -1,9 +1,9 @@
 #include <ctime>
 #include <list>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   clock_t start, finish;
@@ -25,8 +25,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   double progress = 0;
   uint flag = 0;
   // list for top values and coordinates
-  std::list<double> listTop;
-  std::list<Point3d> listIdx;
+  std::list<double> vList;
+  std::list<Point3d> pList;
   std::vector<Point3dValuePair> tempVec;
   // counter for coordinates
   uint *max = (uint *)malloc(numMat * sizeof(uint));
@@ -50,15 +50,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   }
   sort(tempVec.begin(), tempVec.end(), compgt<Point3dValuePair>);
   for (auto itr = tempVec.begin(); itr != tempVec.end(); ++itr) {
-    listTop.push_back(itr->second);
-    listIdx.push_back(itr->first);
+    vList.push_back(itr->second);
+    pList.push_back(itr->first);
   }
   while (!index.isDone()) {
     double temp = MatrixColMul(A, B, C, index.getIdx()[0], index.getIdx()[1],
                                index.getIdx()[2]);
-    if (temp > listTop.back()) {
-      Point3d p = Point3d(index.getIdx()[0], index.getIdx()[1], index.getIdx()[2]);
-      doInsert(temp, listTop, p, listIdx);
+    if (temp > vList.back()) {
+      Point3d p =
+          Point3d(index.getIdx()[0], index.getIdx()[1], index.getIdx()[2]);
+      doInsert(temp, vList, p, pList);
     }
     ++index;
     progress += 1;
@@ -74,13 +75,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   //---------------------------------
   // convert result to Matlab format
   //---------------------------------
-  uint length = listTop.size();
+  uint length = vList.size();
   plhs[0] = mxCreateDoubleMatrix(length, 1, mxREAL);
   double *topValue = mxGetPr(plhs[0]);
   plhs[2] = mxCreateNumericMatrix(length, 3, mxUINT64_CLASS, mxREAL);
   uint64_T *plhs_pr = (uint64_T *)mxGetData(plhs[2]);
-  auto itr = listTop.begin();
-  auto itr2 = listIdx.begin();
+  auto itr = vList.begin();
+  auto itr2 = pList.begin();
   for (uint i = 0; i < length; ++i) {
     // value
     topValue[i] = (*itr);

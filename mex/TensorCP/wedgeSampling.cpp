@@ -5,9 +5,9 @@
 #include <map>
 #include <vector>
 
-#include "matrix.h"
+#include "include/matrix.h"
+#include "include/utils.h"
 #include "mex.h"
-#include "utils.h"
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   clock_t start, finish;
@@ -81,7 +81,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
   start = clock();
   // Do sample S pairs (r, i)
-  sort_sample(NumSample, IdxI, IdxR, freq_r, MatA.n_row, MatA.n_col, weight, 1.0);
+  sort_sample(NumSample, IdxI, IdxR, freq_r, MatA.n_row, MatA.n_col, weight,
+              1.0);
   // sample j,k;
   for (uint r = 0, offset = 0; r < MatA.n_row; ++r) {
     vose_alias(freq_r[r], (IdxJ + offset), MatB.n_row,
