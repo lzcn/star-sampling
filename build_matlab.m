@@ -1,10 +1,9 @@
-function output = build_matlab(action)
+function build_matlab(action)
 path = pwd;
-src_path = fullfile(path, 'src');
 bin_path = fullfile(path, 'bin');
 build_path = fullfile(path, 'build');
-inc_path = fullfile(path, 'include');
-IFLAG = ['-I', inc_path];
+% add current folder to search path for include
+IFLAG = '-I.';
 if nargin > 0 && action == "clean"
     delete("build/*.o");
     delete("bin/*.mex*");
